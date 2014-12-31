@@ -4,6 +4,7 @@ the fields in the email registration process.
 """
 import validate_email
 import psycopg2
+import re
 
 char_limit = 20
 pass_min_length = 8

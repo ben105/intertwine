@@ -8,8 +8,11 @@ import intertwine_account
 app = Flask(__name__)
 
 
-@app.route('api/v1/adduser', methods=['POST'])
+@app.route('/api/v1/adduser', methods=['POST'])
 def add_user():
+	# Errors dict to store all errors
+	errors = dict()
+	# Extract the POST data
 	first = request.form.get('first')
 	last = request.form.get('last')
 	email = request.form.get('email')
