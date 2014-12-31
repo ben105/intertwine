@@ -1,0 +1,451 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		B503CC641A2A2B35008F7B82 /* WebViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = B503CC631A2A2B35008F7B82 /* WebViewController.m */; };
+		B531B0161A27A3F20034CF3C /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = B531B0151A27A3F20034CF3C /* main.m */; };
+		B531B0191A27A3F20034CF3C /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = B531B0181A27A3F20034CF3C /* AppDelegate.m */; };
+		B531B01C1A27A3F20034CF3C /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = B531B01B1A27A3F20034CF3C /* ViewController.m */; };
+		B531B01F1A27A3F20034CF3C /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B531B01D1A27A3F20034CF3C /* Main.storyboard */; };
+		B531B0211A27A3F20034CF3C /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B531B0201A27A3F20034CF3C /* Images.xcassets */; };
+		B531B0241A27A3F20034CF3C /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = B531B0221A27A3F20034CF3C /* LaunchScreen.xib */; };
+		B531B0301A27A3F20034CF3C /* Sign_OnTests.m in Sources */ = {isa = PBXBuildFile; fileRef = B531B02F1A27A3F20034CF3C /* Sign_OnTests.m */; };
+		B531B0401A27E64E0034CF3C /* NewsfeedViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = B531B03F1A27E64E0034CF3C /* NewsfeedViewController.m */; };
+		B5333E631A2984620083E1CB /* facebook-login.png in Resources */ = {isa = PBXBuildFile; fileRef = B5333E621A2984620083E1CB /* facebook-login.png */; };
+		B5333E661A29A5120083E1CB /* EmailRegistrationViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = B5333E651A29A5120083E1CB /* EmailRegistrationViewController.m */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		B531B02A1A27A3F20034CF3C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B531B0081A27A3F20034CF3C /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B531B00F1A27A3F20034CF3C;
+			remoteInfo = "Sign On";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		B503CC621A2A2B35008F7B82 /* WebViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebViewController.h; sourceTree = "<group>"; };
+		B503CC631A2A2B35008F7B82 /* WebViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = WebViewController.m; sourceTree = "<group>"; };
+		B531B0101A27A3F20034CF3C /* Sign On.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Sign On.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		B531B0141A27A3F20034CF3C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		B531B0151A27A3F20034CF3C /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		B531B0171A27A3F20034CF3C /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
+		B531B0181A27A3F20034CF3C /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		B531B01A1A27A3F20034CF3C /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
+		B531B01B1A27A3F20034CF3C /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
+		B531B01E1A27A3F20034CF3C /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		B531B0201A27A3F20034CF3C /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
+		B531B0231A27A3F20034CF3C /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/LaunchScreen.xib; sourceTree = "<group>"; };
+		B531B0291A27A3F20034CF3C /* Sign OnTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Sign OnTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		B531B02E1A27A3F20034CF3C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		B531B02F1A27A3F20034CF3C /* Sign_OnTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Sign_OnTests.m; sourceTree = "<group>"; };
+		B531B03E1A27E64E0034CF3C /* NewsfeedViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = NewsfeedViewController.h; path = ../NewsfeedViewController.h; sourceTree = "<group>"; };
+		B531B03F1A27E64E0034CF3C /* NewsfeedViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = NewsfeedViewController.m; path = ../NewsfeedViewController.m; sourceTree = "<group>"; };
+		B5333E621A2984620083E1CB /* facebook-login.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "facebook-login.png"; sourceTree = "<group>"; };
+		B5333E641A29A5120083E1CB /* EmailRegistrationViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EmailRegistrationViewController.h; sourceTree = "<group>"; };
+		B5333E651A29A5120083E1CB /* EmailRegistrationViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EmailRegistrationViewController.m; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		B531B00D1A27A3F20034CF3C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B531B0261A27A3F20034CF3C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		B531B0071A27A3F20034CF3C = {
+			isa = PBXGroup;
+			children = (
+				B531B0121A27A3F20034CF3C /* Sign On */,
+				B531B02C1A27A3F20034CF3C /* Sign OnTests */,
+				B531B0111A27A3F20034CF3C /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		B531B0111A27A3F20034CF3C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				B531B0101A27A3F20034CF3C /* Sign On.app */,
+				B531B0291A27A3F20034CF3C /* Sign OnTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		B531B0121A27A3F20034CF3C /* Sign On */ = {
+			isa = PBXGroup;
+			children = (
+				B531B0171A27A3F20034CF3C /* AppDelegate.h */,
+				B531B0181A27A3F20034CF3C /* AppDelegate.m */,
+				B531B01A1A27A3F20034CF3C /* ViewController.h */,
+				B531B01B1A27A3F20034CF3C /* ViewController.m */,
+				B5333E641A29A5120083E1CB /* EmailRegistrationViewController.h */,
+				B5333E651A29A5120083E1CB /* EmailRegistrationViewController.m */,
+				B531B03E1A27E64E0034CF3C /* NewsfeedViewController.h */,
+				B531B03F1A27E64E0034CF3C /* NewsfeedViewController.m */,
+				B503CC621A2A2B35008F7B82 /* WebViewController.h */,
+				B503CC631A2A2B35008F7B82 /* WebViewController.m */,
+				B531B01D1A27A3F20034CF3C /* Main.storyboard */,
+				B531B0201A27A3F20034CF3C /* Images.xcassets */,
+				B531B0221A27A3F20034CF3C /* LaunchScreen.xib */,
+				B531B0131A27A3F20034CF3C /* Supporting Files */,
+			);
+			path = "Sign On";
+			sourceTree = "<group>";
+		};
+		B531B0131A27A3F20034CF3C /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				B5333E621A2984620083E1CB /* facebook-login.png */,
+				B531B0141A27A3F20034CF3C /* Info.plist */,
+				B531B0151A27A3F20034CF3C /* main.m */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		B531B02C1A27A3F20034CF3C /* Sign OnTests */ = {
+			isa = PBXGroup;
+			children = (
+				B531B02F1A27A3F20034CF3C /* Sign_OnTests.m */,
+				B531B02D1A27A3F20034CF3C /* Supporting Files */,
+			);
+			path = "Sign OnTests";
+			sourceTree = "<group>";
+		};
+		B531B02D1A27A3F20034CF3C /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				B531B02E1A27A3F20034CF3C /* Info.plist */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		B531B00F1A27A3F20034CF3C /* Sign On */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B531B0331A27A3F20034CF3C /* Build configuration list for PBXNativeTarget "Sign On" */;
+			buildPhases = (
+				B531B00C1A27A3F20034CF3C /* Sources */,
+				B531B00D1A27A3F20034CF3C /* Frameworks */,
+				B531B00E1A27A3F20034CF3C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "Sign On";
+			productName = "Sign On";
+			productReference = B531B0101A27A3F20034CF3C /* Sign On.app */;
+			productType = "com.apple.product-type.application";
+		};
+		B531B0281A27A3F20034CF3C /* Sign OnTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B531B0361A27A3F20034CF3C /* Build configuration list for PBXNativeTarget "Sign OnTests" */;
+			buildPhases = (
+				B531B0251A27A3F20034CF3C /* Sources */,
+				B531B0261A27A3F20034CF3C /* Frameworks */,
+				B531B0271A27A3F20034CF3C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B531B02B1A27A3F20034CF3C /* PBXTargetDependency */,
+			);
+			name = "Sign OnTests";
+			productName = "Sign OnTests";
+			productReference = B531B0291A27A3F20034CF3C /* Sign OnTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		B531B0081A27A3F20034CF3C /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0610;
+				ORGANIZATIONNAME = Intertwine;
+				TargetAttributes = {
+					B531B00F1A27A3F20034CF3C = {
+						CreatedOnToolsVersion = 6.1;
+					};
+					B531B0281A27A3F20034CF3C = {
+						CreatedOnToolsVersion = 6.1;
+						TestTargetID = B531B00F1A27A3F20034CF3C;
+					};
+				};
+			};
+			buildConfigurationList = B531B00B1A27A3F20034CF3C /* Build configuration list for PBXProject "Sign On" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = B531B0071A27A3F20034CF3C;
+			productRefGroup = B531B0111A27A3F20034CF3C /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				B531B00F1A27A3F20034CF3C /* Sign On */,
+				B531B0281A27A3F20034CF3C /* Sign OnTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		B531B00E1A27A3F20034CF3C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B531B01F1A27A3F20034CF3C /* Main.storyboard in Resources */,
+				B5333E631A2984620083E1CB /* facebook-login.png in Resources */,
+				B531B0241A27A3F20034CF3C /* LaunchScreen.xib in Resources */,
+				B531B0211A27A3F20034CF3C /* Images.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B531B0271A27A3F20034CF3C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		B531B00C1A27A3F20034CF3C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B531B01C1A27A3F20034CF3C /* ViewController.m in Sources */,
+				B503CC641A2A2B35008F7B82 /* WebViewController.m in Sources */,
+				B5333E661A29A5120083E1CB /* EmailRegistrationViewController.m in Sources */,
+				B531B0191A27A3F20034CF3C /* AppDelegate.m in Sources */,
+				B531B0161A27A3F20034CF3C /* main.m in Sources */,
+				B531B0401A27E64E0034CF3C /* NewsfeedViewController.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B531B0251A27A3F20034CF3C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B531B0301A27A3F20034CF3C /* Sign_OnTests.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		B531B02B1A27A3F20034CF3C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B531B00F1A27A3F20034CF3C /* Sign On */;
+			targetProxy = B531B02A1A27A3F20034CF3C /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		B531B01D1A27A3F20034CF3C /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				B531B01E1A27A3F20034CF3C /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		B531B0221A27A3F20034CF3C /* LaunchScreen.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				B531B0231A27A3F20034CF3C /* Base */,
+			);
+			name = LaunchScreen.xib;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		B531B0311A27A3F20034CF3C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.1;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+			};
+			name = Debug;
+		};
+		B531B0321A27A3F20034CF3C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.1;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = iphoneos;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		B531B0341A27A3F20034CF3C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				INFOPLIST_FILE = "Sign On/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		B531B0351A27A3F20034CF3C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				INFOPLIST_FILE = "Sign On/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		B531B0371A27A3F20034CF3C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(SDKROOT)/Developer/Library/Frameworks",
+					"$(inherited)",
+				);
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				INFOPLIST_FILE = "Sign OnTests/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Sign On.app/Sign On";
+			};
+			name = Debug;
+		};
+		B531B0381A27A3F20034CF3C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(SDKROOT)/Developer/Library/Frameworks",
+					"$(inherited)",
+				);
+				INFOPLIST_FILE = "Sign OnTests/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Sign On.app/Sign On";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		B531B00B1A27A3F20034CF3C /* Build configuration list for PBXProject "Sign On" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B531B0311A27A3F20034CF3C /* Debug */,
+				B531B0321A27A3F20034CF3C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B531B0331A27A3F20034CF3C /* Build configuration list for PBXNativeTarget "Sign On" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B531B0341A27A3F20034CF3C /* Debug */,
+				B531B0351A27A3F20034CF3C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B531B0361A27A3F20034CF3C /* Build configuration list for PBXNativeTarget "Sign OnTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B531B0371A27A3F20034CF3C /* Debug */,
+				B531B0381A27A3F20034CF3C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = B531B0081A27A3F20034CF3C /* Project object */;
+}
