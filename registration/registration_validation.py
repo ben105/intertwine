@@ -8,6 +8,11 @@ import re
 
 char_limit = 20
 pass_min_length = 8
+db_cursor = None
+
+def set_database_cursor(cursor):
+	global db_cursor
+	db_cursor = cursor
 
 def invalid_name(name):
 	if len(name) > char_limit:
@@ -28,36 +33,23 @@ def invalid_email(email):
 		return 'Please enter a valid email address'
 	return None
 
-
 def duplicate_email(email):
-	try:	
-		conn = psycopg2.connect("dbname=intertwine host=localhost user=brooke password=intertwine")
-	except Exception as exc:
-		return "Couldn't connect to postgres {}".format(exc)
-	cur = conn.cursor()
-	cur.connection.autocommit = True
 	try:
-		cur.execute("SELECT * FROM accounts WHERE email=%s", (email,))
-		rows = cur.fetchall()
+		db_cursor.execute("SELECT * FROM accounts WHERE email=%s", (email,))
+		rows = db_cursor.fetchall()
 		if len(rows):
 			return 'An account already exists'
 	except Exception as exc:
-		return "Couldn't run execution"
+		return str(exc)
 	return None
 
 def duplicate_facebook_id(facebook_id):
-	try:	
-		conn = psycopg2.connect("dbname=intertwine host=localhost user=brooke password=intertwine")
-	except Exception as exc:
-		return "Couldn't connect to postgres {}".format(exc)
-	cur = conn.cursor()
-	cur.connection.autocommit = True
 	try:
-		cur.execute("SELECT * FROM accounts WHERE facebook_id=%s", (facebook_id,))
-		rows = cur.fetchall()
+		db_cursor.execute("SELECT * FROM accounts WHERE facebook_id=%s", (facebook_id,))
+		rows = db_cursor.fetchall()
 		if len(rows):
 			return 'An account already exists'
 	except Exception as exc:
-		return "Couldn't run execution"
+		return str(exc)
 	return None
 	

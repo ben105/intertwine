@@ -4,9 +4,26 @@ import psycopg2
 from flask import Flask, request
 import registration_validation as rv
 import intertwine_account
+import intertwine_psql
 
 app = Flask(__name__)
 
+cur = intertwine_psql.connect()
+rv.set_database_cursor(cur)
+intertwine_account.set_database_cursor(cur)
+
+@app.route('/api/v1/signin', methods=['POST'])
+def sign_in():
+	email = request.form.get('email')
+	password = request.form.get('password')
+	# Check that we have retrieved valid stuff from the post form
+	if not (email and password):
+		return json.dumps({'error':'Invalid login credentials.'})
+	# Attempt to sign in. Make a connection to the database
+	if intertwine_account.sign_in(email, password):
+		return json.dumps({'success':'true'})
+	else:
+		return json.dumps({'error':'Invalid login credentials.'})	
 
 @app.route('/api/v1/adduser', methods=['POST'])
 def add_user():
@@ -32,6 +49,15 @@ def add_user():
 	err = rv.invalid_email(email)
 	if err:
 		errors['email'] = err
+	# Make a connection to the postgres database
+	try:
+		conn = psycopg2.connect("dbname=intertwine host=localhost user=brooke password=intertwine")
+		cur = conn.cursor()
+		cur.connection.autocommit = True
+	except:
+		errors['connection'] = 'Connection issues on the server'
+		return errors
+	# Check if there is already an account with this email
 	if account_type == "email":
 		err = rv.duplicate_email(email)
 		if err:
@@ -45,13 +71,17 @@ def add_user():
 	# continue.
 	# Create the account.
 	if account_type == "email":
-		intertwine_account.create_account_email()
+		err = intertwine_account.create_account_email(email=email, first=first, last=last, password=password)
+		if err:
+			errors['connection'] = err
+			return errors
 	elif account_type == "facebook":
 		intertwine_account.create_account_facebook()
 	else:
 		print "Need to log an incorrect account type!" # TODO
 		return json.dumps( {"error":"Incorrect account type."} )
 	# Succesfully created an account
+	#cur.connection.close()
 	return json.dumps( {"success":"true"} )
 
 @app.route('/api/v1/adduser/first/<first>/last/<last>/email/<email>/password/<password>')
