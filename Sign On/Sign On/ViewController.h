@@ -7,13 +7,17 @@
 //
 
 #import <UIKit/UIKit.h>
+#import <FacebookSDK/FacebookSDK.h>
+
 
 @protocol SignInDelegate <NSObject>
 @required
 - (void)signInWithEmail:(NSString*)email;
 @end
 
-@interface ViewController : UIViewController <SignInDelegate>
+@interface ViewController : UIViewController <SignInDelegate, FBLoginViewDelegate>
+
+@property (nonatomic, weak) IBOutlet FBLoginView *fbLoginView;
 
 @property (nonatomic, weak) IBOutlet UIView *emailSignInView;
 

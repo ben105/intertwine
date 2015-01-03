@@ -14,8 +14,14 @@
 
 @implementation NewsfeedViewController
 
+- (IBAction)done:(id)sender {
+    [self dismissViewControllerAnimated:YES completion:nil];
+}
+
 - (void)viewDidLoad {
     [super viewDidLoad];
+    self.profilePictureView.profileID = self.user.objectID;
+    self.nameLabel.text = self.user.name;
     // Do any additional setup after loading the view.
 }
 

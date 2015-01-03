@@ -8,12 +8,13 @@
 
 #import "ViewController.h"
 #import "EmailRegistrationViewController.h"
+#import "NewsfeedViewController.h"
+#import <FacebookSDK/FacebookSDK.h>
+#import "AppDelegate.h"
 
 const float emailSignInAnimationDuration = 0.5;
 
 NSString *newsfeedStoryboardID = @"Newsfeed";
-
-
 
 @interface ViewController ()
 
@@ -80,8 +81,69 @@ NSString *newsfeedStoryboardID = @"Newsfeed";
 - (IBAction)signOn:(id)sender {
     if ([self.signInEmailAddressField.text length]==0 || [self.signInPasswordField.text length]==0) {
         [self _signOnAlert:@"Missing information."];
+    } else {
+        NSString *email = self.signInEmailAddressField.text;
+        NSString *password = self.signInPasswordField.text;
+        NSString *baseURL = (NSString*)[(AppDelegate*)[[UIApplication sharedApplication] delegate] apiEndpoint];
+        NSString *parameters = @"signin";
+        NSString *absoluteURL = [baseURL stringByAppendingString:parameters];
+        NSURL *url = [NSURL URLWithString:absoluteURL];
+        NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
+        [request setHTTPMethod:@"POST"];
+        NSString *args = [NSString stringWithFormat:@"email=%@&password=%@",
+                          email,
+                          password];
+        NSData *requestBody = [args dataUsingEncoding:NSUTF8StringEncoding];
+        [request setHTTPBody:requestBody];
+        [NSURLConnection sendAsynchronousRequest:request queue:[NSOperationQueue mainQueue] completionHandler:^(NSURLResponse *response, NSData *data, NSError *connectionError) {
+            if (data.length > 0 && connectionError == nil) {
+                NSInteger statusCode = [(NSHTTPURLResponse*)response statusCode];
+                if (statusCode/100 != 2) {
+                    NSLog(@"Bad status code %ld", (long)statusCode);
+                } else {
+                    // Now we can comfortably do something with the data returned
+                    // Let's try to convert it into JSON
+                    NSError *err = nil;
+                    id json = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:&err];
+                    if (json && !err) {
+                        if ([json objectForKey:@"success"])
+                            [self signInWithEmail:email];
+                        else {
+                            [self _signOnAlert:@"Incorrect email or password."];
+                        }
+                    }
+                }
+            } else if (connectionError) {
+                NSLog(@"%@", connectionError);
+            }
+        }];
+
     }
 }
+
+
+
+
+
+
+// This method will be called when the user information has been fetched
+- (void)loginViewFetchedUserInfo:(FBLoginView *)loginView
+                            user:(id<FBGraphUser>)user {
+    UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+    NewsfeedViewController *vc = [storyboard instantiateViewControllerWithIdentifier:@"Newsfeed"];
+    vc.user = user;
+    [self presentViewController:vc animated:YES completion:nil];
+}
+
+
+
+
+
+
+
+
+
+
 
 #pragma mark - Sign Up
 
@@ -96,6 +158,8 @@ NSString *newsfeedStoryboardID = @"Newsfeed";
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    self.fbLoginView.readPermissions = @[@"public_profile", @"email", @"user_friends"];
+    self.fbLoginView.delegate = self;
     [self _dismissEmailSignInView:NO];
     // Do any additional setup after loading the view, typically from a nib.
 }

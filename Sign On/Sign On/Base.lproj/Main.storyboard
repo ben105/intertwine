@@ -2,6 +2,7 @@
 <document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="6250" systemVersion="14A389" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" initialViewController="vXZ-lx-hvc">
     <dependencies>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="6244"/>
+        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
     </dependencies>
     <scenes>
         <!--View Controller-->
@@ -16,9 +17,6 @@
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
-                            <imageView opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleToFill" fixedFrame="YES" image="facebook-login.png" translatesAutoresizingMaskIntoConstraints="NO" id="fWk-uq-9Qe">
-                                <rect key="frame" x="37" y="136" width="304" height="73"/>
-                            </imageView>
                             <view contentMode="scaleToFill" fixedFrame="YES" placeholderIntrinsicWidth="294" placeholderIntrinsicHeight="241" translatesAutoresizingMaskIntoConstraints="NO" id="VEb-XF-mRA">
                                 <rect key="frame" x="40" y="278" width="294" height="241"/>
                                 <subviews>
@@ -61,7 +59,7 @@
                             <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="fK4-Ss-62m">
                                 <rect key="frame" x="53" y="377" width="273" height="30"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="14"/>
-                                <textInputTraits key="textInputTraits"/>
+                                <textInputTraits key="textInputTraits" secureTextEntry="YES"/>
                             </textField>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Email address" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="B9g-QX-d0m">
                                 <rect key="frame" x="53" y="295" width="268" height="21"/>
@@ -75,12 +73,6 @@
                                 <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                                 <nil key="highlightedColor"/>
                             </label>
-                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="tJq-4d-tBX">
-                                <rect key="frame" x="42" y="142" width="294" height="60"/>
-                                <connections>
-                                    <segue destination="GZB-iL-hDN" kind="presentation" id="nq8-Jf-qkI"/>
-                                </connections>
-                            </button>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Don't have an account?" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="cBK-k7-PUl">
                                 <rect key="frame" x="58" y="480" width="183" height="21"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="16"/>
@@ -105,11 +97,16 @@
                                 <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                                 <nil key="highlightedColor"/>
                             </label>
+                            <view contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ehn-Pe-RLA" customClass="FBLoginView">
+                                <rect key="frame" x="40" y="100" width="294" height="74"/>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                            </view>
                         </subviews>
                         <color key="backgroundColor" red="0.99491177759446825" green="0.98989891283469433" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                     </view>
                     <simulatedScreenMetrics key="simulatedDestinationMetrics" type="retina47"/>
                     <connections>
+                        <outlet property="fbLoginView" destination="ehn-Pe-RLA" id="jQe-Ld-esx"/>
                         <outlet property="signInEmailAddressField" destination="boc-gV-dod" id="dgG-iV-psm"/>
                         <outlet property="signInPasswordField" destination="fK4-Ss-62m" id="yZf-EU-K0y"/>
                     </connections>
@@ -130,22 +127,65 @@
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <view contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="w0H-iI-VV9">
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="w0H-iI-VV9">
                                 <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                                 <subviews>
-                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Logged In" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Wt4-Qy-r04">
-                                        <rect key="frame" x="148" y="312" width="78" height="21"/>
+                                    <toolbar opaque="NO" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="oh8-E1-eP4">
+                                        <rect key="frame" x="0.0" y="0.0" width="375" height="44"/>
+                                        <items>
+                                            <barButtonItem title="Done" id="2oX-c3-7fF">
+                                                <connections>
+                                                    <action selector="done:" destination="GZB-iL-hDN" id="KCa-GW-6T2"/>
+                                                </connections>
+                                            </barButtonItem>
+                                        </items>
+                                    </toolbar>
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Title" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Thc-By-FAf">
+                                        <rect key="frame" x="78" y="11" width="218" height="21"/>
                                         <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                         <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                                         <nil key="highlightedColor"/>
                                     </label>
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" ambiguous="YES" text="Name" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Avo-FP-GVf">
+                                        <rect key="frame" x="8" y="74" width="359" height="21"/>
+                                        <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                        <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                    <view contentMode="scaleToFill" ambiguous="YES" placeholderIntrinsicWidth="130" placeholderIntrinsicHeight="130" translatesAutoresizingMaskIntoConstraints="NO" id="Bn3-Vr-Bwq" customClass="FBProfilePictureView">
+                                        <rect key="frame" x="122" y="133" width="130" height="130"/>
+                                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                        <constraints>
+                                            <constraint firstAttribute="width" constant="130" id="iY8-oC-X4C"/>
+                                        </constraints>
+                                    </view>
                                 </subviews>
                                 <color key="backgroundColor" red="0.85082563114559939" green="0.9296554071529346" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                                <constraints>
+                                    <constraint firstAttribute="trailing" secondItem="Bn3-Vr-Bwq" secondAttribute="trailing" constant="123" id="1y5-1x-DkE"/>
+                                    <constraint firstItem="Bn3-Vr-Bwq" firstAttribute="leading" secondItem="w0H-iI-VV9" secondAttribute="leading" constant="122" id="4xY-L3-GZP"/>
+                                    <constraint firstAttribute="trailing" secondItem="oh8-E1-eP4" secondAttribute="trailing" id="AvU-O9-pWa"/>
+                                    <constraint firstItem="Bn3-Vr-Bwq" firstAttribute="top" secondItem="Avo-FP-GVf" secondAttribute="bottom" constant="38" id="S5H-Gb-1Jd"/>
+                                    <constraint firstItem="oh8-E1-eP4" firstAttribute="leading" secondItem="w0H-iI-VV9" secondAttribute="leading" id="TfN-YP-ynZ"/>
+                                    <constraint firstItem="Avo-FP-GVf" firstAttribute="leading" secondItem="w0H-iI-VV9" secondAttribute="leading" constant="8" id="UTE-o4-uD0"/>
+                                    <constraint firstAttribute="trailing" secondItem="Avo-FP-GVf" secondAttribute="trailing" constant="8" id="oWK-03-c1j"/>
+                                    <constraint firstItem="Avo-FP-GVf" firstAttribute="top" secondItem="oh8-E1-eP4" secondAttribute="bottom" constant="30" id="rLY-ea-P9L"/>
+                                </constraints>
                             </view>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        <constraints>
+                            <constraint firstItem="w0H-iI-VV9" firstAttribute="leading" secondItem="L1G-68-blW" secondAttribute="leadingMargin" constant="-16" id="Btf-7f-pg8"/>
+                            <constraint firstItem="w0H-iI-VV9" firstAttribute="top" secondItem="L1G-68-blW" secondAttribute="topMargin" id="Gto-RM-v0M"/>
+                            <constraint firstItem="XSR-sC-wOj" firstAttribute="top" secondItem="w0H-iI-VV9" secondAttribute="bottom" id="NLi-7M-cSW"/>
+                            <constraint firstAttribute="trailingMargin" secondItem="w0H-iI-VV9" secondAttribute="trailing" constant="-16" id="Vt5-cp-opA"/>
+                        </constraints>
                     </view>
                     <simulatedScreenMetrics key="simulatedDestinationMetrics" type="retina47"/>
+                    <connections>
+                        <outlet property="nameLabel" destination="Avo-FP-GVf" id="HAc-uw-bSV"/>
+                        <outlet property="profilePictureView" destination="Bn3-Vr-Bwq" id="211-87-2Mi"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="QAv-kj-hN0" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
@@ -348,7 +388,4 @@
             <point key="canvasLocation" x="908.5" y="845.5"/>
         </scene>
     </scenes>
-    <resources>
-        <image name="facebook-login.png" width="416" height="101"/>
-    </resources>
 </document>

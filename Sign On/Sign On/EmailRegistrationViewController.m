@@ -8,6 +8,7 @@
 
 #import "EmailRegistrationViewController.h"
 #import "WebViewController.h"
+#import "AppDelegate.h"
 
 @interface EmailRegistrationViewController ()
 
@@ -27,7 +28,6 @@ const NSString *lastNameKey = @"last";
 const NSString *emailKey = @"email";
 const NSString *passwordKey = @"password";
 
-const NSString *apiEndpoint = @"http://test-intertwine.cloudapp.net:5000/api/v1/";
 const NSString *tosString = @"http://test-intertwine.cloudapp.net/tos.html";
 const float emailRegistrationAnimationDuration = 0.5;
 
@@ -131,27 +131,38 @@ const float emailRegistrationAnimationDuration = 0.5;
     NSString *last = self.registrationLastNameField.text;
     NSString *email = self.registrationEmailField.text;
     NSString *password = self.registrationPasswordField.text;
-    NSMutableArray *params = [NSMutableArray arrayWithArray:@[first, last, email, password]];
-    for (short int i=0; i<[params count]; i++) {
-        NSString *param = params[i];
-        param = (NSString *)CFBridgingRelease(CFURLCreateStringByAddingPercentEscapes(
-                                                                                      NULL,
-                                                                                      (CFStringRef)param,
-                                                                                      NULL,
-                                                                                      (CFStringRef)@"!*'();:@&=+$,/?%#[]_",
-                                                                                      kCFStringEncodingUTF8 ));
-        params[i] = param;
-    }
-    
-    NSString *baseURL = (NSString*)apiEndpoint;
-    NSString *parameters = [NSString stringWithFormat:@"adduser/first/%@/last/%@/email/%@/password/%@",
-                            params[0],
-                            params[1],
-                            params[2],
-                            params[3]];
+    NSString *account_type = @"email";
+//    NSMutableArray *params = [NSMutableArray arrayWithArray:@[first, last, email, password]];
+//    for (short int i=0; i<[params count]; i++) {
+//        NSString *param = params[i];
+//        param = (NSString *)CFBridgingRelease(CFURLCreateStringByAddingPercentEscapes(
+//                                                                                      NULL,
+//                                                                                      (CFStringRef)param,
+//                                                                                      NULL,
+//                                                                                      (CFStringRef)@"!*'();:@&=+$,/?%#[]_",
+//                                                                                      kCFStringEncodingUTF8 ));
+//        params[i] = param;
+//    }
+    NSString *baseURL = (NSString*)[(AppDelegate*)[[UIApplication sharedApplication] delegate] apiEndpoint];
+    NSString *parameters = @"adduser";
     NSString *absoluteURL = [baseURL stringByAppendingString:parameters];
     NSURL *url = [NSURL URLWithString:absoluteURL];
-    [NSURLConnection sendAsynchronousRequest:[NSURLRequest requestWithURL:url] queue:[NSOperationQueue mainQueue] completionHandler:^(NSURLResponse *response, NSData *data, NSError *connectionError) {
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
+    [request setHTTPMethod:@"POST"];
+    NSString *args = [NSString stringWithFormat:@"first=%@&last=%@&email=%@&password=%@&account_type=%@",
+                      first,
+                      last,
+                      email,
+                      password,
+                      account_type];
+    NSData *requestBody = [args dataUsingEncoding:NSUTF8StringEncoding];
+    [request setHTTPBody:requestBody];
+//    [request setValue:first forHTTPHeaderField:@"first"];
+//    [request setValue:last forHTTPHeaderField:@"last"];
+//    [request setValue:email forHTTPHeaderField:@"email"];
+//    [request setValue:password forHTTPHeaderField:@"password"];
+//    [request setValue:@"email" forHTTPHeaderField:@"account_type"];
+    [NSURLConnection sendAsynchronousRequest:request queue:[NSOperationQueue mainQueue] completionHandler:^(NSURLResponse *response, NSData *data, NSError *connectionError) {
         if (data.length > 0 && connectionError == nil) {
             NSInteger statusCode = [(NSHTTPURLResponse*)response statusCode];
             if (statusCode/100 != 2) {

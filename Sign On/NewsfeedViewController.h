@@ -7,7 +7,15 @@
 //
 
 #import <UIKit/UIKit.h>
+#import <FacebookSDK/FacebookSDK.h>
 
 @interface NewsfeedViewController : UIViewController
+
+@property (nonatomic, weak) id <FBGraphUser> user;
+
+@property (nonatomic, weak) IBOutlet FBProfilePictureView *profilePictureView;
+@property (nonatomic, weak) IBOutlet UILabel *nameLabel;
+
+- (IBAction)done:(id)sender;
 
 @end
