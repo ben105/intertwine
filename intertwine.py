@@ -14,6 +14,20 @@ intertwine_account.set_database_cursor(cur)
 
 @app.route('/api/v1/signin', methods=['POST'])
 def sign_in():
+	"""This sign-in API should be used for accounts
+	that are attempting to sign in with an email address.
+	A Post form is required with this request.
+
+	Keyword arguments:
+	email -- the email address of the user signing in
+	password -- the password associated with the email's account
+
+	The success of this request will result in a JSON dictionary
+	posed as {'success':'true'}
+
+	The failure of this request will result in a JSON dictionary
+	posed as {'error':'Invalid login credentials'}
+	"""
 	email = request.form.get('email')
 	password = request.form.get('password')
 	# Check that we have retrieved valid stuff from the post form
@@ -99,6 +113,7 @@ def friend_request():
 	elif request.method == "POST":
 		requester_id = request.form.get('requester_id')
 		requestee_id = request.form.get('requestee_id')
+		friend_requests.add_request(requester_id, requestee_id)
 
 if __name__ == "__main__":
 	app.run(host='0.0.0.0')
