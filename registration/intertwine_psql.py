@@ -5,6 +5,7 @@ host = "localhost"
 user = "brooke"
 password = "intertwine"
 
+
 def connect():
 	try:
 		conn = psycopg2.connect("dbname=%s host=%s user=%s password=%s" % (dbname, host, user, password))
