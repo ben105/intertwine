@@ -1,6 +1,6 @@
 
 def trans_block(func):
-	def inner(*agrv, **kwargs):
+	def inner(*argv, **kwargs):
 		assert(len(argv)>0)
 		cursor = argv[0]
 		cursor.connection.autocommit = False
@@ -166,7 +166,7 @@ def accept_request(cursor, requestee, requester):
 	# A -> B are friends
 	# B -> A are friends
 	insert_query = """
-	INSERT INTO 
+	INSERT INTO friends
 		(accounts_id, friend_accouns_id)
 	VALUES
 		(%s, %s);
