@@ -1,3 +1,19 @@
+
+def trans_block(func):
+	def inner(*agrv, **kwargs):
+		assert(len(argv)>0)
+		cursor = argv[0]
+		cursor.connection.autocommit = False
+		result = func(*argv, **kwargs)
+		cursor.connection.commit()
+		cursor.connection.autocommit = True
+		return result
+	return inner
+
+
+
+
+
 # Pending Requests
 #
 # This query will retirive the list of friends from whom
@@ -140,7 +156,9 @@ def get_denied(cursor, user_id):
 
 
 def send_request(cursor, requester, requestee):
-	
+	pass
+
+@trans_block	
 def accept_request(cursor, requestee, requester):
 	# First step, add the requester as a friend
 	# This is actually a two step motion in-of-itself, because we add the mirror of the two.
@@ -167,5 +185,7 @@ def accept_request(cursor, requestee, requester):
 
 
 def deny_request(cursor, requestee, requester):
+	pass
 
 def block_user(cursor, user_id, block_user_id):
+	pass
