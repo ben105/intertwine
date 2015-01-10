@@ -3,7 +3,7 @@
 # This query will retirive the list of friends from whom
 # you have a pending request.
 # It will ignore requests you've previously denied.
-def get_pending_requests(cursor):
+def get_pending_requests(cursor, user_id):
 	pending_requests_query = """
 	SELECT
 		accounts.first,
@@ -14,11 +14,11 @@ def get_pending_requests(cursor):
 		accounts, friend_requests
 	WHERE
 		friend_requests.denied = false and
-		friend_requests.requester = accounts.id and
-		friend_requests.requestee = %s;
+		friend_requests.requester_accounts_id = accounts.id and
+		friend_requests.requestee_accounts_id = %s;
 	"""
 	# Run the query
-	cursor.execute(pending_requests_query, user_id)
+	cursor.execute(pending_requests_query, (user_id,))
 	rows = cursor.fetchall()
 	if len(rows):
 		return [{'first':row[0], 'last':row[1], 'facebook_id':row[2], 'email':row[3]} for row in rows]
@@ -34,6 +34,12 @@ def get_pending_requests(cursor):
 # Of course, the list of facebook friends is different
 # for each user.
 def get_friend_suggestions(cusror, user_id, friends_list):
+
+	# This is broken because we are showing too much
+	#
+	# We shouldn't show friends who have sent us a request,
+	# whether we've denied it or not.
+
 	# Generate a list of compairson conditions, with placeholders
 	conditions = list()
 	for i in range(0, len(friends_list)):
@@ -119,11 +125,11 @@ def get_denied(cursor, user_id):
 		accounts.facebook_id,
 		accounts.email
 	FROM
-		accounts, friends
+		accounts, friend_requests
 	WHERE
-		accounts.id = friends.friend_accounts_id and
-		friends.denied = true and
-		friends.accounts_id = %s;
+		accounts.id = friend_requests.requester_accounts_id and
+		friend_requests.denied = true and
+		friend_requests.requestee_accounts_id = %s;
 	"""
 	cursor.execute(denied_query, (user_id,))
 	rows = cursor.fetchall()
@@ -133,3 +139,33 @@ def get_denied(cursor, user_id):
 		return None
 
 
+def send_request(cursor, requester, requestee):
+	
+def accept_request(cursor, requestee, requester):
+	# First step, add the requester as a friend
+	# This is actually a two step motion in-of-itself, because we add the mirror of the two.
+	# For example:
+	# A -> B are friends
+	# B -> A are friends
+	insert_query = """
+	INSERT INTO 
+		(accounts_id, friend_accouns_id)
+	VALUES
+		(%s, %s);
+	"""
+	cursor.execute(insert_query, (requestee, requester)) #Requestee first
+	cursor.execute(insert_query, (requester, requestee)) #Requester first
+	# Now remove the request from the friend_requests table
+	delete_query = """
+	DELETE FROM
+		friend_requests
+	WHERE
+		requestee_accounts_id = %s and
+		requester_accounts_id = %s;
+	"""
+	cursor.execute(delete_query, (requestee, requester))
+
+
+def deny_request(cursor, requestee, requester):
+
+def block_user(cursor, user_id, block_user_id):
