@@ -102,7 +102,7 @@ def get_blocked(cursor, user_id):
 		accounts, blocks
 	WHERE
 		accounts.id = blocks.blocked_accounts_id and
-		blocks.accounts_id = %s
+		blocks.accounts_id = %s;
 	"""
 	cursor.execute(blocked_query, (user_id,))
 	rows = cursor.fetchall()
@@ -111,4 +111,25 @@ def get_blocked(cursor, user_id):
 	else:
 		return None
 	
+def get_denied(cursor, user_id):
+	denied_query = """
+	SELECT
+		accounts.first,
+		accounts.last,
+		accounts.facebook_id,
+		accounts.email
+	FROM
+		accounts, friends
+	WHERE
+		accounts.id = friends.friend_accounts_id and
+		friends.denied = true and
+		friends.accounts_id = %s;
+	"""
+	cursor.execute(denied_query, (user_id,))
+	rows = cursor.fetchall()
+	if len(rows):
+		return [{'first':row[0], 'last':row[1], 'facebook_id':row[2], 'email':row[3]} for row in rows]
+	else:
+		return None
+
 
