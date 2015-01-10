@@ -50,7 +50,7 @@ def get_friend_suggestions(cusror, user_id, friends_list):
 	FROM 
 		accounts, friends
 	WHERE 
-		  accounts.id not in (SELECT blocked_account_id FROM blocks) and
+		  accounts.id not in (SELECT blocked_account_id FROM blocked_accounts) and
 		  accounts.id not in (SELECT requestee_id FROM friend_requests) and
 		  accounts.id not in (SELECT requester_id FROM friend_requests)
 	"""
@@ -99,10 +99,10 @@ def get_blocked(cursor, user_id):
 		accounts.facebook_id,
 		accounts.email
 	FROM
-		accounts, blocks
+		accounts, blocked_accounts
 	WHERE
-		accounts.id = blocks.blocked_accounts_id and
-		blocks.accounts_id = %s;
+		accounts.id = blocked_accounts.blocked_accounts_id and
+		blocked_accounts.accounts_id = %s
 	"""
 	cursor.execute(blocked_query, (user_id,))
 	rows = cursor.fetchall()
