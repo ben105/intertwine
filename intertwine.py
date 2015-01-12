@@ -21,6 +21,11 @@ cur = intertwine_psql.connect()
 rv.set_database_cursor(cur)
 intertwine_account.set_database_cursor(cur)
 
+@app.route('/api/v1/search/<name>')
+def search(name):
+	data = search_accounts.find(cur, name)
+	return json.dumps(data)
+
 @app.route('/api/v1/signin', methods=['POST'])
 def sign_in():
 	"""This sign-in API should be used for accounts
@@ -108,21 +113,25 @@ def add_user():
 	return json.dumps( {"success":"true"} )
 
 
-@app.route('/api/v1/friendrequest', methods=['POST', 'GET'])
-def friend_request():
+@app.route('/api/v1/friendrequests', methods=['POST', 'GET'])
+def friendrequests():
 	"""Friend request can either be a get
 	or a post. A get will simply return
 	the results of all pending friend 
 	requests, while a post will initiate
 	a friend request.
 	"""
+	data = "{}"
 	if request.method == "GET":
-		user_id = request.form.get('user_id')
-		users_requests = friend_requests.get_requests(user_id)
+		user_id = int(request.form.get('user_id'))
+		data = friend_requests.get_pending_requests(cur, user_id)
+		return json.dumps(data)
 	elif request.method == "POST":
-		requester_id = request.form.get('requester_id')
-		requestee_id = request.form.get('requestee_id')
-		friend_requests.add_request(requester_id, requestee_id)
+		requester_id = int(request.form.get('requester_id'))
+		requestee_id = int(request.form.get('requestee_id'))
+		friend_requests.send_request(cur, requester_id, requestee_id)
+	return data
+
 
 if __name__ == "__main__":
 	app.run(host='0.0.0.0')
