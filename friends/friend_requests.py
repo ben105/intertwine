@@ -1,5 +1,5 @@
 
-def trans_block(func):
+def single_transaction(func):
 	def inner(*argv, **kwargs):
 		assert(len(argv)>0)
 		cursor = argv[0]
@@ -12,6 +12,14 @@ def trans_block(func):
 
 
 
+def purge_blocked(cursor, user_id, blocked_user_id):
+	delete_query = """
+	DELETE FROM blocked_accounts
+	WHERE
+		accounts_id = %s and
+		blocked_accounts_id = %s;
+	"""
+	cursor.execute(delete_query, (user_id, blocked_user_id))
 
 
 # Pending Requests
@@ -156,9 +164,15 @@ def get_denied(cursor, user_id):
 
 
 def send_request(cursor, requester, requestee):
-	pass
+	insert_query = """
+	INSERT INTO friend_requests
+		(requester_accounts_id, requestee_accounts_id)
+	VALUES
+		(%s, %s);
+	"""
+	cursor.execute(insert_query, (requester, requestee))
 
-@trans_block	
+@single_transaction	
 def accept_request(cursor, requestee, requester):
 	# First step, add the requester as a friend
 	# This is actually a two step motion in-of-itself, because we add the mirror of the two.
@@ -167,7 +181,7 @@ def accept_request(cursor, requestee, requester):
 	# B -> A are friends
 	insert_query = """
 	INSERT INTO friends
-		(accounts_id, friend_accouns_id)
+		(accounts_id, friend_accounts_id)
 	VALUES
 		(%s, %s);
 	"""
@@ -185,7 +199,63 @@ def accept_request(cursor, requestee, requester):
 
 
 def deny_request(cursor, requestee, requester):
-	pass
+	update_query = """
+	UPDATE friend_requests
+	SET
+		denied = true
+	WHERE
+		requestee_accounts_id=%s and
+		requester_accounts_id=%s;
+	"""
+	cursor.execute(update_query, (requestee, requester))
 
+@single_transaction
+def remove_friend(cursor, user_id, friend_user_id):
+	delete_friend_query = """
+	DELETE FROM friends
+	WHERE
+		(accounts_id=%s and friend_accounts_id=%s) or
+		(accounts_id=%s and friend_accounts_id=%s);
+	"""
+
+	
+
+@single_transaction
 def block_user(cursor, user_id, block_user_id):
-	pass
+	find_friend_query = """
+	SELECT *
+	FROM friends
+	WHERE
+		accounts_id=%s and
+		friend_accounts_id=%s;
+	"""
+	cursor.execute(find_friend_query, (user_id, block_user_id))
+	rows = cursor.fetchall()
+	# If a row is returned, then we should first delete
+	# the record of these two users being friends.
+	# Keep in mind.
+	# We need to delete the mirrored relationship.
+	# A -> B
+	# B -> A
+	if len(rows):
+		# We don't want to call the pre-defined 'remove_friend'
+		# function because that will cause a premature commitment
+		# of this transaction. Instead, we continue our own query
+		# within this current transaction, which we control when we
+		# commit. And because of the @single_transaction decorator,
+		# this transaction will be committed once the scope ends.
+		delete_friend_query = """
+		DELETE FROM friends
+		WHERE
+			(accounts_id=%s and friend_accounts_id=%s) or
+			(accounts_id=%s and friend_accounts_id=%s);
+		"""
+		cursor.execute(delete_friend_query, (user_id, block_user_id, block_user_id, user_id))
+	# We can add this user to the block table now.
+	block_user_query = """
+	INSERT INTO blocked_accounts
+		(accounts_id, blocked_accounts_id)
+	VALUES
+		(%s, %s);
+	"""
+	cursor.execute(block_user_query, (user_id, block_user_id))

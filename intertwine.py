@@ -1,8 +1,17 @@
+from flask import Flask, request
 import json
 import re
+import sys
+import os
 import psycopg2
-from flask import Flask, request
+
+pwd = os.getcwd()
+import_dirs = map(lambda x: pwd+x, ['/friends', '/search', '/registration'])
+sys.path.extend(import_dirs)
+
 import registration_validation as rv
+import search_accounts
+import friend_requests
 import intertwine_account
 import intertwine_psql
 
