@@ -113,7 +113,7 @@ def add_user():
 	return json.dumps( {"success":"true"} )
 
 
-@app.route('/api/v1/friendrequests', methods=['POST', 'GET'])
+@app.route('/api/v1/friend_requests', methods=['POST', 'GET'])
 def friendrequests():
 	"""Friend request can either be a get
 	or a post. A get will simply return
@@ -130,8 +130,16 @@ def friendrequests():
 		requester_id = int(request.form.get('requester_id'))
 		requestee_id = int(request.form.get('requestee_id'))
 		friend_requests.send_request(cur, requester_id, requestee_id)
-	return data
+	return json.dumps(data)
 
+
+@app.route('/api/v1/search_accounts', methods=['POST'])
+def find_accounts():
+	results = []
+	name = request.form.get('name')
+	if name:
+		results = search_accounts.find(cur, name)
+	return json.dumps(results)
 
 if __name__ == "__main__":
 	app.run(host='0.0.0.0')
