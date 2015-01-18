@@ -5,8 +5,8 @@ import sys
 import os
 import psycopg2
 
-pwd = os.getcwd()
-import_dirs = map(lambda x: pwd+x, ['/friends', '/search', '/registration'])
+pwd = '/home/brooke/intertwine'
+import_dirs = map(lambda x: pwd+x, ['/accounts/', '/friends', '/search', '/registration'])
 sys.path.extend(import_dirs)
 
 import registration_validation as rv
@@ -65,18 +65,19 @@ def add_user():
 	password = request.form.get('password')
 	account_type = request.form.get('account_type')
 	# Let' validate the content the user has entered
-	err = rv.invalid_name(first)
-	if err:
-		errors['first'] = err
-	err = rv.invalid_name(last)
-	if err:
-		errors['last'] = err
-	err = rv.invalid_password(password)
-	if err:
-		errors['password'] = err
-	err = rv.invalid_email(email)
-	if err:
-		errors['email'] = err
+	if account_type == "email":
+		err = rv.invalid_name(first)
+		if err:
+			errors['first'] = err
+		err = rv.invalid_name(last)
+		if err:
+			errors['last'] = err
+		err = rv.invalid_password(password)
+		if err:
+			errors['password'] = err
+		err = rv.invalid_email(email)
+		if err:
+			errors['email'] = err
 	# Make a connection to the postgres database
 	try:
 		conn = psycopg2.connect("dbname=intertwine host=localhost user=brooke password=intertwine")
@@ -104,7 +105,10 @@ def add_user():
 			errors['connection'] = err
 			return errors
 	elif account_type == "facebook":
-		intertwine_account.create_account_facebook()
+		err = intertwine_account.create_account_facebook(facebook_id, first, last)
+		if err:
+			errors['connection'] = err
+			return errors
 	else:
 		print "Need to log an incorrect account type!" # TODO
 		return json.dumps( {"error":"Incorrect account type."} )
@@ -130,7 +134,23 @@ def friendrequests():
 		requester_id = int(request.form.get('requester_id'))
 		requestee_id = int(request.form.get('requestee_id'))
 		friend_requests.send_request(cur, requester_id, requestee_id)
-	return data
+	return json.dumps(data)
+
+
+@app.route('/api/v1/friends', methods=['POST'])
+def get_friends():
+	print(request.form)
+	print("Begin.")
+	user_id = request.form.get('user_id')
+	print("Received user ID {}.".format(user_id))
+	if not user_id:
+		print("No user ID found. Returning empty list.")
+		return json.dumps([])
+	print("Converting user ID into an integer.")
+	user_id = int(user_id)
+	print("Retrieving the friends list.")
+	data = friend_requests.get_friends(cur, user_id)
+	return json.dumps(data)
 
 @app.route('/api/v1/deny', method=['POST', 'GET'])
 def deny():
@@ -139,6 +159,13 @@ def deny():
 	deny a friend request with the POST method.
 	"""
 
+@app.route('/api/v1/search_accounts', methods=['POST'])
+def find_accounts():
+	results = []
+	name = request.form.get('name')
+	if name:
+		results = search_accounts.find(cur, name)
+	return json.dumps(results)
 
 if __name__ == "__main__":
 	app.run(host='0.0.0.0')
