@@ -113,7 +113,7 @@ def add_user():
 	return json.dumps( {"success":"true"} )
 
 
-@app.route('/api/v1/friendrequests', methods=['POST', 'GET'])
+@app.route('/api/v1/friend_requests', methods=['POST', 'GET'])
 def friendrequests():
 	"""Friend request can either be a get
 	or a post. A get will simply return
@@ -121,7 +121,7 @@ def friendrequests():
 	requests, while a post will initiate
 	a friend request.
 	"""
-	data = "{}"
+	data = "[]"
 	if request.method == "GET":
 		user_id = int(request.form.get('user_id'))
 		data = friend_requests.get_pending_requests(cur, user_id)
@@ -131,6 +131,13 @@ def friendrequests():
 		requestee_id = int(request.form.get('requestee_id'))
 		friend_requests.send_request(cur, requester_id, requestee_id)
 	return data
+
+@app.route('/api/v1/deny', method=['POST', 'GET'])
+def deny():
+	"""This API endpoint will either get the list
+	of denied friends, with the GET method, or 
+	deny a friend request with the POST method.
+	"""
 
 
 if __name__ == "__main__":

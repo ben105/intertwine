@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		B503CC641A2A2B35008F7B82 /* WebViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = B503CC631A2A2B35008F7B82 /* WebViewController.m */; };
-		B51FB03D1A550B9F00999D20 /* FacebookSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B51FB03C1A550B9F00999D20 /* FacebookSDK.framework */; };
 		B531B0161A27A3F20034CF3C /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = B531B0151A27A3F20034CF3C /* main.m */; };
 		B531B0191A27A3F20034CF3C /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = B531B0181A27A3F20034CF3C /* AppDelegate.m */; };
 		B531B01C1A27A3F20034CF3C /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = B531B01B1A27A3F20034CF3C /* ViewController.m */; };
@@ -19,6 +18,9 @@
 		B531B0401A27E64E0034CF3C /* NewsfeedViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = B531B03F1A27E64E0034CF3C /* NewsfeedViewController.m */; };
 		B5333E631A2984620083E1CB /* facebook-login.png in Resources */ = {isa = PBXBuildFile; fileRef = B5333E621A2984620083E1CB /* facebook-login.png */; };
 		B5333E661A29A5120083E1CB /* EmailRegistrationViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = B5333E651A29A5120083E1CB /* EmailRegistrationViewController.m */; };
+		B5338D891A6C35D6004091D7 /* FacebookSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B5338D881A6C35D6004091D7 /* FacebookSDK.framework */; };
+		B5EC650B1A6B88B0003F45F2 /* IntertwineManager.m in Sources */ = {isa = PBXBuildFile; fileRef = B5EC650A1A6B88B0003F45F2 /* IntertwineManager.m */; };
+		B5EC650E1A6B88D6003F45F2 /* IntertwineManager+Friends.m in Sources */ = {isa = PBXBuildFile; fileRef = B5EC650D1A6B88D6003F45F2 /* IntertwineManager+Friends.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -34,7 +36,6 @@
 /* Begin PBXFileReference section */
 		B503CC621A2A2B35008F7B82 /* WebViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebViewController.h; sourceTree = "<group>"; };
 		B503CC631A2A2B35008F7B82 /* WebViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = WebViewController.m; sourceTree = "<group>"; };
-		B51FB03C1A550B9F00999D20 /* FacebookSDK.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = FacebookSDK.framework; path = ../../../Documents/FacebookSDK/FacebookSDK.framework; sourceTree = "<group>"; };
 		B531B0101A27A3F20034CF3C /* Sign On.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Sign On.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B531B0141A27A3F20034CF3C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B531B0151A27A3F20034CF3C /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
@@ -53,6 +54,11 @@
 		B5333E621A2984620083E1CB /* facebook-login.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "facebook-login.png"; sourceTree = "<group>"; };
 		B5333E641A29A5120083E1CB /* EmailRegistrationViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EmailRegistrationViewController.h; sourceTree = "<group>"; };
 		B5333E651A29A5120083E1CB /* EmailRegistrationViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EmailRegistrationViewController.m; sourceTree = "<group>"; };
+		B5338D881A6C35D6004091D7 /* FacebookSDK.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = FacebookSDK.framework; sourceTree = "<group>"; };
+		B5EC65091A6B88B0003F45F2 /* IntertwineManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IntertwineManager.h; sourceTree = "<group>"; };
+		B5EC650A1A6B88B0003F45F2 /* IntertwineManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IntertwineManager.m; sourceTree = "<group>"; };
+		B5EC650D1A6B88D6003F45F2 /* IntertwineManager+Friends.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "IntertwineManager+Friends.m"; sourceTree = "<group>"; };
+		B5EC650F1A6BA327003F45F2 /* IntertwineManager+Friends.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "IntertwineManager+Friends.h"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -60,7 +66,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B51FB03D1A550B9F00999D20 /* FacebookSDK.framework in Frameworks */,
+				B5338D891A6C35D6004091D7 /* FacebookSDK.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -77,7 +83,10 @@
 		B531B0071A27A3F20034CF3C = {
 			isa = PBXGroup;
 			children = (
-				B51FB03C1A550B9F00999D20 /* FacebookSDK.framework */,
+				B5338D881A6C35D6004091D7 /* FacebookSDK.framework */,
+				B5EC65091A6B88B0003F45F2 /* IntertwineManager.h */,
+				B5EC650A1A6B88B0003F45F2 /* IntertwineManager.m */,
+				B5EC65081A6B885E003F45F2 /* Friends */,
 				B531B0121A27A3F20034CF3C /* Sign On */,
 				B531B02C1A27A3F20034CF3C /* Sign OnTests */,
 				B531B0111A27A3F20034CF3C /* Products */,
@@ -139,6 +148,15 @@
 				B531B02E1A27A3F20034CF3C /* Info.plist */,
 			);
 			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		B5EC65081A6B885E003F45F2 /* Friends */ = {
+			isa = PBXGroup;
+			children = (
+				B5EC650F1A6BA327003F45F2 /* IntertwineManager+Friends.h */,
+				B5EC650D1A6B88D6003F45F2 /* IntertwineManager+Friends.m */,
+			);
+			name = Friends;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -243,6 +261,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B5EC650E1A6B88D6003F45F2 /* IntertwineManager+Friends.m in Sources */,
+				B5EC650B1A6B88B0003F45F2 /* IntertwineManager.m in Sources */,
 				B531B01C1A27A3F20034CF3C /* ViewController.m in Sources */,
 				B503CC641A2A2B35008F7B82 /* WebViewController.m in Sources */,
 				B5333E661A29A5120083E1CB /* EmailRegistrationViewController.m in Sources */,
@@ -375,6 +395,7 @@
 					"$(PROJECT_DIR)/Sign",
 					On,
 					/Users/Ben/Documents/FacebookSDK,
+					"$(PROJECT_DIR)",
 				);
 				INFOPLIST_FILE = "Sign On/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
@@ -392,6 +413,7 @@
 					"$(PROJECT_DIR)/Sign",
 					On,
 					/Users/Ben/Documents/FacebookSDK,
+					"$(PROJECT_DIR)",
 				);
 				INFOPLIST_FILE = "Sign On/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";

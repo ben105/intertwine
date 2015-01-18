@@ -7,6 +7,8 @@
 //
 
 #import "AppDelegate.h"
+#import "IntertwineManager.h"
+#import "IntertwineManager+Friends.h"
 #import <FacebookSDK/FacebookSDK.h>
 
 const NSString *apiEndpoint = @"http://test-intertwine.cloudapp.net:5000/api/v1/";
@@ -38,6 +40,7 @@ const NSString *apiEndpoint = @"http://test-intertwine.cloudapp.net:5000/api/v1/
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // Override point for customization after application launch.
     [FBLoginView class];
+
     return YES;
 }
 

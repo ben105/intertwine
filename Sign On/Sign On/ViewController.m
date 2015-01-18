@@ -11,6 +11,7 @@
 #import "NewsfeedViewController.h"
 #import <FacebookSDK/FacebookSDK.h>
 #import "AppDelegate.h"
+#import "IntertwineManager.h"
 
 const float emailSignInAnimationDuration = 0.5;
 
@@ -78,9 +79,10 @@ NSString *newsfeedStoryboardID = @"Newsfeed";
     [alert show];
 }
 
+//TODO: Clean sign on method
 - (IBAction)signOn:(id)sender {
     if ([self.signInEmailAddressField.text length]==0 || [self.signInPasswordField.text length]==0) {
-        [self _signOnAlert:@"Missing information."];
+        [self _signOnAlert:@"Enter an email address and password."];
     } else {
         NSString *email = self.signInEmailAddressField.text;
         NSString *password = self.signInPasswordField.text;
@@ -129,6 +131,15 @@ NSString *newsfeedStoryboardID = @"Newsfeed";
 // This method will be called when the user information has been fetched
 - (void)loginViewFetchedUserInfo:(FBLoginView *)loginView
                             user:(id<FBGraphUser>)user {
+    NSString *facebookID = user.objectID;
+    NSString *username = user.name;
+    NSString *first = nil;
+    NSString *last = nil;
+    NSArray *names = [username componentsSeparatedByString:@" "];
+    first = [names firstObject];
+    if ([names count] > 1)
+        last = [names lastObject];
+    [IntertwineManager createAccountFirst:first last:last email:nil facebook:facebookID password:nil completion:nil];
     UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
     NewsfeedViewController *vc = [storyboard instantiateViewControllerWithIdentifier:@"Newsfeed"];
     vc.user = user;
