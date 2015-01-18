@@ -119,7 +119,7 @@ def get_friends(cursor, user_id):
 		return [{'first':row[0], 'last':row[1], 'facebook_id':row[2], 'email':row[3]} for row in rows]
 	else:
 		print "Found nothing"
-		return None
+		return []
 
 def get_blocked(cursor, user_id):
 	blocked_query = """

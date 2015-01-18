@@ -49,7 +49,7 @@ def check_none(func):
 			param1 = argv[0]
 			if param1 == None:
 				return k_err_server_problem
-		func(*argc, **argv)
+		func(*argv, **kwarg)
 	return inner
 
 
