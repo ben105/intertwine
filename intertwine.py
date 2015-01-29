@@ -44,14 +44,8 @@ def sign_in():
 	"""
 	email = request.form.get('email')
 	password = request.form.get('password')
-	# Check that we have retrieved valid stuff from the post form
-	if not (email and password):
-		return json.dumps({'error':'Invalid login credentials.'})
-	# Attempt to sign in. Make a connection to the database
-	if intertwine_account.sign_in(email, password):
-		return json.dumps({'success':'true'})
-	else:
-		return json.dumps({'error':'Invalid login credentials.'})	
+	result = intertwine_account.sign_in(email, password)
+	return json.dumps(result)
 
 @app.route('/api/v1/adduser', methods=['POST'])
 def add_user():
@@ -105,10 +99,8 @@ def add_user():
 			errors['connection'] = err
 			return errors
 	elif account_type == "facebook":
-		err = intertwine_account.create_account_facebook(facebook_id, first, last)
-		if err:
-			errors['connection'] = err
-			return errors
+		result = intertwine_account.sign_in_facebook(facebook_id, first, last)
+		return json.dumps(result)
 	else:
 		print "Need to log an incorrect account type!" # TODO
 		return json.dumps( {"error":"Incorrect account type."} )
@@ -152,7 +144,7 @@ def get_friends():
 	data = friend_requests.get_friends(cur, user_id)
 	return json.dumps(data)
 
-@app.route('/api/v1/deny', method=['POST', 'GET'])
+@app.route('/api/v1/deny', methods=['POST', 'GET'])
 def deny():
 	"""This API endpoint will either get the list
 	of denied friends, with the GET method, or 
