@@ -49,7 +49,7 @@ def check_none(func):
 			param1 = argv[0]
 			if param1 == None:
 				return k_err_server_problem
-		func(*argv, **kwarg)
+		return func(*argv, **kwarg)
 	return inner
 
 
@@ -127,6 +127,7 @@ def duplicate_email(email):
 	Either an error string, or a None value.
 	"""
 	try:
+		print("Checking for duplicate account: SELECT * FROM accounts WHERE email=%s" % email)
 		db_cursor.execute("SELECT * FROM accounts WHERE email=%s", (email,))
 		rows = db_cursor.fetchall()
 		if len(rows):

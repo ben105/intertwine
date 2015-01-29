@@ -97,7 +97,7 @@ def get_friend_suggestions(cusror, user_id, friends_list):
 
 
 def get_friends(cursor, user_id):
-	print "Building query"
+	print "Building query for account {}".format(user_id)
 	friends_query = """
 	SELECT
 		accounts.first,
