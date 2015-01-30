@@ -1,5 +1,5 @@
 //
-//  NewsfeedViewController.h
+//  FriendsViewController.h
 //  Sign On
 //
 //  Created by Ben Rooke on 11/27/14.
@@ -9,13 +9,18 @@
 #import <UIKit/UIKit.h>
 #import <FacebookSDK/FacebookSDK.h>
 
-@interface NewsfeedViewController : UIViewController
+@interface FriendsViewController : UIViewController <UITableViewDataSource, UITableViewDelegate>
 
 @property (nonatomic, weak) id <FBGraphUser> user;
 
 @property (nonatomic, weak) IBOutlet FBProfilePictureView *profilePictureView;
 @property (nonatomic, weak) IBOutlet UILabel *nameLabel;
 
-- (IBAction)done:(id)sender;
+@property (nonatomic, weak) IBOutlet UITableView *friendsTableView;
+
+- (IBAction)done;
+- (void) add;
+
+- (void)getFriends;
 
 @end

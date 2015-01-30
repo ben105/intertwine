@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "IntertwineManager.h"
 
 @interface IntertwineManager (Friends)
 
@@ -15,5 +16,7 @@
 + (void) friendSuggestions:(void (^)(id json, NSError* error, NSURLResponse *response))responseBlock;
 
 + (void) pendingRequest:(void (^)(id json, NSError* error, NSURLResponse *response))responseBlock;
+
++ (void) searchAccounts:(NSString*)entry response:(void (^)(id json, NSError *error, NSURLResponse *response)) responseBlock;
 
 @end

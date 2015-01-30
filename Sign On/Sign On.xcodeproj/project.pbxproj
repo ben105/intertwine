@@ -15,10 +15,11 @@
 		B531B0211A27A3F20034CF3C /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B531B0201A27A3F20034CF3C /* Images.xcassets */; };
 		B531B0241A27A3F20034CF3C /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = B531B0221A27A3F20034CF3C /* LaunchScreen.xib */; };
 		B531B0301A27A3F20034CF3C /* Sign_OnTests.m in Sources */ = {isa = PBXBuildFile; fileRef = B531B02F1A27A3F20034CF3C /* Sign_OnTests.m */; };
-		B531B0401A27E64E0034CF3C /* NewsfeedViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = B531B03F1A27E64E0034CF3C /* NewsfeedViewController.m */; };
+		B531B0401A27E64E0034CF3C /* FriendsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = B531B03F1A27E64E0034CF3C /* FriendsViewController.m */; };
 		B5333E631A2984620083E1CB /* facebook-login.png in Resources */ = {isa = PBXBuildFile; fileRef = B5333E621A2984620083E1CB /* facebook-login.png */; };
 		B5333E661A29A5120083E1CB /* EmailRegistrationViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = B5333E651A29A5120083E1CB /* EmailRegistrationViewController.m */; };
 		B5338D891A6C35D6004091D7 /* FacebookSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B5338D881A6C35D6004091D7 /* FacebookSDK.framework */; };
+		B5CBC9841A78C3A700528F54 /* SendRequestViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = B5CBC9831A78C3A700528F54 /* SendRequestViewController.m */; };
 		B5EC650B1A6B88B0003F45F2 /* IntertwineManager.m in Sources */ = {isa = PBXBuildFile; fileRef = B5EC650A1A6B88B0003F45F2 /* IntertwineManager.m */; };
 		B5EC650E1A6B88D6003F45F2 /* IntertwineManager+Friends.m in Sources */ = {isa = PBXBuildFile; fileRef = B5EC650D1A6B88D6003F45F2 /* IntertwineManager+Friends.m */; };
 /* End PBXBuildFile section */
@@ -49,12 +50,14 @@
 		B531B0291A27A3F20034CF3C /* Sign OnTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Sign OnTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B531B02E1A27A3F20034CF3C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B531B02F1A27A3F20034CF3C /* Sign_OnTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Sign_OnTests.m; sourceTree = "<group>"; };
-		B531B03E1A27E64E0034CF3C /* NewsfeedViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = NewsfeedViewController.h; path = ../NewsfeedViewController.h; sourceTree = "<group>"; };
-		B531B03F1A27E64E0034CF3C /* NewsfeedViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = NewsfeedViewController.m; path = ../NewsfeedViewController.m; sourceTree = "<group>"; };
+		B531B03E1A27E64E0034CF3C /* FriendsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FriendsViewController.h; sourceTree = "<group>"; };
+		B531B03F1A27E64E0034CF3C /* FriendsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FriendsViewController.m; sourceTree = "<group>"; };
 		B5333E621A2984620083E1CB /* facebook-login.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "facebook-login.png"; sourceTree = "<group>"; };
 		B5333E641A29A5120083E1CB /* EmailRegistrationViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EmailRegistrationViewController.h; sourceTree = "<group>"; };
 		B5333E651A29A5120083E1CB /* EmailRegistrationViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EmailRegistrationViewController.m; sourceTree = "<group>"; };
 		B5338D881A6C35D6004091D7 /* FacebookSDK.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = FacebookSDK.framework; sourceTree = "<group>"; };
+		B5CBC9821A78C3A700528F54 /* SendRequestViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SendRequestViewController.h; sourceTree = "<group>"; };
+		B5CBC9831A78C3A700528F54 /* SendRequestViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SendRequestViewController.m; sourceTree = "<group>"; };
 		B5EC65091A6B88B0003F45F2 /* IntertwineManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IntertwineManager.h; sourceTree = "<group>"; };
 		B5EC650A1A6B88B0003F45F2 /* IntertwineManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IntertwineManager.m; sourceTree = "<group>"; };
 		B5EC650D1A6B88D6003F45F2 /* IntertwineManager+Friends.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "IntertwineManager+Friends.m"; sourceTree = "<group>"; };
@@ -111,8 +114,6 @@
 				B531B01B1A27A3F20034CF3C /* ViewController.m */,
 				B5333E641A29A5120083E1CB /* EmailRegistrationViewController.h */,
 				B5333E651A29A5120083E1CB /* EmailRegistrationViewController.m */,
-				B531B03E1A27E64E0034CF3C /* NewsfeedViewController.h */,
-				B531B03F1A27E64E0034CF3C /* NewsfeedViewController.m */,
 				B503CC621A2A2B35008F7B82 /* WebViewController.h */,
 				B503CC631A2A2B35008F7B82 /* WebViewController.m */,
 				B531B01D1A27A3F20034CF3C /* Main.storyboard */,
@@ -155,6 +156,10 @@
 			children = (
 				B5EC650F1A6BA327003F45F2 /* IntertwineManager+Friends.h */,
 				B5EC650D1A6B88D6003F45F2 /* IntertwineManager+Friends.m */,
+				B531B03E1A27E64E0034CF3C /* FriendsViewController.h */,
+				B531B03F1A27E64E0034CF3C /* FriendsViewController.m */,
+				B5CBC9821A78C3A700528F54 /* SendRequestViewController.h */,
+				B5CBC9831A78C3A700528F54 /* SendRequestViewController.m */,
 			);
 			name = Friends;
 			sourceTree = "<group>";
@@ -268,7 +273,8 @@
 				B5333E661A29A5120083E1CB /* EmailRegistrationViewController.m in Sources */,
 				B531B0191A27A3F20034CF3C /* AppDelegate.m in Sources */,
 				B531B0161A27A3F20034CF3C /* main.m in Sources */,
-				B531B0401A27E64E0034CF3C /* NewsfeedViewController.m in Sources */,
+				B5CBC9841A78C3A700528F54 /* SendRequestViewController.m in Sources */,
+				B531B0401A27E64E0034CF3C /* FriendsViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

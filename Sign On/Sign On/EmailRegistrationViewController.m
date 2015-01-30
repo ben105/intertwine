@@ -147,7 +147,19 @@ const float emailRegistrationAnimationDuration = 0.5;
                     BOOL err = [self _handleErrors:json];
                     if (!err) {
                         [self dismissViewControllerAnimated:NO completion:nil];
-                        [self.delegate signInWithEmail:self.registrationEmailField.text];
+                        [IntertwineManager emailSignOn:email password:password completion:^(NSURLResponse *response, NSData *data, NSError *connectionError) {
+                            /*
+                             * Now that we've sent the sign on request to the server,
+                             * we can extrapolate the session key.
+                             */
+                            NSError *err = nil;
+                            id json = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:&err];
+                            if (json && !err) {
+                                NSString *sessionKey = [json objectForKey:@"session_key"];
+                                NSString *accountID = [json objectForKey:@"account_id"];
+                                [self.delegate signInWithSessionKey:sessionKey andAccountID:accountID];
+                            }
+                        }];
                     }
                 }
             }

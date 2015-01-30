@@ -8,7 +8,7 @@
 
 #import "ViewController.h"
 #import "EmailRegistrationViewController.h"
-#import "NewsfeedViewController.h"
+#import "FriendsViewController.h"
 #import <FacebookSDK/FacebookSDK.h>
 #import "AppDelegate.h"
 #import "IntertwineManager.h"
@@ -86,18 +86,8 @@ NSString *newsfeedStoryboardID = @"Newsfeed";
     } else {
         NSString *email = self.signInEmailAddressField.text;
         NSString *password = self.signInPasswordField.text;
-        NSString *baseURL = (NSString*)[(AppDelegate*)[[UIApplication sharedApplication] delegate] apiEndpoint];
-        NSString *parameters = @"signin";
-        NSString *absoluteURL = [baseURL stringByAppendingString:parameters];
-        NSURL *url = [NSURL URLWithString:absoluteURL];
-        NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
-        [request setHTTPMethod:@"POST"];
-        NSString *args = [NSString stringWithFormat:@"email=%@&password=%@",
-                          email,
-                          password];
-        NSData *requestBody = [args dataUsingEncoding:NSUTF8StringEncoding];
-        [request setHTTPBody:requestBody];
-        [NSURLConnection sendAsynchronousRequest:request queue:[NSOperationQueue mainQueue] completionHandler:^(NSURLResponse *response, NSData *data, NSError *connectionError) {
+        
+        [IntertwineManager emailSignOn:email password:password completion:^(NSURLResponse *response, NSData *data, NSError *connectionError) {
             if (data.length > 0 && connectionError == nil) {
                 NSInteger statusCode = [(NSHTTPURLResponse*)response statusCode];
                 if (statusCode/100 != 2) {
@@ -108,11 +98,15 @@ NSString *newsfeedStoryboardID = @"Newsfeed";
                     NSError *err = nil;
                     id json = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:&err];
                     if (json && !err) {
-                        if ([json objectForKey:@"success"])
-                            [self signInWithEmail:email];
-                        else {
-                            [self _signOnAlert:@"Incorrect email or password."];
+                        NSString *serverError = [json objectForKey:@"error"];
+                        if ((NSNull*)serverError != [NSNull null]) {
+                            [(AppDelegate*)[[UIApplication sharedApplication] delegate] presentError:nil description:serverError];
+                        } else {
+                            NSString *sessionKey = [json objectForKey:@"session_key"];
+                            NSString *accountID = [json objectForKey:@"account_id"];
+                            [self signInWithSessionKey:sessionKey andAccountID:accountID];
                         }
+                        
                     }
                 }
             } else if (connectionError) {
@@ -140,10 +134,7 @@ NSString *newsfeedStoryboardID = @"Newsfeed";
     if ([names count] > 1)
         last = [names lastObject];
     [IntertwineManager createAccountFirst:first last:last email:nil facebook:facebookID password:nil completion:nil];
-    UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
-    NewsfeedViewController *vc = [storyboard instantiateViewControllerWithIdentifier:@"Newsfeed"];
-    vc.user = user;
-    [self presentViewController:vc animated:YES completion:nil];
+    [self presentHome];
 }
 
 
@@ -184,13 +175,36 @@ NSString *newsfeedStoryboardID = @"Newsfeed";
 }
 
 
+
+#pragma mark - Setup of Navigation Controllers
+
+- (UINavigationController*) friendsNavigationController {
+    UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+    UIViewController *vc = [storyboard instantiateViewControllerWithIdentifier:@"Friends"];
+    vc.title = @"Friends";
+    UINavigationController *friendsNav = [[UINavigationController alloc] initWithRootViewController:vc];
+    return friendsNav;
+}
+
+
+
 #pragma mark - Sign In Delegate
 
-- (void)signInWithEmail:(NSString*)email {
-    UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
-    UIViewController *vc = [storyboard instantiateViewControllerWithIdentifier:@"Newsfeed"];
-    [self presentViewController:vc animated:YES completion:nil];
+- (void)presentHome {
+    UINavigationController *friendsNav = [self friendsNavigationController];
+    
+    UITabBarController *tabBarController = [[UITabBarController alloc] init];
+    tabBarController.viewControllers = [[NSArray alloc] initWithObjects:friendsNav, nil];
+    
+    
+    [self presentViewController:tabBarController animated:YES completion:nil];
 }
+
+- (void)signInWithSessionKey:(NSString*)sessionKey andAccountID:(NSString *)accountID{
+    [IntertwineManager setHashkey:sessionKey];
+    [IntertwineManager setAccountID:accountID];
+    [self presentHome];
+   }
 
 
 #pragma mark - Generic Present View

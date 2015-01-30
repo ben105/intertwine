@@ -12,7 +12,7 @@
 
 @protocol SignInDelegate <NSObject>
 @required
-- (void)signInWithEmail:(NSString*)email;
+- (void)signInWithSessionKey:(NSString*)sessionKey andAccountID:(NSString*)accountID;
 @end
 
 @interface ViewController : UIViewController <SignInDelegate, FBLoginViewDelegate>
@@ -31,6 +31,12 @@
 
 - (IBAction)signUp:(id)sender;
 - (IBAction)signOn:(id)sender;
+
+
+
+
+- (void)presentHome;
+- (UINavigationController*)friendsNavigationController;
 
 @end
 

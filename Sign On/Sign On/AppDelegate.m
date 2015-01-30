@@ -11,11 +11,6 @@
 #import "IntertwineManager+Friends.h"
 #import <FacebookSDK/FacebookSDK.h>
 
-const NSString *apiEndpoint = @"http://test-intertwine.cloudapp.net:5000/api/v1/";
-
-@interface AppDelegate ()
-
-@end
 
 @implementation AppDelegate
 
@@ -32,10 +27,11 @@ const NSString *apiEndpoint = @"http://test-intertwine.cloudapp.net:5000/api/v1/
     return wasHandled;
 }
 
-
-- (const NSString*) apiEndpoint {
-    return apiEndpoint;
+- (void)presentError:(NSString*)title description:(NSString*)description {
+    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:title message:description delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil];
+    [alert show];
 }
+
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // Override point for customization after application launch.

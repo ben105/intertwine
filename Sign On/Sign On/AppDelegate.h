@@ -12,7 +12,8 @@
 
 @property (strong, nonatomic) UIWindow *window;
 
-- (const NSString*) apiEndpoint;
+- (void)presentError:(NSString*)title description:(NSString*)description;
+
 
 @end
 
