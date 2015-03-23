@@ -8,6 +8,11 @@
 
 #import <Foundation/Foundation.h>
 
+typedef enum {
+    kAccountTypeFacebook,
+    kAccountTypeEmail
+} AccountType;
+
 @interface IntertwineManager : NSObject
 
 + (NSString*)filePath;
@@ -20,6 +25,14 @@
                 completion:(void (^)(NSURLResponse *response, NSData *data, NSError *connectionError)) completion;
 + (void)emailSignOn:(NSString*)emailAddress password:(NSString*)password completion:(void (^)(NSURLResponse *response, NSData *data, NSError *connectionError)) completion;
 
+
++ (void)registeredFacebookID:(NSString*)facebookID username:(NSString*)username;
++ (NSString*) facebookID;
++ (NSString*) facebookName;
+
+
+
+
 + (NSString*)getAccountID;
 + (BOOL)setAccountID:(NSString*)accountID;
 + (NSString*)accountIDFilePath;
@@ -31,6 +44,11 @@
 + (void)sendRequest:(NSMutableURLRequest*)request response:(void (^)(id json, NSError* error, NSURLResponse *resp))responseBlock;
 
 
++ (void)attachCredentialsToRequest:(NSMutableURLRequest*)request;
 
++ (void)setAccountType:(AccountType)accountType;
++ (AccountType)accountType;
+
++ (void) clearCredentialCache;
 
 @end

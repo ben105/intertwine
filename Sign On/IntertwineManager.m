@@ -8,14 +8,18 @@
 
 #import "IntertwineManager.h"
 
+AccountType _accountType;
+
 @interface IntertwineManager ()
 
-+(BOOL) checkConnectionError:(NSError*)error HTTPResponse:(NSURLResponse*)response data:(NSData*)data;
++(BOOL) isConnectionError:(NSError*)error HTTPResponse:(NSURLResponse*)response data:(NSData*)data;
 
 @end
 
 @implementation IntertwineManager
 
+NSString *_facebookID = nil;
+NSString *_facebookName = nil;
 NSString *_accountID = nil;
 NSString *_hashkey = nil;
 const NSString *server = @"http://test-intertwine.cloudapp.net:5000";
@@ -49,16 +53,10 @@ const NSString *server = @"http://test-intertwine.cloudapp.net:5000";
 
 + (NSMutableURLRequest*)getRequest:(NSString*)endpoint {
     endpoint = [endpoint stringByReplacingOccurrencesOfString:@" " withString:@"%20"];
-    
     NSString *urlString = [server stringByAppendingString:endpoint];
     NSURL *url = [NSURL URLWithString:urlString];
     NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:url];
-//    NSString *user_id = [IntertwineManager getAccountID];
-//    if (user_id) {
-//        NSString *params = [NSString stringWithFormat:@"user_id=%@", user_id];
-//        NSData *body = [params dataUsingEncoding:NSUTF8StringEncoding];
-//        [request setHTTPBody:body];
-//    }
+    [IntertwineManager attachCredentialsToRequest:request];
     return request;
 }
 
@@ -71,7 +69,7 @@ const NSString *server = @"http://test-intertwine.cloudapp.net:5000";
                                    NSLog(@"Error connecting: %@", connectionError.userInfo);
                                    responseBlock(nil, connectionError, response);
                                } else {
-                                   if (data && [data length]) {
+                                   if (data!=nil && [data length]) {
                                        NSError *jsonReadingError = nil;
                                        id json = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:&jsonReadingError];
                                        if (jsonReadingError) {
@@ -90,6 +88,19 @@ const NSString *server = @"http://test-intertwine.cloudapp.net:5000";
 
 #pragma mark - Account Management
 
++ (void)registeredFacebookID:(NSString*)facebookID username:(NSString*)username {
+    _facebookID = facebookID;
+    _facebookName = username;
+}
+
++ (NSString*) facebookID {
+    return _facebookID;
+}
+
++ (NSString*) facebookName {
+    return _facebookName;
+}
+
 + (void)createAccountFirst:(NSString*)first
                       last:(NSString*)last
                      email:(NSString*)email
@@ -98,12 +109,20 @@ const NSString *server = @"http://test-intertwine.cloudapp.net:5000";
                 completion:(void (^)(NSURLResponse *response, NSData *data, NSError *connectionError)) completion{
     // The account creation type is either a Facebook
     // type, or an email type.
+    _facebookName = [first stringByAppendingString:[NSString stringWithFormat:@" %@", last]];
     NSString *account_type = @"facebook";
     BOOL isFacebook = YES;
     if (email) {
         account_type = @"email";
         isFacebook = NO;
     }
+    
+    if (isFacebook) {
+        [IntertwineManager setAccountType:kAccountTypeFacebook];
+    } else {
+        [IntertwineManager setAccountType:kAccountTypeEmail];
+    }
+    
     // Build the request instance
     NSMutableURLRequest *request = [IntertwineManager getRequest:@"/api/v1/adduser"];
     [request setHTTPMethod:@"POST"];
@@ -135,15 +154,24 @@ const NSString *server = @"http://test-intertwine.cloudapp.net:5000";
             NSError *err = nil;
             id json = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:&err];
             if (json && !err) {
-                NSLog(@"%@",json);
+                NSString *serverError = [json objectForKey:@"error"];
+                if ((NSNull*)serverError != [NSNull null]){
+                    NSLog(@"Server Error!");
+                }
                 if(isFacebook) {
                     NSString *hashkey = [json objectForKey:@"session_key"];
-                    NSString *accountid = [json objectForKey:@"account_id"];
+                    NSNumber *accountIDNumber = [json objectForKey:@"account_id"];
+                    NSString *accountid = [NSString stringWithFormat:@"%d", [accountIDNumber integerValue]];
                     [IntertwineManager setHashkey:hashkey];
                     [IntertwineManager setAccountID:accountid];
                 }
-                completion(response, data, connectionError);
+                if (completion)
+                    completion(response, data, connectionError);
+                
             }
+        } else {
+            NSLog(@"We're in the bad part of town...");
+            completion(nil, nil, nil);
         }
     }];
 }
@@ -167,6 +195,7 @@ const NSString *server = @"http://test-intertwine.cloudapp.net:5000";
                 NSString *accountid = [json objectForKey:@"accountid"];
                 [IntertwineManager setHashkey:hashkey];
                 [IntertwineManager setAccountID:accountid];
+                [IntertwineManager setAccountType:kAccountTypeEmail];
             }
             completion(response, data, connectionError);
         }
@@ -188,7 +217,6 @@ const NSString *server = @"http://test-intertwine.cloudapp.net:5000";
         return _accountID;
     }
     NSString *filePath = [IntertwineManager accountIDFilePath];
-    NSLog(@"File path: %@", filePath);
     NSData *data = [NSData dataWithContentsOfFile:filePath];
     if (!data)
         return nil;
@@ -226,10 +254,35 @@ const NSString *server = @"http://test-intertwine.cloudapp.net:5000";
     _hashkey = hashkey;
     // Write the new account ID to file, to save for relaunches
     NSString *filePath = [IntertwineManager hashkeyFilePath];
-    NSLog(@"Hash Key: %@", filePath);
     NSData *data = [hashkey dataUsingEncoding:NSUTF8StringEncoding];
     return [data writeToFile:filePath atomically:YES];
 
+}
+
+
++ (void)attachCredentialsToRequest:(NSMutableURLRequest*)request {
+    NSString *accountID = [IntertwineManager getAccountID];
+    NSString *sessionKey = [IntertwineManager getHash];
+    if (accountID != nil){
+        [request setValue:accountID forHTTPHeaderField:@"user_id"];
+    }
+    if (sessionKey != nil) {
+        [request setValue:sessionKey forHTTPHeaderField:@"session_key"];
+    }
+}
+
+
++ (void)setAccountType:(AccountType)accountType {
+    _accountType = accountType;
+}
+
++ (AccountType)accountType {
+    return _accountType;
+}
+
++ (void) clearCredentialCache{
+    [IntertwineManager setAccountID:@""];
+    [IntertwineManager setHashkey:@""];
 }
 
 

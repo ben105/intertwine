@@ -9,6 +9,12 @@
 #import <UIKit/UIKit.h>
 #import <FacebookSDK/FacebookSDK.h>
 
+@class PendingRequestTableViewCell;
+
+@protocol FriendsDelegate <NSObject>
+- (void) acceptedFriendRequest:(PendingRequestTableViewCell*)cell;
+@end
+
 @interface FriendsViewController : UIViewController <UITableViewDataSource, UITableViewDelegate>
 
 @property (nonatomic, weak) id <FBGraphUser> user;
@@ -17,10 +23,12 @@
 @property (nonatomic, weak) IBOutlet UILabel *nameLabel;
 
 @property (nonatomic, weak) IBOutlet UITableView *friendsTableView;
+@property (nonatomic, strong) NSArray *cellIdentifiers;
 
 - (IBAction)done;
 - (void) add;
 
+- (void)getPendingRequests;
 - (void)getFriends;
 
 @end

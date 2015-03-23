@@ -9,6 +9,7 @@
 #import "SendRequestViewController.h"
 #import <FacebookSDK/FacebookSDK.h>
 #import "IntertwineManager+Friends.h"
+#import "SendRequestTableViewCell.h"
 
 @interface SendRequestViewController ()
 
@@ -28,11 +29,15 @@
     }
     [IntertwineManager searchAccounts:searchText response:^(id json, NSError *error, NSURLResponse *response) {
         if (!error) {
-            NSLog(@"%@", json);
             if ([self.searchBar.text isEqualToString:@""]) {
                 return;
             }
-            [self.tableData replaceObjectAtIndex:0 withObject:json];
+            if (json) {
+                [self.tableData replaceObjectAtIndex:0 withObject:json];
+
+            } else {
+                [self.tableData replaceObjectAtIndex:0 withObject:@[]];
+            }
             [self.friendsTableView reloadData];
         } else {
             NSLog(@"ERROR: %@", error);
@@ -44,14 +49,34 @@
 #pragma mark - Loading Facebook Friends (who are not already your Intertwine friends)
 
 - (void) loadFacebookFriends {
-    FBRequest* friendsRequest = [FBRequest requestForMyFriends];
-    [friendsRequest startWithCompletionHandler: ^(FBRequestConnection *connection,
+    FBRequest* fbRequest = [FBRequest requestForMyFriends];
+    [fbRequest startWithCompletionHandler: ^(FBRequestConnection *connection,
                                                   NSDictionary* result,
                                                   NSError *error) {
+        if (error || [result count] == 0) {
+            return;
+        }
         NSArray* friends = [result objectForKey:@"data"];
-        self.friendSuggestions = friends;
-        [self.tableData replaceObjectAtIndex:1 withObject:self.friendSuggestions];
-        [self.friendsTableView reloadData];
+        if ([friends count] == 0) {
+            return;
+        }
+        NSMutableArray *facebookIDs = [[NSMutableArray alloc] init];
+        for (NSDictionary *friend in friends) {
+            NSNumber *facebookIDNumber = [friend objectForKey:@"id"];
+            NSString *facebookIDString = [NSString stringWithFormat:@"%d", [facebookIDNumber intValue]];
+            [facebookIDs addObject:facebookIDString];
+        }
+        [IntertwineManager getFacebookFriends:facebookIDs withResponse:^(id json, NSError *error, NSURLResponse *response) {
+            if (!error) {
+                if(json) {
+                    [self.tableData replaceObjectAtIndex:1 withObject:json];
+                } else {
+                    [self.tableData replaceObjectAtIndex:1 withObject:@[]];
+                }
+                [self.friendsTableView reloadData];
+            }
+        }];
+        
     }];
 }
 
@@ -101,25 +126,43 @@
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"cell"];
-    if (!cell) {
-        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"cell"];
-    }
-
+   
     NSArray *section = [self.tableData objectAtIndex:indexPath.section];
-    if (indexPath.section == 1) {
-        NSDictionary<FBGraphUser>* friend = [section objectAtIndex:indexPath.row];
-        NSString *friendName = [friend objectForKey:@"name"];
-        cell.textLabel.text = friendName;
-    } else {
-        NSDictionary *account = [section objectAtIndex:indexPath.row];
-        NSString *name = [NSString stringWithFormat:@"%@ %@", [account objectForKey:@"first"], [account objectForKey:@"last"]];
-        cell.textLabel.text = name;
+    NSDictionary *account = [section objectAtIndex:indexPath.row];
+    
+    SendRequestTableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"cell"];
+    if (!cell) {
+        BOOL hasSent = [[account objectForKey:@"sent"] boolValue];
+        cell = [[SendRequestTableViewCell alloc] initWithSentStatus:hasSent reuseIdentifier:@"cell"];
     }
 
+    NSString *name = [NSString stringWithFormat:@"%@ %@", [account objectForKey:@"first"], [account objectForKey:@"last"]];
+    cell.textLabel.text = name;
+    BOOL hasSent = [[account objectForKey:@"sent"] boolValue];
+    [cell setSentStatus:hasSent];
+    
     return cell;
 }
 
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+    NSDictionary *account = [[self.tableData objectAtIndex:indexPath.section] objectAtIndex:indexPath.row];
+    BOOL hasSent = [[account objectForKey:@"sent"] boolValue];
+    if (hasSent) {
+        [tableView deselectRowAtIndexPath:indexPath animated:NO];
+    } else {
+        [IntertwineManager sendFriendRequest:[account objectForKey:@"account_id"] response:^(id json, NSError *error, NSURLResponse *response) {
+            if (error) {
+                NSLog(@"%@",error);
+            } else {
+                SendRequestTableViewCell *cell = (SendRequestTableViewCell*)[tableView cellForRowAtIndexPath:indexPath];
+                [cell setSentStatus:YES];
+            }
+        }];
+        [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    }
+
+}
 
 
 @end

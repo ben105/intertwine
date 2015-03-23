@@ -12,6 +12,7 @@
 #import <FacebookSDK/FacebookSDK.h>
 #import "AppDelegate.h"
 #import "IntertwineManager.h"
+#import "PrototypeViewController.h"
 
 const float emailSignInAnimationDuration = 0.5;
 
@@ -129,12 +130,16 @@ NSString *newsfeedStoryboardID = @"Newsfeed";
     NSString *username = user.name;
     NSString *first = nil;
     NSString *last = nil;
+    [IntertwineManager registeredFacebookID:facebookID username:username];
     NSArray *names = [username componentsSeparatedByString:@" "];
     first = [names firstObject];
     if ([names count] > 1)
         last = [names lastObject];
-    [IntertwineManager createAccountFirst:first last:last email:nil facebook:facebookID password:nil completion:nil];
-    [self presentHome];
+    [IntertwineManager createAccountFirst:first last:last email:nil facebook:facebookID password:nil completion:^(NSURLResponse *response, NSData *data, NSError *connectionError) {
+            [self presentHome];
+        
+    }];
+
 }
 
 
@@ -166,6 +171,11 @@ NSString *newsfeedStoryboardID = @"Newsfeed";
     // Do any additional setup after loading the view, typically from a nib.
 }
 
+- (void) viewDidAppear:(BOOL)animated {
+    self.signInEmailAddressField.text = @"";
+    self.signInPasswordField.text = @"";
+    [super viewDidAppear:animated];
+}
 
 #pragma mark - Memory Warning
 
@@ -191,13 +201,15 @@ NSString *newsfeedStoryboardID = @"Newsfeed";
 #pragma mark - Sign In Delegate
 
 - (void)presentHome {
-    UINavigationController *friendsNav = [self friendsNavigationController];
-    
-    UITabBarController *tabBarController = [[UITabBarController alloc] init];
-    tabBarController.viewControllers = [[NSArray alloc] initWithObjects:friendsNav, nil];
-    
-    
-    [self presentViewController:tabBarController animated:YES completion:nil];
+//    UINavigationController *friendsNav = [self friendsNavigationController];
+//    UITabBarController *tabBarController = [[UITabBarController alloc] init];
+//    tabBarController.viewControllers = [[NSArray alloc] initWithObjects:friendsNav, nil];
+//    [self presentViewController:tabBarController animated:YES completion:nil];
+    UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+    PrototypeViewController *prototypeVC = [storyboard instantiateViewControllerWithIdentifier:@"Prototype"];
+    prototypeVC.username = [IntertwineManager facebookName];
+    prototypeVC.facebookID = [IntertwineManager facebookID];
+    [self presentViewController:prototypeVC animated:YES completion:nil];
 }
 
 - (void)signInWithSessionKey:(NSString*)sessionKey andAccountID:(NSString *)accountID{

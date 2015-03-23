@@ -9,16 +9,29 @@
 #import "FriendsViewController.h"
 #import "IntertwineManager+Friends.h"
 #import "SendRequestViewController.h"
+#import "PendingRequestTableViewCell.h"
 
 @interface FriendsViewController ()
 
-@property (nonatomic, strong) NSMutableArray *allFriends;
+@property (nonatomic, strong) NSMutableArray *tableData;
+@property (nonatomic, strong) NSArray *sectionTitles;
 
 @end
 
 @implementation FriendsViewController
 
+- (BOOL)prefersStatusBarHidden {
+    return YES;
+}
+
+
+
+
 - (IBAction)done {
+//    AccountType accountType = [IntertwineManager accountType];
+//    if (accountType == kAccountTypeFacebook) {
+//        [FBSession.activeSession closeAndClearTokenInformation];
+//    }
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 
@@ -41,9 +54,14 @@
     
     self.profilePictureView.profileID = self.user.objectID;
     self.nameLabel.text = self.user.name;
-    self.allFriends = [[NSMutableArray alloc] init];
+    self.tableData = [[NSMutableArray alloc] initWithArray:@[@[], @[]]];
+    self.sectionTitles = [[NSArray alloc] initWithObjects:@"Friends", @"Pending Requests", nil];
+    self.cellIdentifiers = [[NSArray alloc] initWithObjects: @"friend_cell", @"pending_cell", nil];
+}
+
+- (void)viewDidAppear:(BOOL)animated {
     [self getFriends];
-    // Do any additional setup after loading the view.
+    [self getPendingRequests];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -51,18 +69,47 @@
     // Dispose of any resources that can be recreated.
 }
 
+
+#pragma mark - Friends
+
+- (void) acceptedFriendRequest:(PendingRequestTableViewCell*)cell {
+    NSIndexPath *indexPath = [self.friendsTableView indexPathForCell:cell];
+    [[self.tableData objectAtIndex:indexPath.section] removeObjectAtIndex:indexPath.row];
+    [self.friendsTableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+    [self getPendingRequests];
+    [self getFriends];
+}
+
+- (void)getPendingRequests {
+    [IntertwineManager pendingRequest:^(id json, NSError *error, NSURLResponse *response) {
+        if (!error) {
+            if (json) {
+                [self.tableData replaceObjectAtIndex:1 withObject:json];
+                [self getFriends];
+            } else {
+                [self.tableData replaceObjectAtIndex:1 withObject:@[]];
+            }
+            [self.friendsTableView reloadData]; // Do we need to reload data if the 'getFriends' method will do that for us?
+        }
+    }];
+}
+
+
 - (void)getFriends {
     
     [IntertwineManager friends:^(id json, NSError *error
                                  , NSURLResponse *response) {
         // If there is valid json returned, we will insert it into the friends array.
-        if (json) [self.allFriends insertObject:json atIndex:0];
         if (!error) {
             for (NSDictionary *friend in json) {
                 NSString *first = [friend objectForKey:@"first"];
-                NSString *last = [friend objectForKey:@"last"];
-                NSLog(@"I have a friend named %@ %@", first, last);
+                NSString *last = [friend objectForKey:@"last"];            }
+            if (json) {
+                [self.tableData replaceObjectAtIndex:0 withObject:json];
+            } else {
+                [self.tableData replaceObjectAtIndex:0 withObject:@[]];
             }
+            [self.friendsTableView reloadData];
         }
         [self.friendsTableView reloadData];
     }];
@@ -89,7 +136,14 @@
 
 
 
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
+    return [self.tableData count];
+}
 
+
+- (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
+    return [self.sectionTitles objectAtIndex:section];
+}
 
 
 
@@ -99,24 +153,33 @@
 
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    if([self.allFriends count])
-        return [[self.allFriends objectAtIndex:section] count];
-    else
-        return 0;
+    return [[self.tableData objectAtIndex:section] count];
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"cell"];
+
+    NSString *cellIdentifier = [self.cellIdentifiers objectAtIndex:indexPath.section];
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:cellIdentifier];
     if (!cell) {
-        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"cell"];
+        if (indexPath.section == 0) {
+            cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:cellIdentifier];
+        } else if (indexPath.section == 1) {
+            cell = [[PendingRequestTableViewCell alloc] initWithReuseIdentifier:cellIdentifier];
+        }
     }
-    NSDictionary<FBGraphUser>* friend = [[self.allFriends objectAtIndex:indexPath.section] objectAtIndex:indexPath.row];
-    NSString *friendName = [[friend objectForKey:@"first"] stringByAppendingString:[friend objectForKey:@"last"]];
+    NSDictionary<FBGraphUser>* friend = [[self.tableData objectAtIndex:indexPath.section] objectAtIndex:indexPath.row];
+    NSString *friendName = [NSString stringWithFormat:@"%@ %@", [friend objectForKey:@"first"], [friend objectForKey:@"last"]];
+    if (indexPath.section == 1) {
+        [(PendingRequestTableViewCell*)cell setAccountID:[friend objectForKey:@"account_id"]];
+        [(PendingRequestTableViewCell*)cell setDelegate:self];
+    }
     cell.textLabel.text = friendName;
     return cell;
 }
 
-
+- (void) tableView:(UITableView*)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+}
 
 
 @end
