@@ -25,8 +25,6 @@
 }
 
 
-
-
 - (IBAction)done {
 //    AccountType accountType = [IntertwineManager accountType];
 //    if (accountType == kAccountTypeFacebook) {
@@ -43,25 +41,25 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    
-    UIBarButtonItem *done = [[UIBarButtonItem alloc] initWithTitle:@"Exit" style:UIBarButtonItemStyleDone target:self action:@selector(done)];
-    
-    UIBarButtonItem *add = [[UIBarButtonItem alloc] initWithTitle:@"+" style:UIBarButtonItemStylePlain target:self action:@selector(add)];
-    [self.navigationItem setLeftBarButtonItem:done];
-    [self.navigationItem setRightBarButtonItem:add];
-    
-    
-    
     self.profilePictureView.profileID = self.user.objectID;
     self.nameLabel.text = self.user.name;
     self.tableData = [[NSMutableArray alloc] initWithArray:@[@[], @[]]];
     self.sectionTitles = [[NSArray alloc] initWithObjects:@"Friends", @"Pending Requests", nil];
     self.cellIdentifiers = [[NSArray alloc] initWithObjects: @"friend_cell", @"pending_cell", nil];
+    [self.navigationController setHidesBarsOnSwipe:YES];
 }
 
 - (void)viewDidAppear:(BOOL)animated {
     [self getFriends];
     [self getPendingRequests];
+    
+    UIBarButtonItem *done = [[UIBarButtonItem alloc] initWithTitle:@"Exit" style:UIBarButtonItemStyleDone target:self action:@selector(done)];
+    
+    UIBarButtonItem *add = [[UIBarButtonItem alloc] initWithTitle:@"+" style:UIBarButtonItemStylePlain target:self action:@selector(add)];
+    [self.navigationItem setLeftBarButtonItem:done animated:NO];
+    [self.navigationItem setRightBarButtonItem:add animated:NO];
+    
+    [super viewDidAppear:YES];
 }
 
 - (void)didReceiveMemoryWarning {

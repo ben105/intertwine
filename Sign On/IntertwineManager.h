@@ -15,6 +15,8 @@ typedef enum {
 
 @interface IntertwineManager : NSObject
 
++ (NSData*)loadJSON:(id)object;
+
 + (NSString*)filePath;
 
 + (void)createAccountFirst:(NSString*)first
@@ -31,7 +33,11 @@ typedef enum {
 + (NSString*) facebookName;
 
 
++ (void) updateDeviceToken:(NSData*)deviceToken;
 
+
++ (NSData*)getDeviceToken;
++ (void)setDeviceToken:(NSData*)deviceToken;
 
 + (NSString*)getAccountID;
 + (BOOL)setAccountID:(NSString*)accountID;

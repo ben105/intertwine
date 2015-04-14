@@ -14,6 +14,7 @@
 @property (nonatomic, copy) NSString *last;
 @property (nonatomic, copy) NSString *facebookID;
 @property (nonatomic, copy) NSString *emailAddress;
+@property (nonatomic, copy) NSString *accountID;
 
 - (NSString*) fullName;
 

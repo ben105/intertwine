@@ -1,5 +1,5 @@
 //
-//  PrototypeViewController.h
+//  EventViewController.h
 //  Sign On
 //
 //  Created by Ben Rooke on 3/2/15.
@@ -8,12 +8,17 @@
 
 #import <UIKit/UIKit.h>
 #import "SettingsViewController.h"
+#import "NewEventViewController.h"
+#import "EventTableViewCell.h"
 
 @class FBProfilePictureView;
 
-@interface PrototypeViewController : UIViewController <SettingsDelegate>
+@interface EventViewController : UIViewController <SettingsDelegate, EventCreationDelegate, EventTableViewCellDelegate,
+                                                    UITableViewDataSource, UITableViewDelegate>
 
 @property (nonatomic, strong) SettingsViewController *settingsViewController;
+@property (nonatomic, strong) NewEventViewController *eventCreationViewController;
+
 @property (nonatomic, strong) UIControl *dimView;
 
 @property (nonatomic, weak) IBOutlet FBProfilePictureView *profilePicture;
@@ -26,6 +31,12 @@
 @property (nonatomic, copy) NSString *facebookID;
 
 @property (nonatomic, strong) NSMutableArray *friends;
+
+@property (nonatomic, strong) NSMutableArray *events;
+@property (nonatomic, weak) IBOutlet UITableView *eventsTableView;
+- (void) loadEvents;
+
+- (void) refresh;
 
 - (IBAction)openSettings:(id)sender;
 - (IBAction)closeSettings:(id)sender;

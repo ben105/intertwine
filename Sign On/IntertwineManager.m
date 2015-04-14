@@ -18,10 +18,24 @@ AccountType _accountType;
 
 @implementation IntertwineManager
 
++ (NSData*)loadJSON:(id)object {
+    /*
+     * Convert the NSMutableDictionary into JSON data.
+     */
+    NSError *error = nil;
+    NSData *data = [NSJSONSerialization dataWithJSONObject:object options:0 error:&error];
+    if (error) {
+        NSLog(@"Error occured trying to serialize to JSON data, when creating an event.");
+        return nil;
+    }
+    return data;
+}
+
 NSString *_facebookID = nil;
 NSString *_facebookName = nil;
 NSString *_accountID = nil;
 NSString *_hashkey = nil;
+NSData *_deviceToken = nil;
 const NSString *server = @"http://test-intertwine.cloudapp.net:5000";
 
 
@@ -83,6 +97,26 @@ const NSString *server = @"http://test-intertwine.cloudapp.net:5000";
                                }
                            }];
 }
+
+
+#pragma mark - Device Token
+
++ (void) updateDeviceToken:(NSData*)deviceToken {
+    NSLog(@"Updating device tokne: %@", deviceToken);
+    NSMutableURLRequest *request = [IntertwineManager getRequest:@"/api/v1/device_token"];
+    [IntertwineManager attachCredentialsToRequest:request];
+    [request setHTTPMethod:@"POST"];
+    [request setValue:@"application/octet-stream" forHTTPHeaderField:@"Content-Type"];
+    [request setHTTPBody:deviceToken];
+    [NSURLConnection sendAsynchronousRequest:request
+                                       queue:[NSOperationQueue mainQueue]
+                           completionHandler:^(NSURLResponse *response, NSData *data, NSError *connectionError) {
+                               if(connectionError) {
+                                   NSLog(@"Connection error: %@", connectionError);
+                               }
+                           }];
+}
+
 
 
 
@@ -263,6 +297,7 @@ const NSString *server = @"http://test-intertwine.cloudapp.net:5000";
 + (void)attachCredentialsToRequest:(NSMutableURLRequest*)request {
     NSString *accountID = [IntertwineManager getAccountID];
     NSString *sessionKey = [IntertwineManager getHash];
+
     if (accountID != nil){
         [request setValue:accountID forHTTPHeaderField:@"user_id"];
     }
@@ -279,6 +314,16 @@ const NSString *server = @"http://test-intertwine.cloudapp.net:5000";
 + (AccountType)accountType {
     return _accountType;
 }
+
+
+#pragma mark - Device Token
++ (NSData*)getDeviceToken {
+    return _deviceToken;
+}
++ (void)setDeviceToken:(NSData*)deviceToken {
+    _deviceToken = deviceToken;
+}
+
 
 + (void) clearCredentialCache{
     [IntertwineManager setAccountID:@""];

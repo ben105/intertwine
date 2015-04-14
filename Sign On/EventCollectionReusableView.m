@@ -17,7 +17,7 @@
         CGFloat height = CGRectGetHeight(frame);
         self.textLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 0, width, height)];
         self.textLabel.backgroundColor = [UIColor clearColor];
-        self.textLabel.textColor = [UIColor blackColor];
+        self.textLabel.textColor = [UIColor whiteColor];
         [self addSubview:self.textLabel];
     }
     return self;

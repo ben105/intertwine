@@ -12,7 +12,7 @@
 #import <FacebookSDK/FacebookSDK.h>
 #import "AppDelegate.h"
 #import "IntertwineManager.h"
-#import "PrototypeViewController.h"
+#import "ActivityViewController.h"
 
 const float emailSignInAnimationDuration = 0.5;
 
@@ -20,7 +20,23 @@ NSString *newsfeedStoryboardID = @"Newsfeed";
 
 @interface ViewController ()
 
+
+/* Present Home:
+ * Called after the user has logged in, either via email
+ * or Facebook.                                                 */
+- (void)_presentHome;
+
+/* Present Email Sign In View:
+ * --------------------------------
+ * TODO: Create Email Account View
+ * --------------------------------
+ * Presents the view from which a user can enter the information
+ * needed to create a new account (email account).              */
 - (void)_presentEmailSignInView:(BOOL)animated;
+
+/* Resetting Email Fields:
+ * Simple purpose, to reset the text fields where the user has
+ * possibly entered their credentials.                          */
 - (void)_resetEmailSignInFields;
 
 - (void)_presentView:(UIView*)aView animationSpeed:(float)speed animated:(BOOL)animated completion:(void (^)(BOOL finished))completion;
@@ -136,7 +152,7 @@ NSString *newsfeedStoryboardID = @"Newsfeed";
     if ([names count] > 1)
         last = [names lastObject];
     [IntertwineManager createAccountFirst:first last:last email:nil facebook:facebookID password:nil completion:^(NSURLResponse *response, NSData *data, NSError *connectionError) {
-            [self presentHome];
+            [self _presentHome];
         
     }];
 
@@ -165,6 +181,15 @@ NSString *newsfeedStoryboardID = @"Newsfeed";
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    
+    
+    //Right, that is the point
+//    UIUserNotificationSettings *settings = [UIUserNotificationSettings settingsForTypes:(UIUserNotificationTypeBadge
+//                                                                                         |UIUserNotificationTypeSound
+//                                                                                         |UIUserNotificationTypeAlert) categories:nil];
+//    [[UIApplication sharedApplication] registerUserNotificationSettings:settings];
+    
+    
     self.fbLoginView.readPermissions = @[@"public_profile", @"email", @"user_friends"];
     self.fbLoginView.delegate = self;
     [self _dismissEmailSignInView:NO];
@@ -186,36 +211,20 @@ NSString *newsfeedStoryboardID = @"Newsfeed";
 
 
 
-#pragma mark - Setup of Navigation Controllers
-
-- (UINavigationController*) friendsNavigationController {
-    UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
-    UIViewController *vc = [storyboard instantiateViewControllerWithIdentifier:@"Friends"];
-    vc.title = @"Friends";
-    UINavigationController *friendsNav = [[UINavigationController alloc] initWithRootViewController:vc];
-    return friendsNav;
-}
-
-
-
 #pragma mark - Sign In Delegate
 
-- (void)presentHome {
-//    UINavigationController *friendsNav = [self friendsNavigationController];
-//    UITabBarController *tabBarController = [[UITabBarController alloc] init];
-//    tabBarController.viewControllers = [[NSArray alloc] initWithObjects:friendsNav, nil];
-//    [self presentViewController:tabBarController animated:YES completion:nil];
+- (void)_presentHome {
     UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
-    PrototypeViewController *prototypeVC = [storyboard instantiateViewControllerWithIdentifier:@"Prototype"];
-    prototypeVC.username = [IntertwineManager facebookName];
-    prototypeVC.facebookID = [IntertwineManager facebookID];
+    ActivityViewController *prototypeVC = [storyboard instantiateViewControllerWithIdentifier:@"Activity"];
+//    prototypeVC.username = [IntertwineManager facebookName];
+//    prototypeVC.facebookID = [IntertwineManager facebookID];
     [self presentViewController:prototypeVC animated:YES completion:nil];
 }
 
 - (void)signInWithSessionKey:(NSString*)sessionKey andAccountID:(NSString *)accountID{
     [IntertwineManager setHashkey:sessionKey];
     [IntertwineManager setAccountID:accountID];
-    [self presentHome];
+    [self _presentHome];
    }
 
 

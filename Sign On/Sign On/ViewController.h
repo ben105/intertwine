@@ -17,15 +17,21 @@
 
 @interface ViewController : UIViewController <SignInDelegate, FBLoginViewDelegate>
 
+/*
+ * Logging into Facebook
+ */
 @property (nonatomic, weak) IBOutlet FBLoginView *fbLoginView;
+- (IBAction)faceookLogin:(id)sender;
 
+/*
+ * Signing into email
+ */
 @property (nonatomic, weak) IBOutlet UIView *emailSignInView;
-
 @property (nonatomic, weak) IBOutlet UITextField *signInEmailAddressField;
 @property (nonatomic, weak) IBOutlet UITextField *signInPasswordField;
 
-- (IBAction)faceookLogin:(id)sender;
 
+/* Sign Up process */
 - (IBAction)dismissEmailSignIn:(id)sender;
 - (IBAction)presentEmailSignIn:(id)sender;
 
@@ -35,8 +41,8 @@
 
 
 
-- (void)presentHome;
-- (UINavigationController*)friendsNavigationController;
+
+
 
 @end
 
