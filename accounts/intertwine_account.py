@@ -71,6 +71,8 @@ def sign_in_facebook(facebook_id, first, last):
 		err = SERVER_ERROR
 	if len(rows):
 		print("Account already exists")
+		account_id = rows[0][0]
+		hashed_password = rows[0][1]
 		session_block = get_response_block(account_id, hashed_password, err)
 		return session_block
 	
@@ -87,7 +89,7 @@ def sign_in_facebook(facebook_id, first, last):
 		password,
 		password_salt)
 		VALUES
-		(%s, %s, %s);
+		(%s, %s, %s, %s, %s);
 	"""
 	try:
 		db_cursor.execute(query, (facebook_id, first, last, hashed_password, salt))

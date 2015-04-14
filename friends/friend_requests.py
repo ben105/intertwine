@@ -11,6 +11,43 @@ def single_transaction(func):
 	return inner
 
 
+def fb_friends(cursor, user_id,  fb_list):
+	# fb_list is a list of facebook IDs of friends (who have
+	# an Intertwine account.
+	fb_conditions = ["facebook_id='{}'".format(fb_id) for fb_id in fb_list]
+	fb_conditions_str = " or ".join(fb_conditions)
+	query = """SELECT distinct
+		accounts.first,
+		accounts.last,
+		accounts.facebook_id,
+		accounts.email,
+		accounts.id,
+		requestee_accounts_id
+	FROM 
+		accounts, friend_requests, blocked_accounts
+	WHERE
+		friend_requests.requester_accounts_id = %s and 
+		friend_requests.requestee_accounts_id = accounts.id and
+		(""" + fb_conditions_str + """) and
+		%s not in (SELECT blocked_accounts_id 
+			   FROM blocked_accounts 
+			   WHERE accounts_id=accounts.id);
+	"""
+	print("Query: ")
+	print(query)
+	rows = []
+	try:
+		cursor.execute(query, (user_id, user_id))
+		rows = cursor.fetchall()
+	except Exception as exc:
+		print(exc)
+	if len(rows):
+		requestee_accounts_id = row[5]
+		sent = True if requestee_accounts_id else False
+		return [{'account_id':row[4], 'first':row[0], 'last':row[1], 'facebook_id':row[2], 'email':row[3], 'sent':sent} for row in rows]
+	else:
+		return None
+
 
 def purge_blocked(cursor, user_id, blocked_user_id):
 	delete_query = """
@@ -33,7 +70,8 @@ def get_pending_requests(cursor, user_id):
 		accounts.first,
 		accounts.last,
 		accounts.facebook_id,
-		accounts.email
+		accounts.email,
+		accounts.id
 	FROM 
 		accounts, friend_requests
 	WHERE
@@ -45,7 +83,7 @@ def get_pending_requests(cursor, user_id):
 	cursor.execute(pending_requests_query, (user_id,))
 	rows = cursor.fetchall()
 	if len(rows):
-		return [{'first':row[0], 'last':row[1], 'facebook_id':row[2], 'email':row[3]} for row in rows]
+		return [{'account_id':row[4], 'first':row[0], 'last':row[1], 'facebook_id':row[2], 'email':row[3]} for row in rows]
 	else:
 		return None
 
@@ -103,7 +141,8 @@ def get_friends(cursor, user_id):
 		accounts.first,
 		accounts.last,
 		accounts.facebook_id,
-		accounts.email
+		accounts.email,
+		accounts.id
 	FROM
 		accounts, friends
 	WHERE
@@ -116,7 +155,7 @@ def get_friends(cursor, user_id):
 	rows = cursor.fetchall()
 	if len(rows):
 		print "Found results"
-		return [{'first':row[0], 'last':row[1], 'facebook_id':row[2], 'email':row[3]} for row in rows]
+		return [{'first':row[0], 'last':row[1], 'facebook_id':row[2], 'email':row[3], 'account_id':str(row[4])} for row in rows]
 	else:
 		print "Found nothing"
 		return []
@@ -164,6 +203,12 @@ def get_denied(cursor, user_id):
 
 
 def send_request(cursor, requester, requestee):
+	if not requester or not requestee:
+		error_block = {
+			'error':'A problem has occured on the server, please try again later.',
+			'success':False
+		}
+		return error_block
 	insert_query = """
 	INSERT INTO friend_requests
 		(requester_accounts_id, requestee_accounts_id)
@@ -171,6 +216,10 @@ def send_request(cursor, requester, requestee):
 		(%s, %s);
 	"""
 	cursor.execute(insert_query, (requester, requestee))
+	success_block = {
+		'success':True
+	}
+	return success_block
 
 @single_transaction	
 def accept_request(cursor, requestee, requester):
@@ -192,13 +241,15 @@ def accept_request(cursor, requestee, requester):
 	DELETE FROM
 		friend_requests
 	WHERE
-		requestee_accounts_id = %s and
-		requester_accounts_id = %s;
-	"""
-	cursor.execute(delete_query, (requestee, requester))
+		(requestee_accounts_id = %s and
+		requester_accounts_id = %s) or
+		(requestee_accounts_id = %s and
+		requester_accounts_id = %s) ;
+	""" # We want to delete both sides, incase one person denied the other
+	cursor.execute(delete_query, (requestee, requester, requester, requestee))
 
 
-def deny_request(cursor, requestee, requester):
+def decline_request(cursor, requestee, requester):
 	update_query = """
 	UPDATE friend_requests
 	SET
