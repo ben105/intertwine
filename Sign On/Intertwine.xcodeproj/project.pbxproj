@@ -24,6 +24,8 @@
 		B5333E631A2984620083E1CB /* facebook-login.png in Resources */ = {isa = PBXBuildFile; fileRef = B5333E621A2984620083E1CB /* facebook-login.png */; };
 		B5333E661A29A5120083E1CB /* EmailRegistrationViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = B5333E651A29A5120083E1CB /* EmailRegistrationViewController.m */; };
 		B5338D891A6C35D6004091D7 /* FacebookSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B5338D881A6C35D6004091D7 /* FacebookSDK.framework */; };
+		B543B8F31ADCA9A600D90AC5 /* CommentObject.m in Sources */ = {isa = PBXBuildFile; fileRef = B543B8F21ADCA9A600D90AC5 /* CommentObject.m */; };
+		B543B8F61ADCD30700D90AC5 /* ActivityTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = B543B8F51ADCD30700D90AC5 /* ActivityTableViewCell.m */; };
 		B54B3F9F1ABE6AEA00DCA373 /* NewEventViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = B54B3F9E1ABE6AEA00DCA373 /* NewEventViewController.m */; };
 		B556F5B11AA55F7D000C796C /* EventViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = B556F5B01AA55F7D000C796C /* EventViewController.m */; };
 		B556F5B51AA56165000C796C /* OrangeBar.png in Resources */ = {isa = PBXBuildFile; fileRef = B556F5B41AA56165000C796C /* OrangeBar.png */; };
@@ -95,6 +97,10 @@
 		B5333E641A29A5120083E1CB /* EmailRegistrationViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EmailRegistrationViewController.h; sourceTree = "<group>"; };
 		B5333E651A29A5120083E1CB /* EmailRegistrationViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EmailRegistrationViewController.m; sourceTree = "<group>"; };
 		B5338D881A6C35D6004091D7 /* FacebookSDK.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = FacebookSDK.framework; sourceTree = "<group>"; };
+		B543B8F11ADCA9A600D90AC5 /* CommentObject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CommentObject.h; sourceTree = "<group>"; };
+		B543B8F21ADCA9A600D90AC5 /* CommentObject.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CommentObject.m; sourceTree = "<group>"; };
+		B543B8F41ADCD30700D90AC5 /* ActivityTableViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ActivityTableViewCell.h; sourceTree = "<group>"; };
+		B543B8F51ADCD30700D90AC5 /* ActivityTableViewCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ActivityTableViewCell.m; sourceTree = "<group>"; };
 		B54B3F9D1ABE6AEA00DCA373 /* NewEventViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NewEventViewController.h; sourceTree = "<group>"; };
 		B54B3F9E1ABE6AEA00DCA373 /* NewEventViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NewEventViewController.m; sourceTree = "<group>"; };
 		B556F5AF1AA55F7D000C796C /* EventViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EventViewController.h; sourceTree = "<group>"; };
@@ -283,6 +289,8 @@
 			children = (
 				B556F5AF1AA55F7D000C796C /* EventViewController.h */,
 				B556F5B01AA55F7D000C796C /* EventViewController.m */,
+				B543B8F11ADCA9A600D90AC5 /* CommentObject.h */,
+				B543B8F21ADCA9A600D90AC5 /* CommentObject.m */,
 				B5C8F35B1AD9F93E0040E1C8 /* CommentViewController.h */,
 				B5C8F35C1AD9F93E0040E1C8 /* CommentViewController.m */,
 				B51A6A941AAC1EE3008FF64A /* SettingsViewController.h */,
@@ -306,6 +314,8 @@
 		B56E43491AD4B93200D3B442 /* Activity */ = {
 			isa = PBXGroup;
 			children = (
+				B543B8F41ADCD30700D90AC5 /* ActivityTableViewCell.h */,
+				B543B8F51ADCD30700D90AC5 /* ActivityTableViewCell.m */,
 				B56E434A1AD4B96700D3B442 /* ActivityViewController.h */,
 				B56E434B1AD4B96700D3B442 /* ActivityViewController.m */,
 				B56E434D1AD4BA5800D3B442 /* IntertwineManager+Activity.h */,
@@ -453,6 +463,7 @@
 				B56E434C1AD4B96700D3B442 /* ActivityViewController.m in Sources */,
 				B5EC650B1A6B88B0003F45F2 /* IntertwineManager.m in Sources */,
 				B5C8F35D1AD9F93E0040E1C8 /* CommentViewController.m in Sources */,
+				B543B8F31ADCA9A600D90AC5 /* CommentObject.m in Sources */,
 				B531B01C1A27A3F20034CF3C /* ViewController.m in Sources */,
 				B509BBC81A7DA642002ACE39 /* PendingRequestTableViewCell.m in Sources */,
 				B58DA7A41AC0AD9D000B814E /* EventCollectionReusableView.m in Sources */,
@@ -462,6 +473,7 @@
 				B58DA7A11AC0A983000B814E /* Friend.m in Sources */,
 				B5FFCFC81AD0339A000AA4EB /* EventObject.m in Sources */,
 				B54B3F9F1ABE6AEA00DCA373 /* NewEventViewController.m in Sources */,
+				B543B8F61ADCD30700D90AC5 /* ActivityTableViewCell.m in Sources */,
 				B567932F1AC1BECF00558E2D /* IntertwineManager+Events.m in Sources */,
 				B56E434F1AD4BA5800D3B442 /* IntertwineManager+Activity.m in Sources */,
 				B567932C1AC0D59D00558E2D /* EventCollectionViewCell.m in Sources */,

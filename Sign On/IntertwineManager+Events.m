@@ -39,25 +39,14 @@ const NSString *commentsEndpoint = @"/api/v1/comment";
 }
 
 + (void) getCommentsForEvent:(NSNumber*)eventNumber withReponse:(void (^)(id json, NSError *error, NSURLResponse *response))responseBlock {
-    /*
-     * Create a body to hold the event ID
-     */
-    NSMutableDictionary *body = [[NSMutableDictionary alloc] init];
-    [body setObject:eventNumber forKey:@"event_id"];
-    
-    /*
-     * Turn the dictionary into serialized JSON
-     */
-    NSData *data = [IntertwineManager loadJSON:body];
-    if (data == nil) {
-        return;
-    }
+   
+    /* Formulate the HTTP REST URI */
+    unsigned long int eventID = [eventNumber unsignedIntegerValue];
+    NSString *uri = [NSString stringWithFormat:@"%@/%lu", commentsEndpoint, eventID];
     
     /* Send the request */
-    NSMutableURLRequest *request = [IntertwineManager getRequest:(NSString*)commentsEndpoint];
+    NSMutableURLRequest *request = [IntertwineManager getRequest:uri];
     [request setHTTPMethod:@"GET"];
-    [request setHTTPBody:data];
-    [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
     [IntertwineManager sendRequest:request response:responseBlock];
 }
 

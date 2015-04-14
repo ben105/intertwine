@@ -9,6 +9,8 @@
 #import "CommentViewController.h"
 #import "EventCollectionViewCell.h"
 #import "EventObject.h"
+#import "CommentObject.h"
+#import "IntertwineManager+Events.h"
 #import <FacebookSDK/FacebookSDK.h>
 
 
@@ -18,6 +20,10 @@ const NSString *kCommentCollectionIdentifier = @"commentvc_attendee";
 - (void)_registerForKeyboardNotifications;
 - (void)_keyboardWasShown:(NSNotification*)aNotification;
 - (void)_keyboardWillBeHidden:(NSNotification*)aNotification;
+
+- (void)_loadDismissControl;
+- (BOOL)_checkCommentLimit;
+- (void)_loadComments;
 @end
 
 @implementation CommentViewController
@@ -26,8 +32,16 @@ const NSString *kCommentCollectionIdentifier = @"commentvc_attendee";
     [super viewDidLoad];
     // Do any additional setup after loading the view.
     self.titleLabel.text = self.event.eventTitle;
+    self.comments = [[NSMutableArray alloc] init];
+    
     [self.attendeesCollectionView registerClass:[EventCollectionViewCell class] forCellWithReuseIdentifier:(NSString*)kCommentCollectionIdentifier];
+    [self _loadDismissControl];
     [self _registerForKeyboardNotifications];
+}
+
+- (void) viewDidAppear:(BOOL)animated {
+    [super viewDidAppear:animated];
+    [self _loadComments];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -44,6 +58,79 @@ const NSString *kCommentCollectionIdentifier = @"commentvc_attendee";
     // Pass the selected object to the new view controller.
 }
 */
+
+- (void) _loadDismissControl {
+    CGFloat textFieldHeight = CGRectGetHeight(self.commentTextField.frame);
+    CGFloat controlHeight = CGRectGetHeight([[UIScreen mainScreen] bounds]) - textFieldHeight;
+    CGFloat controlWidth = CGRectGetWidth([[UIScreen mainScreen] bounds]);
+    self.dismissControlView = [[UIControl alloc] initWithFrame:CGRectMake(0, 0, controlWidth, controlHeight)];
+    [self.dismissControlView addTarget:self.commentTextField action:@selector(resignFirstResponder) forControlEvents:UIControlEventTouchUpInside];
+}
+
+#pragma mark - Post Comment
+
+- (IBAction) postComment {
+    BOOL success = [self _checkCommentLimit];
+    if (!success)
+        return;
+    [IntertwineManager addComment:self.commentTextField.text forEvent:self.event.eventID withResponse:^(id json, NSError *error, NSURLResponse *response) {
+        if (error) {
+            NSLog(@"Error posting comment!");
+            [self performSelector:@selector(_loadComments) withObject:nil afterDelay:1.0];
+        }
+    }];
+}
+
+- (BOOL)_checkCommentLimit {
+    NSUInteger length = [self.commentTextField.text length];
+    if (length > 499) {
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:nil
+                                                        message:[NSString stringWithFormat:@"Comment is too large. (%lu/500) characters.",(unsigned long)length]
+                                                       delegate:nil
+                                              cancelButtonTitle:@"Okay"
+                                              otherButtonTitles:nil];
+        [alert show];
+        return NO;
+    }
+    return YES;
+}
+
+
+#pragma mark - Load Comments
+
+- (void) _loadComments {
+    [IntertwineManager getCommentsForEvent:self.event.eventID withReponse:^(id json, NSError *error, NSURLResponse *response) {
+        if (error) {
+            NSLog(@"Error occured trying to load the comments for event: %@", self.event.eventTitle);
+            return;
+        }
+        [self.comments removeAllObjects];
+        for (NSMutableDictionary *commentJSON in json) {
+            /*
+             * Establish the commentator first.
+             */
+            NSMutableDictionary *commentatorJSON = [commentJSON objectForKey:@"user"];
+            Friend *commentator = [[Friend alloc] init];
+            commentator.accountID = [commentatorJSON objectForKey:@"id"];
+            commentator.first = [commentatorJSON objectForKey:@"first"];
+            commentator.last = [commentatorJSON objectForKey:@"last"];
+            commentator.emailAddress = [commentatorJSON objectForKey:@"email"];
+            commentator.facebookID = [commentatorJSON objectForKey:@"facebook_id"];
+
+            /* Initiate the actual comment. */
+            CommentObject *comment = [[CommentObject alloc] init];
+            comment.comment = [commentJSON objectForKey:@"comment"];
+            comment.eventID = [commentJSON objectForKey:@"event_id"];
+            comment.commentator = commentator;
+            
+            [self.comments addObject:comment];
+        }
+        [self.commentsTableView reloadData];
+    }];
+}
+
+
+#pragma mark -
 
 
 - (IBAction)dismiss:(id)sender {
@@ -78,12 +165,15 @@ const NSString *kCommentCollectionIdentifier = @"commentvc_attendee";
         CGFloat width = CGRectGetWidth(self.view.frame);
         CGFloat height = CGRectGetHeight(self.view.frame);
         self.view.frame = CGRectMake(0, 0 - kbSize.height, width, height);
+    } completion:^(BOOL finished) {
+        [self.view addSubview:self.dismissControlView];
     }];
 }
 
 // Called when the UIKeyboardWillHideNotification is sent
 - (void)_keyboardWillBeHidden:(NSNotification*)aNotification
 {
+    [self.dismissControlView removeFromSuperview];
     NSNumber *animationDurationNumber = [[aNotification userInfo] objectForKey:UIKeyboardAnimationDurationUserInfoKey];
     double animationDuration = [animationDurationNumber doubleValue];
     
@@ -103,13 +193,13 @@ const NSString *kCommentCollectionIdentifier = @"commentvc_attendee";
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-    return 40;
+    return 60;
 }
 
 #pragma mark - Table View Data Source
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    return [self.events count];
+    return [self.comments count];
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -117,9 +207,10 @@ const NSString *kCommentCollectionIdentifier = @"commentvc_attendee";
     if (!cell) {
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"cell"];
     }
-    [cell setCreatorThumbnailWithID:facebookID facebook:YES];
-    [cell setAttendeeCount:[event.attendees count]];
-    
+    CommentObject *comment = [self.comments objectAtIndex:indexPath.row];
+    NSString *text = [NSString stringWithFormat:@"%@: %@", comment.commentator.first, comment.comment];
+    cell.textLabel.text = text;
+    cell.textLabel.numberOfLines = 0;
     return cell;
 }
 
