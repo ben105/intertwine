@@ -22,7 +22,7 @@ cur = intertwine_psql.connect()
 rv.set_database_cursor(cur)
 intertwine_account.set_database_cursor(cur)
 
-@app.route('api/v1/comment_count', methods=['GET'])
+@app.route('/api/v1/comment_count', methods=['GET'])
 def comment_count_handler():
 	user_id = int(request.headers.get("user_id"))
 	body = json.loads(request.data)
@@ -30,17 +30,19 @@ def comment_count_handler():
 	result = comments.comment_count(cur, event_id)
 	return json.dumps(result)
 
-@app.route('api/v1/comment', methods=['GET', 'POST'])
+@app.route('/api/v1/comment/<int:event_id>', methods=['GET'])
+def comment_get(event_id):
+	result = comments.get_comments(cur, event_id)
+	return json.dumps(result)
+
+@app.route('/api/v1/comment', methods=['POST'])
 def comment_handler():
 	user_id = int(request.headers.get("user_id"))
 	body = json.loads(request.data)
-	if request.method == "POST":
-		comment = body["comment"]
-		event_id = body["event_id"]
-		result = comment.add_comment(cur, user_id, event_id, comment)
-	elif request.method = "GET":
-		event_id = body["event_id"]
-		result = comment.get_comments(cur, event_id)
+	result = {}
+	comment = body["comment"]
+	event_id = body["event_id"]
+	result = comments.add_comment(cur, user_id, event_id, comment)
 	return json.dumps(result)
 
 @app.route('/api/v1/activity', methods=['GET'])

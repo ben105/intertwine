@@ -4,20 +4,22 @@ import psycopg2
 def get_activity(cur, user_id):
 	# Build the query
 	query = """
-	SELECT
+	SELECT DISTINCT
 		events.id,
 		events.title,
 		events.description,
 		events.creator,
 		events.updated_time
 	FROM
-		friends,
-		event_attendees,
 		events
+	INNER JOIN 	event_attendees
+	ON 		event_attendees.events_id = events.id
+	INNER JOIN 	friends
+	ON 		friends.friend_accounts_id = event_attendees.attendee_accounts_id
 	WHERE
-		accounts_id = %s and
-		friend_accounts_id = event_attendees.attendee_accounts_id and
-		event_attendees.events_id = events.id;
+		accounts_id = %s
+	ORDER BY
+		updated_time DESC;
 	"""
 	try:
 		cur.execute(query, (user_id,))

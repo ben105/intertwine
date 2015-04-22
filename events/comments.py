@@ -1,4 +1,5 @@
 import psycopg2
+from intertwine import push
 
 def comment_count(cur, event_id):
 	query = """
@@ -44,7 +45,7 @@ def get_comments(cur, event_id):
 	for row in rows:
 		comment = {}
 		user = {}
-		user["id"] = row[1]
+		user["id"] = str(row[1])
 		user["first"] = row[2]
 		user["last"] = row[3]
 		user["email"] = row[4]
@@ -54,6 +55,46 @@ def get_comments(cur, event_id):
 		comment["comment"] = row[6]
 		comments.append(comment)
 	return comments
+
+def event_title(cur, event_id):
+	query = """
+	SELECT
+		title
+	FROM
+		events
+	WHERE
+		id = %s;
+	"""
+	try:
+		cur.execute(query, (event_id,))
+	except Exception as exc:
+		print(exc)
+		return
+	row = cur.fetchone()
+	return row[0]
+
+def notify_attendees(cur, user_id, event_id, comment):
+	poster_name = push.name(cur, user_id)
+	title = event_title(cur, event_id)
+	query = """
+	SELECT
+		attendee_accounts_id
+	FROM
+		event_attendees
+	WHERE
+		events_id = %s and 
+		attendee_accounts_id <> %s;
+	"""
+	try:
+		cur.execute(query, (event_id, user_id))
+	except Exception as exc:
+		print(exc)
+		return
+	rows = cur.fetchall()
+	for row in rows:
+		account_id = row[0]
+		msg = "{} posted a comment on {}: {}".format(poster_name, title, comment)
+		push.push_notification(cur, account_id, msg)
 
 def add_comment(cur, user_id, event_id, comment):
 	query = """
@@ -68,4 +109,5 @@ def add_comment(cur, user_id, event_id, comment):
 	except Exception as exc:
 		print(exc)
 		return
+	notify_attendees(cur, user_id, event_id, comment)
 	return {'success':True}

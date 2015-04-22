@@ -12,6 +12,15 @@ def device_token(cur, user_id):
 	row = cur.fetchone()
 	return row[0]
 
+def name(cur, user_id):
+	try:
+		cur.execute("SELECT first, last FROM accounts WHERE id=%s", (user_id,))
+	except Exception as exc:
+		print("Failed trying to get name for %d" % user_id)
+		return None
+	row = cur.fetchone()
+	return "{} {}".format(row[0], row[1])
+
 def push_notification(cur, user_id, msg):
 	deviceToken = str(device_token(cur, user_id))
 	if not deviceToken:

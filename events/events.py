@@ -87,7 +87,7 @@ def get_events(cur, user_id):
 		event_attendees.events_id = events.id and 
 		accounts.id = %s
 	ORDER BY
-		events.updated_time ASC;
+		events.updated_time DESC;
 	"""
 	try:
 		cur.execute(query, (user_id,))
