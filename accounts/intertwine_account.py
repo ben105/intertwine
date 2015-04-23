@@ -23,10 +23,10 @@ def random_salt(salt_len):
 	return "".join(chars)
 
 
-def get_hash_password(password, salt):
+def salt_and_hash(password, salt):
 	return hashlib.sha256(password + salt).hexdigest()
 
-def create_account_email(email, first, last, password):
+def create_email_account(email, first, last, password):
 	err = None
 	salt = random_salt(16)
 	print "Random salt generated %s" % salt
