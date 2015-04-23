@@ -16,6 +16,8 @@ def get_now_timestamp():
 	return datetime.datetime.fromtimestamp(t).strftime('%Y-%m-%d %H:%M:%S')
 
 def random_salt(salt_len):
+	if salt_len <= 0:
+		raise ValueError
 	alphanumeric = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	chars = list()
 	for i in range(salt_len):
