@@ -1,5 +1,5 @@
 import unittest
-import intertwine.accounts.intertwine_accounts as accounts
+import intertwine.accounts.intertwine_account as accounts
 
 def garbage_string():
 	return "daagd432$QE@"
