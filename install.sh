@@ -10,7 +10,7 @@ mkdir /usr/lib/python2.7/intertwine 2> /dev/null
 touch /usr/lib/python2.7/intertwine/__init__.py
 for module in "$modules"
 do
-   cp -R $module /usr/lib/python2.7/intertwine/
+   cp -R "$module" /usr/lib/python2.7/intertwine/
 done
 mkdir -p /opt/intertwine/certs 2> /dev/null
 cp newck.pem /opt/intertwine/certs/
