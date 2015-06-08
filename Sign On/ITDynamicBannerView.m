@@ -117,7 +117,8 @@ const CGFloat smBannerHeight = 60.0;
         self.bannerImageView = [[UIImageView alloc] initWithImage:bannerImage];
         self.bannerImageView.frame = imageViewRect;
         self.bannerImageView.contentMode = UIViewContentModeScaleAspectFit;
-        self.bannerImageView.layer.cornerRadius = CGRectGetWidth(imageViewRect) / 2.0;
+        self.bannerImageView.layer.cornerRadius = CGRectGetWidth(self.bannerImageView.frame) / 2.0;
+        self.bannerImageView.clipsToBounds = YES;
         
         self.bannerLabel.text = bannerText;
         
@@ -220,6 +221,7 @@ const CGFloat smBannerHeight = 60.0;
     self.bannerLabel.frame = CGRectMake(0, labelY, SCREEN_WIDTH, labelHeight);
     self.bannerLabel.font = [UIFont fontWithName:@"HelveticaNeue-UltraLight" size:labelFont];
     self.bannerImageView.frame = CGRectMake(imageViewX, imageViewY, imageViewWidth, imageViewWidth);
+    self.bannerImageView.layer.cornerRadius = CGRectGetWidth(self.bannerImageView.frame) / 2.0;
 }
 
 

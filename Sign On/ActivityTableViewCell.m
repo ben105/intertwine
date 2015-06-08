@@ -13,7 +13,6 @@
 - (id) initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier {
     self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
     if (self) {
-        self.eventLabel = [[UILabel alloc] initWithFrame:CGRectMake(15, 20, 260, 30)];
         
     }
     return self;

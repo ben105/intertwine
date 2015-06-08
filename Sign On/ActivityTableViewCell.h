@@ -7,11 +7,8 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "EventTableViewCell.h"
 
-@interface ActivityTableViewCell : UITableViewCell
-
-@property (nonatomic, strong) UILabel *eventLabel;
-
-@property (nonatomic, strong) UITableView *attendeesTableView;
+@interface ActivityTableViewCell : EventTableViewCell
 
 @end

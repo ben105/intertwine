@@ -145,8 +145,18 @@
 
 #pragma mark - Table View Delegate
 
+- (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
+    cell.backgroundView.backgroundColor = [UIColor clearColor];
+    cell.backgroundColor = [UIColor clearColor];
+}
+
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+    CommentViewController *commentVC = [storyboard instantiateViewControllerWithIdentifier:@"Comment"];
+    EventObject *event = [self.events objectAtIndex:indexPath.row];
+    commentVC.event = event;
+    [self presentViewController:commentVC animated:YES completion:nil];
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -162,7 +172,7 @@
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     EventTableViewCell *cell = (EventTableViewCell*)[tableView dequeueReusableCellWithIdentifier:@"cell"];
     if (!cell) {
-        cell = [[EventTableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"cell"];
+        cell = [[EventTableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"cell" indentLength:10.0];
     }
     EventObject *event = [self.events objectAtIndex:indexPath.row];
     cell.event = event;
@@ -172,7 +182,7 @@
     NSString *facebookID = event.creator.facebookID;
     
     [cell setCreatorThumbnailWithID:facebookID facebook:YES];
-    [cell setAttendeeCount:[event.attendees count]];
+    [cell setAttendees:[event attendees]];
     
     return cell;
 }

@@ -17,15 +17,20 @@
 
 @interface EventTableViewCell : UITableViewCell
 
+- (id) initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier indentLength:(CGFloat)indent;
+
 @property (nonatomic, strong) UILabel  *eventLabel;
 @property (nonatomic, strong) UILabel  *friendsLabel;
+@property (nonatomic, strong) UILabel *commentLabel;
 
 @property (nonatomic, weak) EventObject *event;
 
 @property (nonatomic, weak) id <EventTableViewCellDelegate>delegate;
 
 - (void) setCreatorThumbnailWithID:(NSString*)profileID facebook:(BOOL)isFacebook;
+- (void) setAttendees:(NSArray*)attendees;
 - (void) setAttendeeCount:(NSUInteger)count;
+
 
 @end
 

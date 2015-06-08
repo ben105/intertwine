@@ -110,7 +110,12 @@ const CGPoint controlViewCenter = { 79, 102 };
 #pragma mark - Touch Handling
 
 - (void) touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
-    [self performSelector:@selector(_expand) withObject:nil afterDelay:0.2];
+    UITouch *touch = [[event allTouches] anyObject];
+    CGPoint location = [touch locationInView:self];
+    
+    if (CGRectContainsPoint(self.addEventView.frame, location)) {
+        [self performSelector:@selector(_expand) withObject:nil afterDelay:0.2];
+    }
 }
 
 - (void) touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event {
@@ -241,7 +246,7 @@ const CGPoint controlViewCenter = { 79, 102 };
         
         self.isExpanded = NO;
         
-        self.userInteractionEnabled = YES;
+        self.userInteractionEnabled = NO;
         self.clipsToBounds = NO;
         // Put the views inside of the collapsed views.
         [self addSubview:self.randomEventView];
@@ -262,6 +267,7 @@ const CGPoint controlViewCenter = { 79, 102 };
         _addEventView.frame = CGRectMake(0, 0, largeBallWidth, largeBallWidth);
         _addEventView.center = addEventViewCenter;
         _addEventView.layer.cornerRadius = CGRectGetWidth(_addEventView.frame) / 2.0;
+        _addEventView.userInteractionEnabled = YES;
     }
     return _addEventView;
 }
@@ -273,6 +279,7 @@ const CGPoint controlViewCenter = { 79, 102 };
         _randomEventView.frame = CGRectMake(0, 0, smallBallWidth, smallBallWidth);
         _randomEventView.center = randomEventViewCenter;
         _randomEventView.layer.cornerRadius = CGRectGetWidth(_randomEventView.frame) / 2.0;
+        _randomEventView.userInteractionEnabled = YES;
     }
     return _randomEventView;
 }
@@ -284,6 +291,7 @@ const CGPoint controlViewCenter = { 79, 102 };
         _categoryView.frame = CGRectMake(0, 0, smallBallWidth, smallBallWidth);
         _categoryView.center = categoryViewCenter;
         _categoryView.layer.cornerRadius = CGRectGetWidth(_categoryView.frame) / 2.0;
+        _categoryView.userInteractionEnabled = YES;
     }
     return _categoryView;
 }

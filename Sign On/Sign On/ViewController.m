@@ -13,6 +13,11 @@
 #import "AppDelegate.h"
 #import "IntertwineManager.h"
 #import "ActivityViewController.h"
+#import "EventViewController.h"
+#import "FriendsViewController.h"
+#import "ITMultipleBannersViewController.h"
+#import "ITDynamicBannerViewController.h"
+#import "ITActivityViewController.h"
 
 const float emailSignInAnimationDuration = 0.5;
 
@@ -214,11 +219,37 @@ NSString *newsfeedStoryboardID = @"Newsfeed";
 #pragma mark - Sign In Delegate
 
 - (void)_presentHome {
-    UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
-    ActivityViewController *prototypeVC = [storyboard instantiateViewControllerWithIdentifier:@"Activity"];
-//    prototypeVC.username = [IntertwineManager facebookName];
-//    prototypeVC.facebookID = [IntertwineManager facebookID];
-    [self presentViewController:prototypeVC animated:YES completion:nil];
+    
+    [[FBRequest requestForMe] startWithCompletionHandler:^(FBRequestConnection *connection, NSDictionary<FBGraphUser> *FBuser, NSError *error) {
+        if (error) {
+            NSLog(@"Error: %@", error);
+        }
+        else {
+            NSString *userImageURL = [NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=square", [FBuser objectID]];
+            NSData *data = [NSData dataWithContentsOfURL:[NSURL URLWithString:userImageURL]];
+            UIImage *facebookImage = [UIImage imageWithData:data];
+            
+            /* Create two dynamic banner view controllers. */
+            ITActivityViewController *activityViewController = [[ITActivityViewController alloc] init];
+            ITDynamicBannerViewController *yourViewController =
+                [[ITDynamicBannerViewController alloc] initWithBannerTitle:[IntertwineManager facebookName]
+                                                               bannerImage:facebookImage
+                                                                      data:nil];
+            ITMultipleBannersViewController *vc = [[ITMultipleBannersViewController alloc]
+                                                   initWithBannerViewControllers:@[activityViewController, yourViewController]];
+            [self presentViewController:vc animated:YES completion:nil];
+            
+        }
+    }];
+    
+    
+//    /* Instantiate all the view controller instances. */
+//    UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+//    ActivityViewController *activityVC = [storyboard instantiateViewControllerWithIdentifier:@"Activity"];
+//    activityVC.title = @"Activity";
+//    
+//    /* Present the views. */
+//    [self presentViewController:activityVC animated:YES completion:nil];
 }
 
 - (void)signInWithSessionKey:(NSString*)sessionKey andAccountID:(NSString *)accountID{

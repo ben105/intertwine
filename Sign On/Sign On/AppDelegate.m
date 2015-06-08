@@ -32,6 +32,10 @@
     [alert show];
 }
 
+- (CGFloat) bottomTabBarHeight {
+    return 44.0;
+}
+
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // Override point for customization after application launch.

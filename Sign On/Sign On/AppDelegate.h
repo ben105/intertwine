@@ -14,6 +14,8 @@
 
 - (void)presentError:(NSString*)title description:(NSString*)description;
 
+/* For the main home screen, getting the bottom bar height. */
+- (CGFloat) bottomTabBarHeight;
 
 @end
 

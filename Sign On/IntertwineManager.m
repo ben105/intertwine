@@ -36,7 +36,7 @@ NSString *_facebookName = nil;
 NSString *_accountID = nil;
 NSString *_hashkey = nil;
 NSData *_deviceToken = nil;
-const NSString *server = @"http://test-intertwine.cloudapp.net:5000";
+const NSString *server = @"http://ec2-52-11-184-120.us-west-2.compute.amazonaws.com:5000";
 
 
 
