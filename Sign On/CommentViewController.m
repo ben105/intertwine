@@ -73,12 +73,9 @@ const NSString *kCommentCollectionIdentifier = @"commentvc_attendee";
     BOOL success = [self _checkCommentLimit];
     if (!success)
         return;
-    [IntertwineManager addComment:self.commentTextField.text forEvent:self.event.eventID withResponse:^(id json, NSError *error, NSURLResponse *response) {
-        if (error) {
-            NSLog(@"Error posting comment!");
-            [self performSelector:@selector(_loadComments) withObject:nil afterDelay:1.0];
-        }
-    }];
+    [IntertwineManager addComment:self.commentTextField.text forEvent:self.event.eventID withResponse:nil];
+    [self performSelector:@selector(_loadComments) withObject:nil afterDelay:1.0];
+    self.commentTextField.text = @"";
 }
 
 - (BOOL)_checkCommentLimit {
@@ -108,6 +105,8 @@ const NSString *kCommentCollectionIdentifier = @"commentvc_attendee";
         for (NSMutableDictionary *commentJSON in json) {
             /*
              * Establish the commentator first.
+             * TODO: Only instantiate another friend object if the person hasn't 
+             *       appeared already in the list.
              */
             NSMutableDictionary *commentatorJSON = [commentJSON objectForKey:@"user"];
             Friend *commentator = [[Friend alloc] init];

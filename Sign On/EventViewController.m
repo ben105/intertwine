@@ -254,6 +254,8 @@
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    EventObject *event = [self.events objectAtIndex:indexPath.row];
+    [self presentCommentsWithEvent:event];
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -300,35 +302,11 @@
 }
 
 - (IBAction)createNewEvent {
-    UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
-    self.eventCreationViewController = [storyboard instantiateViewControllerWithIdentifier:@"CreateEvent"];
-    self.eventCreationViewController.title = @"Create Event";
+    self.eventCreationViewController = [[NewActivityViewController alloc] init];
     self.eventCreationViewController.friends = self.friends;
     self.eventCreationViewController.delegate = self;
     
-    CGFloat width = CGRectGetWidth([[UIScreen mainScreen] bounds]);
-    CGFloat height = CGRectGetHeight([[UIScreen mainScreen] bounds]);
-    CGRect screenRect = CGRectMake(0, 0, width, height);
-    self.eventCreationViewController.view.frame = screenRect;
-    self.eventCreationViewController.view.alpha = 0.0;
-    
-    /*
-     * Add the subviews.
-     */
-    [self.view addSubview:self.dimView];
-    [self.view addSubview:self.eventCreationViewController.view];
-
-    
-    /*
-     * Animate the event creation view controller
-     * onto screen.
-     */
-    [UIView animateWithDuration:0.6 animations:^{
-        self.dimView.alpha = 0.85;
-        self.eventCreationViewController.view.alpha = 1.0;
-    }];
-    
-    //    [self presentViewController:newEventVC animated:YES completion:nil];
+    [self presentViewController:self.eventCreationViewController animated:YES completion:nil];
 }
 
 - (void) closeEventCreation {
@@ -338,14 +316,7 @@
      * OFF screen.
      */
     [self refresh];
-    [UIView animateWithDuration:0.6 animations:^{
-        self.dimView.alpha = 0;
-        self.eventCreationViewController.view.alpha = 0;
-    } completion:^(BOOL finished) {
-        [self.dimView removeFromSuperview];
-        [self.eventCreationViewController.view removeFromSuperview];
-        self.eventCreationViewController = nil;
-    }];
+    [self.eventCreationViewController dismissViewControllerAnimated:YES completion:nil];
 }
 
 

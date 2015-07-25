@@ -22,7 +22,7 @@
 
 CGFloat outterCellHeight = 120;
 
-CGFloat creatorDimensions = 60.0;
+CGFloat creatorDimensions = 0.0;
 CGFloat spacer = 10.0;
 
 @implementation EventTableViewCell
@@ -49,34 +49,36 @@ CGFloat spacer = 10.0;
             [self.contentView addSubview:container];
         }
         
-        CGFloat leftBuffer = 20.0;
+        CGFloat leftBuffer = 10.0;
         
-        UIImage *commentImage = [UIImage imageNamed:@"comment.png"];
-        self._comment = [UIButton buttonWithType:UIButtonTypeCustom];
-        [self._comment setBackgroundImage:commentImage forState:UIControlStateNormal];
+//        UIImage *commentImage = [UIImage imageNamed:@"comment.png"];
+//        self._comment = [UIButton buttonWithType:UIButtonTypeCustom];
+//        [self._comment setBackgroundImage:commentImage forState:UIControlStateNormal];
 //        [self._comment addTarget:self action:@selector(presentComment) forControlEvents:UIControlEventTouchUpInside];
-        self._comment.frame = CGRectMake(320, 80, commentImage.size.width, commentImage.size.height);
+//        self._comment.frame = CGRectMake(320, 40, commentImage.size.width, commentImage.size.height);
         
-        self.commentLabel = [[UILabel alloc] initWithFrame:CGRectMake(300, 78, 20, commentImage.size.height)];
-        self.commentLabel.backgroundColor = [UIColor clearColor];
-        self.commentLabel.textColor = [UIColor grayColor];
-        self.commentLabel.text = @"0";
+//        self.commentLabel = [[UILabel alloc] initWithFrame:CGRectMake(300, 38, 20, commentImage.size.height)];
+//        self.commentLabel.backgroundColor = [UIColor clearColor];
+//        self.commentLabel.textColor = [UIColor grayColor];
+//        self.commentLabel.text = @"0";
         
 //        self.backgroundColor = [UIColor clearColor];
 //        self.contentView.backgroundColor = [UIColor clearColor];
-        self._creatorThumbnail = [[FBProfilePictureView alloc] initWithProfileID:@"0" pictureCropping:FBProfilePictureCroppingSquare];
-        self._creatorThumbnail.frame = CGRectMake(leftBuffer , 20 + spacer, creatorDimensions, creatorDimensions);
-        self._creatorThumbnail.layer.cornerRadius = CGRectGetWidth(self._creatorThumbnail.frame)/2;
+//        self._creatorThumbnail = [[FBProfilePictureView alloc] initWithProfileID:@"0" pictureCropping:FBProfilePictureCroppingSquare];
+//        self._creatorThumbnail.frame = CGRectMake(leftBuffer , 20 + spacer, creatorDimensions, creatorDimensions);
+//        self._creatorThumbnail.layer.cornerRadius = CGRectGetWidth(self._creatorThumbnail.frame)/2;
 
         
-        self.eventLabel = [[UILabel alloc] initWithFrame:CGRectMake(leftBuffer  + creatorDimensions + spacer, 20 + spacer, 200, 20)];
+        CGFloat semiFullWidth = [[UIScreen mainScreen] bounds].size.width - (leftBuffer*2.0);
+        
+        self.eventLabel = [[UILabel alloc] initWithFrame:CGRectMake(leftBuffer, 20 + spacer, semiFullWidth, 20)];
         [self.eventLabel setFont:[UIFont fontWithName:@"HelveticaNeue-Regular" size:20]];
         self.eventLabel.textColor = [UIColor blackColor];
         self.eventLabel.backgroundColor = [UIColor clearColor];
         
-        self.friendsLabel = [[UILabel alloc] initWithFrame:CGRectMake(leftBuffer  + creatorDimensions + spacer,
+        self.friendsLabel = [[UILabel alloc] initWithFrame:CGRectMake(leftBuffer,
                                                                       20 + spacer + 20 + 5,
-                                                                      200,
+                                                                      semiFullWidth,
                                                                       20)];
         [self.friendsLabel setFont:[UIFont fontWithName:@"HelveticaNeue-UltraLight" size:14]];
         self.friendsLabel.textColor = [UIColor blackColor];
@@ -87,9 +89,9 @@ CGFloat spacer = 10.0;
         // Add the thumbnail to the view
         [container addSubview:self.eventLabel];
         [container addSubview:self.friendsLabel];
-        [container addSubview:self._creatorThumbnail];
-        [container addSubview:self._comment];
-        [container addSubview:self.commentLabel];
+//        [container addSubview:self._creatorThumbnail];
+//        [container addSubview:self._comment];
+//        [container addSubview:self.commentLabel];
     }
     return self;
 }

@@ -86,13 +86,18 @@ const NSString *server = @"http://ec2-52-11-184-120.us-west-2.compute.amazonaws.
                                    if (data!=nil && [data length]) {
                                        NSError *jsonReadingError = nil;
                                        id json = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:&jsonReadingError];
+                                       if (responseBlock == nil) {
+                                           return;
+                                       }
                                        if (jsonReadingError) {
                                            responseBlock(nil, jsonReadingError, response);
                                        } else {
                                            responseBlock(json, nil, response);
                                        }
                                    } else {
-                                       responseBlock(nil, nil, response);
+                                       if (responseBlock != nil) {
+                                           responseBlock(nil, nil, response);
+                                       }
                                    }
                                }
                            }];
@@ -190,7 +195,7 @@ const NSString *server = @"http://ec2-52-11-184-120.us-west-2.compute.amazonaws.
             if (json && !err) {
                 NSString *serverError = [json objectForKey:@"error"];
                 if ((NSNull*)serverError != [NSNull null]){
-                    NSLog(@"Server Error!");
+                    NSLog(@"Server Error: %@", serverError);
                 }
                 if(isFacebook) {
                     NSString *hashkey = [json objectForKey:@"session_key"];

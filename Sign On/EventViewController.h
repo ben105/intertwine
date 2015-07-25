@@ -8,16 +8,16 @@
 
 #import <UIKit/UIKit.h>
 #import "SettingsViewController.h"
-#import "NewEventViewController.h"
+#import "NewActivityViewController.h"
 #import "EventTableViewCell.h"
 
 @class FBProfilePictureView;
 
-@interface EventViewController : UIViewController <SettingsDelegate, EventCreationDelegate, EventTableViewCellDelegate,
+@interface EventViewController : UIViewController <SettingsDelegate, ActivityCreationDelegate, EventTableViewCellDelegate,
                                                     UITableViewDataSource, UITableViewDelegate>
 
 @property (nonatomic, strong) SettingsViewController *settingsViewController;
-@property (nonatomic, strong) NewEventViewController *eventCreationViewController;
+@property (nonatomic, strong) NewActivityViewController *eventCreationViewController;
 
 @property (nonatomic, strong) UIControl *dimView;
 

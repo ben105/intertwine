@@ -26,6 +26,7 @@
     [super viewDidLoad];
     // Do any additional setup after loading the view.
     self.events = [[NSMutableArray alloc] init];
+    [self.view addSubview:self.activityTableView];
 }
 
 - (void)viewDidAppear:(BOOL)animated {
@@ -120,10 +121,10 @@
 #pragma mark - Event Cell Delegate
 
 - (void) presentCommentsWithEvent:(EventObject *)event {
-    UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
-    CommentViewController *commentVC = [storyboard instantiateViewControllerWithIdentifier:@"Comment"];
-    commentVC.event = event;
-    [self presentViewController:commentVC animated:YES completion:nil];
+//    UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+//    CommentViewController *commentVC = [storyboard instantiateViewControllerWithIdentifier:@"Comment"];
+//    commentVC.event = event;
+//    [self presentViewController:commentVC animated:YES completion:nil];
 }
 
 
@@ -185,6 +186,19 @@
     [cell setAttendees:[event attendees]];
     
     return cell;
+}
+
+#pragma mark - Lazy Loading
+
+- (UITableView*)activityTableView {
+    if (!_activityTableView) {
+        NSLog(@"\nScreen rect: %@\nThis view's rect: %@", NSStringFromCGRect([[UIScreen mainScreen] bounds]), NSStringFromCGRect(self.view.frame));
+        _activityTableView = [[UITableView alloc] initWithFrame:self.view.frame style:UITableViewStylePlain];
+        _activityTableView.backgroundColor = [UIColor clearColor];
+        _activityTableView.delegate = self;
+        _activityTableView.dataSource = self;
+    }
+    return _activityTableView;
 }
 
 @end

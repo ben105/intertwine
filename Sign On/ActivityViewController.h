@@ -9,9 +9,9 @@
 #import <UIKit/UIKit.h>
 #import "EventTableViewCell.h"
 
-@interface ActivityViewController : UIViewController <EventTableViewCellDelegate>
+@interface ActivityViewController : UIViewController <EventTableViewCellDelegate, UITableViewDataSource, UITableViewDelegate>
 
-@property (nonatomic, weak) IBOutlet UITableView *activityTableView;
+@property (nonatomic, strong) UITableView *activityTableView;
 @property (nonatomic, strong) NSMutableArray *events;
 
 

@@ -18,6 +18,7 @@
 #import "ITMultipleBannersViewController.h"
 #import "ITDynamicBannerViewController.h"
 #import "ITActivityViewController.h"
+#import "NavigationViewController.h"
 
 const float emailSignInAnimationDuration = 0.5;
 
@@ -147,6 +148,7 @@ NSString *newsfeedStoryboardID = @"Newsfeed";
 // This method will be called when the user information has been fetched
 - (void)loginViewFetchedUserInfo:(FBLoginView *)loginView
                             user:(id<FBGraphUser>)user {
+    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(_animateShieldViewDown) object:nil];
     NSString *facebookID = user.objectID;
     NSString *username = user.name;
     NSString *first = nil;
@@ -157,7 +159,7 @@ NSString *newsfeedStoryboardID = @"Newsfeed";
     if ([names count] > 1)
         last = [names lastObject];
     [IntertwineManager createAccountFirst:first last:last email:nil facebook:facebookID password:nil completion:^(NSURLResponse *response, NSData *data, NSError *connectionError) {
-            [self _presentHome];
+        [self performSelector:@selector(_presentHome) withObject:nil afterDelay:1.0];
         
     }];
 
@@ -182,18 +184,36 @@ NSString *newsfeedStoryboardID = @"Newsfeed";
     [self presentViewController:registrationVC animated:YES completion:nil];
 }
 
+
+#pragma mark - Shield View
+
+- (void) _shieldViewUpAnimated:(BOOL)animated {
+    CGRect upFrame = [[UIScreen mainScreen] bounds];
+    self.shieldView.frame = upFrame;
+}
+
+- (void) _shieldViewDownAnimated:(BOOL)animated {
+    CGRect screenFrame = [[UIScreen mainScreen] bounds];
+    screenFrame.origin.y += screenFrame.size.height;
+    self.shieldView.frame = screenFrame;
+}
+
+- (void) _animateShieldViewDown {
+    CGRect screenFrame = [[UIScreen mainScreen] bounds];
+    screenFrame.origin.y += screenFrame.size.height;
+    [UIView animateWithDuration:0.5
+                     animations:^{
+                         self.shieldView.frame = screenFrame;
+                     }];
+}
+
+
 #pragma mark - View Load
 
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    
-    //Right, that is the point
-//    UIUserNotificationSettings *settings = [UIUserNotificationSettings settingsForTypes:(UIUserNotificationTypeBadge
-//                                                                                         |UIUserNotificationTypeSound
-//                                                                                         |UIUserNotificationTypeAlert) categories:nil];
-//    [[UIApplication sharedApplication] registerUserNotificationSettings:settings];
-    
+    [self.view addSubview:self.shieldView];
     
     self.fbLoginView.readPermissions = @[@"public_profile", @"email", @"user_friends"];
     self.fbLoginView.delegate = self;
@@ -202,6 +222,9 @@ NSString *newsfeedStoryboardID = @"Newsfeed";
 }
 
 - (void) viewDidAppear:(BOOL)animated {
+    [self _shieldViewUpAnimated:NO];
+    [self performSelector:@selector(_animateShieldViewDown) withObject:nil afterDelay:1.0];
+    
     self.signInEmailAddressField.text = @"";
     self.signInPasswordField.text = @"";
     [super viewDidAppear:animated];
@@ -230,23 +253,34 @@ NSString *newsfeedStoryboardID = @"Newsfeed";
             UIImage *facebookImage = [UIImage imageWithData:data];
             
             /* Create two dynamic banner view controllers. */
-            ITActivityViewController *activityViewController = [[ITActivityViewController alloc] init];
-            ITDynamicBannerViewController *yourViewController =
-                [[ITDynamicBannerViewController alloc] initWithBannerTitle:[IntertwineManager facebookName]
-                                                               bannerImage:facebookImage
-                                                                      data:nil];
-            ITMultipleBannersViewController *vc = [[ITMultipleBannersViewController alloc]
-                                                   initWithBannerViewControllers:@[activityViewController, yourViewController]];
-            [self presentViewController:vc animated:YES completion:nil];
+//            ITActivityViewController *activityViewController = [[ITActivityViewController alloc] init];
+//            ITDynamicBannerViewController *yourViewController =
+//                [[ITDynamicBannerViewController alloc] initWithBannerTitle:[IntertwineManager facebookName]
+//                                                               bannerImage:facebookImage
+//                                                                      data:nil];
+//            ITMultipleBannersViewController *vc = [[ITMultipleBannersViewController alloc]
+//                                                   initWithBannerViewControllers:@[activityViewController, yourViewController]];
+//            [self presentViewController:vc animated:YES completion:nil];
+            
+//            UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+//            ActivityViewController *activityVC = [storyboard instantiateViewControllerWithIdentifier:@"Events"];
+//            //    activityVC.title = @"Activity";
+//            [self presentViewController:activityVC animated:YES completion:nil];
+            
+            /* Present the views. */
+            NavigationViewController *navigationVC = [NavigationViewController new];
+            [self presentViewController:navigationVC animated:YES completion:^{
+                NSLog(@"Supposedly, completed presenting view controller.");
+            }];
             
         }
     }];
     
     
-//    /* Instantiate all the view controller instances. */
+    /* Instantiate all the view controller instances. */
 //    UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
-//    ActivityViewController *activityVC = [storyboard instantiateViewControllerWithIdentifier:@"Activity"];
-//    activityVC.title = @"Activity";
+//    ActivityViewController *activityVC = [storyboard instantiateViewControllerWithIdentifier:@"Events"];
+////    activityVC.title = @"Activity";
 //    
 //    /* Present the views. */
 //    [self presentViewController:activityVC animated:YES completion:nil];
@@ -284,6 +318,56 @@ NSString *newsfeedStoryboardID = @"Newsfeed";
         aView.alpha = alpha;
         completion(YES);
     }
+}
+
+
+#pragma mark - UI Elements
+
+- (UIView*) shieldView {
+    if (!_shieldView) {
+        CGRect screenBounds = [[UIScreen mainScreen] bounds];
+        
+        _shieldView = [[UIView alloc] initWithFrame:screenBounds];
+        _shieldView.backgroundColor = [UIColor colorWithRed:95.0/255.0 green:132.0/255.0 blue:205.0/255.0 alpha:1.0];
+        
+        NSString *fontName = @"MarkerFelt-Thin";
+        CGFloat titleFontSize = 30.0;
+        
+        CGFloat subtitleFontSize = 18.0;
+        CGFloat textHeight = 36.0;
+        
+        CGFloat inset = 10.0;
+        CGFloat middleOfScreen = CGRectGetMidY(screenBounds);
+        CGFloat screenWidth = CGRectGetWidth(screenBounds);
+        CGFloat textWidth = screenWidth - (inset * 2.0);
+        
+        
+        UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(inset, middleOfScreen - textHeight, textWidth, textHeight)];
+        titleLabel.font = [UIFont fontWithName:fontName size:titleFontSize];
+        titleLabel.text = @"Intertwine";
+        titleLabel.textColor = [UIColor whiteColor];
+        titleLabel.backgroundColor = [UIColor clearColor];
+        titleLabel.textAlignment = NSTextAlignmentCenter;
+        
+        UILabel *subtitleLabel = [[UILabel alloc] initWithFrame:CGRectMake(inset, CGRectGetMaxY(titleLabel.frame), textWidth, textHeight)];
+        subtitleLabel.font = [UIFont fontWithName:fontName size:subtitleFontSize];
+        subtitleLabel.text = @"Ben Rooke";
+        subtitleLabel.textColor = [UIColor whiteColor];
+        subtitleLabel.backgroundColor = [UIColor clearColor];
+        subtitleLabel.textAlignment = NSTextAlignmentCenter;
+        
+        UILabel *versionLabel = [[UILabel alloc] initWithFrame:CGRectMake(inset, CGRectGetMaxY(subtitleLabel.frame) + textHeight, textWidth, textHeight)];
+        versionLabel.font = [UIFont fontWithName:fontName size:subtitleFontSize];
+        versionLabel.text = @"pre-alpha v3.0";
+        versionLabel.textColor = [UIColor whiteColor];
+        versionLabel.backgroundColor = [UIColor clearColor];
+        versionLabel.textAlignment = NSTextAlignmentCenter;
+        
+        [_shieldView addSubview:titleLabel];
+        [_shieldView addSubview:subtitleLabel];
+        [_shieldView addSubview:versionLabel];
+    }
+    return _shieldView;
 }
 
 

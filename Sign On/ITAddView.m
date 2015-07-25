@@ -30,7 +30,7 @@ const CGFloat AddViewAnimationDuration = 0.3;
 const CGFloat addViewWidth = 160.0;
 const CGFloat addViewHeight = 124.0;
 const CGFloat smallBallWidth = 25.0;
-const CGFloat largeBallWidth = 32.0;
+const CGFloat largeBallWidth = 40.0;
 const CGFloat expandedBallWidth = 42.0;
 
 /* Position all the subviews with these coordinates. */

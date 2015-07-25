@@ -39,7 +39,7 @@
 - (IBAction)signOn:(id)sender;
 
 
-
+@property (nonatomic, strong) UIView *shieldView;
 
 
 

@@ -15,4 +15,8 @@
 @property (nonatomic, strong) FBProfilePictureView *profilePicture;
 @property (nonatomic, strong) UILabel *nameLabel;
 
+/* Determines the width programatically based on the screen size. */
++ (CGFloat) cellWidth;
++ (CGFloat) cellHeight;
+
 @end
