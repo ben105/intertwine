@@ -2,7 +2,7 @@ import psycopg2
 
 dbname = "intertwine"
 host = "localhost"
-user = "brooke"
+user = "intertwine"
 password = "intertwine"
 
 
