@@ -23,9 +23,21 @@ def random_salt(salt_len):
 
 
 def salt_and_hash(password, salt):
+	if not password or not salt:
+		logging.error('invalid values when trying to salt and hash (password %s, salt %s)', password, salt)
+		raise ValueError
 	return hashlib.sha256(password + salt).hexdigest()
 
 def create_email_account(cur, email, first, last, password):
+	if not email:
+		logging.error('no email provided for creating an email account!')
+		raise ValueError
+	if not first or not last:
+		logging.error('first or last name are missing (%s, %s)', first, last)
+		raise ValueError
+	if not password:
+		logging.error('password is missing')
+		raise ValueError
 	err = None
 	salt = random_salt(16)
 	logging.debug('random salt generated for %s %s', first, last)

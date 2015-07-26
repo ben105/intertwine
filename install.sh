@@ -8,7 +8,8 @@ friends \
 registration \
 search \
 log \
-push.py"
+push.py \
+testdb.py"
 
 # If Intertwine is currently running, shut it down.
 status intertwine 2> /dev/null | grep "running" && stop intertwine
