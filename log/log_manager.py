@@ -21,7 +21,7 @@ if options.logging_level:
 	LEVEL = levelMap.get(options.logging_level.lower())
 
 if LEVEL is None:
-	LEVEL = logging.Error
+	LEVEL = logging.ERROR
 
 
 def EnableLogging():

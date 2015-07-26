@@ -7,6 +7,7 @@ events \
 friends \
 registration \
 search \
+log \
 push.py"
 
 # If Intertwine is currently running, shut it down.
@@ -25,6 +26,7 @@ mkdir -p /opt/intertwine/certs 2> /dev/null
 
 # Logs will be placed here.
 mkdir -p /var/log/intertwine 2> /dev/null
+chmod 777 /var/log/intertwine
 
 # Copy important files into the right place.
 cp newck.pem /opt/intertwine/certs/
