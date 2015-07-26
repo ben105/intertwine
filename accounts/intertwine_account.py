@@ -29,7 +29,7 @@ def create_email_account(cur, email, first, last, password):
 	err = None
 	salt = random_salt(16)
 	logging.debug('random salt generated for %s %s', first, last)
-	hashed_password = get_hash_password(password, salt)
+	hashed_password = salt_and_hash(password, salt)
 	logging.debug('hashed password for %s %s', first, last)
 	created_date = get_now_timestamp()
 	query = """
@@ -77,7 +77,7 @@ def sign_in_facebook(cur, facebook_id, first, last):
 	
 	salt = random_salt(16)
 	print "Random salt generated %s" % salt
-	hashed_password = get_hash_password(facebook_id, salt)
+	hashed_password = salt_and_hash(facebook_id, salt)
 	print "Hashed password %s" % hashed_password
 	
 	query = """
@@ -95,7 +95,7 @@ def sign_in_facebook(cur, facebook_id, first, last):
 	except Exception as exc:
 		logging.error('exception raised attempting to create a new Facebook account for %s %s', first, last)
 		err = SERVER_ERROR
-		session_block(error=err)
+		session_block = get_response_block(error=err)
 		return session_block
 	account_id = cur.fetchone()[0]
 	logging.info('created a new Facebook account for %s %s', first, last)
@@ -118,7 +118,7 @@ def sign_in(cur, email, password):
 		salt = rows[0][1]
 		account_id = str(rows[0][2])
 		logging.debug('retrieved data to authorize %s', email)
-		password_attempt = get_hash_password(password, salt)
+		password_attempt = salt_and_hash(password, salt)
 		logging.debug('hashing %s\'s password attempt'. email)
 		if password_attempt == hashed_password:
 			logging.debug('%s\'s password verified', email)
