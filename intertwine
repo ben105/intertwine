@@ -15,7 +15,7 @@ import intertwine.events.events as events
 import intertwine.events.comments as comments
 import intertwine.activity.activity as activity
 import intertwine.push as push
-import intertwine.logging.log_manager as log_manager
+import intertwine.log.log_manager as log_manager
 
 log_manager.EnableLogging()
 

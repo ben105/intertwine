@@ -69,16 +69,13 @@ def sign_in_facebook(cur, facebook_id, first, last):
 	except:
 		err = SERVER_ERROR
 	if len(rows):
-		print("Account already exists")
 		account_id = rows[0][0]
 		hashed_password = rows[0][1]
 		session_block = get_response_block(account_id, hashed_password, err)
 		return session_block
 	
 	salt = random_salt(16)
-	print "Random salt generated %s" % salt
 	hashed_password = salt_and_hash(facebook_id, salt)
-	print "Hashed password %s" % hashed_password
 	
 	query = """
 		INSERT INTO accounts
