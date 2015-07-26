@@ -1,8 +1,10 @@
 import intertwine.events.events as eve
 import psycopg2
+import logging
 
 def get_activity(cur, user_id):
 	# Build the query
+	logging.debug('fetching activities for user %d', user_id)
 	query = """
 	SELECT DISTINCT
 		events.id,
@@ -24,7 +26,7 @@ def get_activity(cur, user_id):
 	try:
 		cur.execute(query, (user_id,))
 	except Exception as exc:
-		print("Exception occured when trying to populate the activity feed:\n{}".format(exc))
+		logging.error('exception raised while trying to populate the activity feed for user %d', user_id)
 		return
 	events = []
 	rows = cur.fetchall()
@@ -37,4 +39,5 @@ def get_activity(cur, user_id):
 		event["updated_time"] = str(row[4])
 		event["attendees"] = eve.get_attendees(cur, row[0])
 		events.append(event)
+	logging.debug('fetched %d activities for user %d', len(events), user_id)
 	return events	

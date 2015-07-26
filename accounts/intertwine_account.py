@@ -3,13 +3,9 @@ import time
 import datetime
 import hashlib
 import random
+import logging
 
 SERVER_ERROR = "An error has occured on the Intertwine server, please try again later."
-
-db_cursor = None
-def set_database_cursor(cursor):
-	global db_cursor
-	db_cursor = cursor
 
 def get_now_timestamp():
 	t = time.time()
@@ -17,6 +13,7 @@ def get_now_timestamp():
 
 def random_salt(salt_len):
 	if salt_len <= 0:
+		logging.error('constructing random salt with an invlaid length value, %s', salt_len)
 		raise ValueError
 	alphanumeric = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	chars = list()
@@ -28,12 +25,12 @@ def random_salt(salt_len):
 def salt_and_hash(password, salt):
 	return hashlib.sha256(password + salt).hexdigest()
 
-def create_email_account(email, first, last, password):
+def create_email_account(cur, email, first, last, password):
 	err = None
 	salt = random_salt(16)
-	print "Random salt generated %s" % salt
+	logging.debug('random salt generated for %s %s', first, last)
 	hashed_password = get_hash_password(password, salt)
-	print "Hashed password %s" % hashed_password
+	logging.debug('hashed password for %s %s', first, last)
 	created_date = get_now_timestamp()
 	query = """
 		INSERT INTO accounts
@@ -47,16 +44,16 @@ def create_email_account(email, first, last, password):
 		RETURNING id;
 	"""
 	try:
-		db_cursor.execute(query, (email, first, last, hashed_password, salt))
+		cur.execute(query, (email, first, last, hashed_password, salt))
 	except Exception as exc:
-		print exc
+		logging.error('exception raised while trying to create a new account for %s %s', first, last)
 		err = SERVER_ERROR
 		return err
-	account_id = db_cursor.fetchone()[0]
-	print "Finished creating brand new account for %s %s" % (first, last)	
+	account_id = cur.fetchone()[0]
+	logging.info('created a new account for %s %s', first, last)
 	return err
 
-def sign_in_facebook(facebook_id, first, last):
+def sign_in_facebook(cur, facebook_id, first, last):
 	err = None
 	# Bail early if there already exists a facebook account
 	# with this Facebook ID
@@ -67,8 +64,8 @@ def sign_in_facebook(facebook_id, first, last):
 	"""
 	rows = []
 	try:
-		db_cursor.execute(query, (facebook_id,))
-		rows = db_cursor.fetchall()
+		cur.execute(query, (facebook_id,))
+		rows = cur.fetchall()
 	except:
 		err = SERVER_ERROR
 	if len(rows):
@@ -94,43 +91,46 @@ def sign_in_facebook(facebook_id, first, last):
 		(%s, %s, %s, %s, %s);
 	"""
 	try:
-		db_cursor.execute(query, (facebook_id, first, last, hashed_password, salt))
-	except:
+		cur.execute(query, (facebook_id, first, last, hashed_password, salt))
+	except Exception as exc:
+		logging.error('exception raised attempting to create a new Facebook account for %s %s', first, last)
 		err = SERVER_ERROR
 		session_block(error=err)
 		return session_block
-	account_id = db_cursor.fetchone()[0]
-	print "Finished creating brand new account for %s %s" % (first, last)
-	print "Facebook ID {}".format(facebook_id)
+	account_id = cur.fetchone()[0]
+	logging.info('created a new Facebook account for %s %s', first, last)
 	session_key = get_session_key(account_id, hashed_password)
 	session_block = get_response_block(session=session_key, error=err)
 	return session_block
 	
-def sign_in(email, password):
+def sign_in(cur, email, password):
 	err = None
 	try:
-		db_cursor.execute("SELECT password, password_salt, id FROM accounts WHERE email=%s", (email,))
+		cur.execute("SELECT password, password_salt, id FROM accounts WHERE email=%s", (email,))
 	except:
+		logging.error('failed to sign in user with email %s', email)
 		err = SERVER_ERROR
 		session_block = get_response_block(error=err)
 		return session_block
-	rows = db_cursor.fetchall()
+	rows = cur.fetchall()
 	if len(rows):
 		hashed_password = rows[0][0]
 		salt = rows[0][1]
 		account_id = str(rows[0][2])
-		print "Hashed password received: " + hashed_password
-		print "Salt: " + salt
-		print "Account ID: " + account_id
+		logging.debug('retrieved data to authorize %s', email)
 		password_attempt = get_hash_password(password, salt)
+		logging.debug('hashing %s\'s password attempt'. email)
 		if password_attempt == hashed_password:
+			logging.debug('%s\'s password verified', email)
 			session_block = get_response_block(account_id, hashed_password)
 			return session_block
 		else:
 			# Incorrect password
+			logging.debug('%s\'s password rejected', email)
 			err = "Invalid login credentials"
 	else:
 		# Incorrect email
+		logging.debug('%s is an invalid email address', email)
 		err = "Invalid login credentials."
 	session_block = get_response_block(account_id, hashed_password, err)
 	return session_block

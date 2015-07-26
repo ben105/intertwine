@@ -1,13 +1,33 @@
+import intertwine.events.comments as comments
+import logging
 
+def single_transaction(func):
+	def inner(*argv, **kwargs):
+		assert(len(argv)>0)
+		cursor = argv[0]
+		cursor.connection.autocommit = False
+		success = func(*argv, **kwargs)
+		if type(success) is bool and success == False:
+			logging.error('single transaction failed, and is rolling back')
+			cursor.rollback()
+		else:
+			logging.debug('single transaction completed')
+			cursor.connection.commit()
+		cursor.connection.autocommit = True
+		return success
+	return inner
+
+@single_transaction
 def create_event(cur, user_id, title, description, attendees):
+	logging.debug('creating a new activity for user %d called %s', user_id, title)
 	# Add the row to the database.
 	#insert into events (title) values ('Roller blades');
 	try:
 		cur.execute("insert into events (title, description, creator) values (%s, %s, %s) returning id;", (title, description, user_id))
 		event_id = cur.fetchone()[0]
 	except Exception as exc:
-		print(exc)
-		return
+		logging.error('exception raised while trying to insert user\'s %d activity (%s) into the database', user_id, title)
+		return False
 	# Add the attendees to the event.	
 	#insert into event_attendees (attendee_accounts_id, events_id) values (38, 1);
 	attendees.append(str(user_id))
@@ -15,7 +35,8 @@ def create_event(cur, user_id, title, description, attendees):
 		try:
 			cur.execute("insert into event_attendees (attendee_accounts_id, events_id) values (%s, %s);", (int(user), event_id))
 		except Exception as exc:
-			print(exc)
+			logging.error('exception raised while inserting attendee %d to activity %s', user, title)
+			return False
 	# TODO: Return success or error
 	return {'success':True}
 
@@ -35,8 +56,8 @@ def get_creator(cur, creator_id):
 		cur.execute(query, (creator_id,))
 		creator_row = cur.fetchone()
 	except Exception as exc:
-		print exc
-		return
+		logging.error('exception raised while retrieving creator %d', creator_id)
+		return {}
 	creator_first = creator_row[0]
 	creator_last = creator_row[1]
 	creator_email = creator_row[2]
@@ -64,7 +85,11 @@ def get_attendees(cur, event_id):
 		event_attendees.attendee_accounts_id=accounts.id and 
 		event_attendees.events_id=%s;
 	"""
-	cur.execute(query, (event_id,))
+	try:
+		cur.execute(query, (event_id,))
+	except Exception as exc:
+		logging.error('exception raised attempting to get list of attendees for event %d', event_id)
+		return
 	results = cur.fetchall()
 	attendees = [{"first":a[0], "last":a[1], "email":a[2], "facebook_id":a[3], "id":a[4]} for a in results] 
 	return attendees
@@ -92,8 +117,8 @@ def get_events(cur, user_id):
 	try:
 		cur.execute(query, (user_id,))
 	except Exception as exc:
-		print(exc)
-		return
+		logging.error('exception raised trying to retrieve list of events for user %d', user_id)
+		return []
 	rows = cur.fetchall()
 	events = []
 	for row in rows:
@@ -105,6 +130,7 @@ def get_events(cur, user_id):
 		event["creator"] = get_creator(cur, row[3])
 		event["updated_time"] = str(row[4]).split('.')[0]
 		event["attendees"] = get_attendees(cur, event["id"])
+		event["comment_count"] = comments.comment_count(cur, event["id"])
 		# Append to the end of events list
 		events.append(event)
 	return events	
@@ -119,6 +145,6 @@ def delete_event(cur, event_id):
 	try:
 		cur.execute(query, (event_id,))
 	except Exception as exc:
-		print("Failed to delete event: {}".format(event_id))
-		return
+		logging.error('exception raised trying to delete event %d', event_id)
+		return {}
 	return { 'success':True }

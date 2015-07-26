@@ -13,8 +13,8 @@ def comment_count(cur, event_id):
 	try:
 		cur.execute(query, (event_id,))
 	except Exception as exc:
-		print(exc)
-		return
+		logging.error('exception raised trying to retrieve comment count for event %d', event_id)
+		return {}
 	row = cur.fetchone()
 	return { "comment_count": int(row[0]) }
 
@@ -38,8 +38,8 @@ def get_comments(cur, event_id):
 	try:
 		cur.execute(query, (event_id,))
 	except Exception as exc:
-		print(exc)
-		return
+		logging.error('exception raised retrieving comments for event %d', event_id)
+		return []
 	rows = cur.fetchall()
 	comments = []
 	for row in rows:
@@ -68,8 +68,8 @@ def event_title(cur, event_id):
 	try:
 		cur.execute(query, (event_id,))
 	except Exception as exc:
-		print(exc)
-		return
+		logging.error('exception raised retrieving event %d title', event_id)
+		return ''
 	row = cur.fetchone()
 	return row[0]
 
@@ -88,7 +88,7 @@ def notify_attendees(cur, user_id, event_id, comment):
 	try:
 		cur.execute(query, (event_id, user_id))
 	except Exception as exc:
-		print(exc)
+		logging.error('exception raised notifying attendees')
 		return
 	rows = cur.fetchall()
 	for row in rows:
@@ -107,7 +107,7 @@ def add_comment(cur, user_id, event_id, comment):
 	try:
 		cur.execute(query, (user_id, event_id, comment))
 	except Exception as exc:
-		print(exc)
+		logging.error('exception raised trying to insert comment "%s" for event %d', comment, user_id)
 		return
 	notify_attendees(cur, user_id, event_id, comment)
 	return {'success':True}

@@ -5,6 +5,7 @@ the fields in the email registration process.
 import validate_email
 import psycopg2
 import re
+import logging
 
 # Global varibale declarations
 # 
@@ -48,6 +49,7 @@ def check_none(func):
 		if len(argv) > 0:
 			param1 = argv[0]
 			if param1 == None:
+				logging.warning('validationg warning, None type is invalid type', k_err_server_problem)
 				return k_err_server_problem
 		return func(*argv, **kwarg)
 	return inner
@@ -74,8 +76,10 @@ def invalid_name(name):
 	Either an error string, or a None value.
 	"""
 	if len(name) > char_limit:
+		logging.warning('validation warning, "%s" name greater than character limit', name)
 		return k_err_char_limit
 	if not re.match("^[a-zA-Z-\.]*$", name):
+		logging.warning('validation warning, "%s" invalid characters', name)
 		return k_err_invalid_characters
 	return None
 
@@ -92,8 +96,10 @@ def invalid_password(password):
 	Either an error string, or a None value.
 	"""
 	if len(password) < pass_min_length:
+		logging.warning('validation warning, password is less than minimum length (%d)', pass_min_length)
 		return k_err_password_size
 	if not re.match("^[a-zA-Z0-9_\-#@]*$", password):
+		logging.warning('validation warning, invalid characters being used for password')
 		return k_err_password_chars
 	return None 
 
@@ -109,9 +115,8 @@ def invalid_email(email):
 	Return value:
 	Either an error string, or a None value.
 	"""
-	if email == None:
-		return k_err_server_problem
 	if not validate_email.validate_email(email, check_mx=True):
+		logging.warning('validation warning, failed to validate email %s', email)
 		return k_err_invalid_email
 	return None
 
@@ -131,8 +136,10 @@ def duplicate_email(email):
 		db_cursor.execute("SELECT * FROM accounts WHERE email=%s", (email,))
 		rows = db_cursor.fetchall()
 		if len(rows):
+			logging.info('validation warning, duplicate account found for email %s', email)
 			return k_err_duplicate_account
 	except Exception as exc:
+		logging.error('validation exception raised validating email, %s', exc)
 		return str(exc)
 	return None
 
@@ -142,8 +149,10 @@ def duplicate_facebook_id(facebook_id):
 		db_cursor.execute("SELECT * FROM accounts WHERE facebook_id=%s", (facebook_id,))
 		rows = db_cursor.fetchall()
 		if len(rows):
+			logging.info('validation warning, duplicate account found for Facebook ID')
 			return k_err_duplicate_account
 	except Exception as exc:
+		logging.error('validation exception raised searching for Facebook ID, %s', exc)
 		return str(exc)
 	return None
 	
