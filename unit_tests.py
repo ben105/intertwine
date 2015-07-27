@@ -9,7 +9,7 @@ import intertwine.friends.unit_tests
 import intertwine.registration.unit_tests
 import intertwine.search.unit_tests
 
-TEST_DB = 'test_database'
+TEST_DB = 'test__database'
 
 
 def distribute_cursor(cur):
@@ -45,3 +45,5 @@ if __name__ == '__main__':
 
 	runner = unittest.TextTestRunner()
 	runner.run(suite())
+
+	intertwine.testdb.stop(TEST_DB)

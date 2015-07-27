@@ -76,16 +76,20 @@ class TestAccounts(unittest.TestCase):
 
 	def test_duplicate_email_account(self):
 		accounts.create_email_account(cur, 'ben_rooke@icloud.com', 'Ben', 'Rooke', 'password1')
-		with self.assertRaises(Exception):
-			accounts.create_email_account(
-				cur, 'ben_rooke@icloud.com', 'Ben', 'Rooke', 'password1')
-
+		cur.connection.commit()
+		cur.execute('SELECT * FROM accounts WHERE email=%s', ('ben_rooke@icloud.com',))
+		rows = cur.fetchall()
+		self.assertEqual(len(rows), 1)
+		err = accounts.create_email_account(cur, 'ben_rooke@icloud.com', 'Ben', 'Rooke', 'password1')
+		self.assertEqual(err, accounts.SERVER_ERROR)
 
 if __name__ == '__main__':
-	global cur
 	cur = intertwine.testdb.start()
-
-	unittest.main()
-
+	
+	try:
+		unittest.main()
+	except Exception as exc:
+		print(exc)
+		pass
+	intertwine.testdb.stop()
 	cur.connection.close()
-

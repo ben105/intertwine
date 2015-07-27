@@ -15,9 +15,15 @@ def init(cur, sqlfile):
 	"""
 	if not cur:
 		raise ValueError('invalid cursor provided')
-	if not os.path.exist(sqlfile):
-		raise ValueError('SQL file could not be found')
+	if not os.path.exists(sqlfile):
+		raise ValueError('%s file could not be found' % sqlfile)
 	cur.execute(open(sqlfile).read())
+	cur.connection.commit()
+
+def stop(cur, db_name='testdb'):
+	cur.execute('DROP DATABASE {};'.format(db_name))
+	cur.connection.commit()
+	cur.connection.close()
 
 def start(db_name='testdb'):
 	"""This function will create a new database with the name
@@ -35,11 +41,15 @@ def start(db_name='testdb'):
 	conn = psycopg2.connect('user=intertwine password=intertwine')
 	cur = conn.cursor()
 	cur.connection.autocommit = True
-	cur.execute('CREATE DATABASE %s;', db_name)
-
+	try:
+		cur.execute('CREATE DATABASE {};'.format(db_name,))
+	except psycopg2.ProgrammingError as exc:
+		cur.execute('DROP DATABASE {};'.format(db_name,))
+		cur.connection.commit()
+		cur.execute('CREATE DATABASE {};'.format(db_name,))
 	# Initialize the database with the script to build the schema.
 	sqlscript = 'schema.sql'
-	sqlscript_path = os.path.join(os.path.dirname(__file__), sqlscript)
+	sqlscript_path = os.path.join('/home/calgrove/intertwine', sqlscript)
 	init(cur, sqlscript_path)
 	
 	return cur
