@@ -1,0 +1,280 @@
+#!/usr/bin/env python2.7
+
+from flask import Flask, request
+import json
+import re
+import sys
+import os
+import psycopg2
+import intertwine.registration.registration_validation as rv
+import intertwine.search.search_accounts as search_accounts
+import intertwine.friends.friend_requests as friend_requests
+import intertwine.accounts.intertwine_account as intertwine_account
+import intertwine.registration.intertwine_psql as intertwine_psql
+import intertwine.events.events as events
+import intertwine.events.comments as comments
+import intertwine.activity.activity as activity
+import intertwine.push as push
+import intertwine.log.log_manager as log_manager
+
+log_manager.EnableLogging()
+
+app = Flask(__name__)
+
+cur = intertwine_psql.connect()
+
+@app.route('/api/v1/comment_count', methods=['GET'])
+def comment_count_handler():
+	user_id = int(request.headers.get("user_id"))
+	body = json.loads(request.data)
+	event_id = body["event_id"]
+	result = comments.comment_count(cur, event_id)
+	return json.dumps(result)
+
+@app.route('/api/v1/comment/<int:event_id>', methods=['GET'])
+def comment_get(event_id):
+	result = comments.get_comments(cur, event_id)
+	return json.dumps(result)
+
+@app.route('/api/v1/comment', methods=['POST'])
+def comment_handler():
+	user_id = int(request.headers.get("user_id"))
+	body = json.loads(request.data)
+	result = {}
+	comment = body["comment"]
+	event_id = body["event_id"]
+	result = comments.add_comment(cur, user_id, event_id, comment)
+	return json.dumps(result)
+
+@app.route('/api/v1/activity', methods=['GET'])
+def activities():
+	user_id = int(request.headers.get("user_id"))
+	results = activity.get_activity(cur, user_id)
+	return json.dumps(results)
+
+@app.route('/api/v1/device_token', methods=['POST'])
+def set_device_token():
+	user_id = int(request.headers.get("user_id"))
+	try:
+		token_data = request.data
+	except Exception as exc:
+		print exc
+		return
+	# See if it's a new insert or an update.
+	cur.execute("SELECT * FROM device_tokens WHERE accounts_id=%s;", (user_id,))
+	rows = cur.fetchall()
+	if len(rows):
+		# Update
+		cur.execute("UPDATE device_tokens SET token=%s WHERE accounts_id=%s;", (psycopg2.Binary(token_data), user_id))
+	else:
+		
+		try:
+			cur.execute("INSERT INTO device_tokens (accounts_id, token) VALUES (%s, %s);", (user_id, psycopg2.Binary(token_data)))
+		except Exception as exc:
+			print exc
+			return
+	return json.dumps([])
+	
+
+@app.route('/api/v1/events', methods=['GET', 'POST', 'DELETE'])
+def event_api():
+	user_id = request.headers.get("user_id")
+	if request.method == "GET":
+		try:
+			all_events = events.get_events(cur, user_id)
+		except Exception as exc:
+			print(exc)
+		return json.dumps(all_events)
+	elif request.method == "POST":
+		body = json.loads(request.data)
+		friends = body["friends"]
+		title = body["title"]
+		try:
+			ret = events.create_event(cur, user_id, title, "", friends)
+		except Exception as exc:
+			print(exc)
+		for friend in friends:
+			cur.execute("SELECT first, last FROM accounts WHERE id=%s", (user_id,))
+			row = cur.fetchone()
+			name = "{} {}".format(row[0], row[1])
+			try:
+				push.push_notification(cur, friend, "{} created a new event: {}".format(name, title))
+			except Exception as exc:
+				print(exc)
+		return json.dumps(ret)
+	elif request.method == "DELETE":
+		body = json.loads(request.data)
+		print body
+		event_id = body['event_id']
+		print event_id
+		success = events.delete_event(cur, event_id)
+		return json.dumps(success)
+
+@app.route('/api/v1/search/<name>', methods=['GET'])
+def search(name):
+	user_id = request.headers.get("user_id")
+	data = search_accounts.find(cur, user_id, name)
+	return json.dumps(data)
+
+@app.route('/api/v1/signin', methods=['POST'])
+def sign_in():
+	"""This sign-in API should be used for accounts
+	that are attempting to sign in with an email address.
+	A Post form is required with this request.
+
+	Keyword arguments:
+	email -- the email address of the user signing in
+	password -- the password associated with the email's account
+
+	The success of this request will result in a JSON dictionary
+	posed as {'success':'true'}
+
+	The failure of this request will result in a JSON dictionary
+	posed as {'error':'Invalid login credentials'}
+	"""
+	email = request.form.get('email')
+	password = request.form.get('password')
+	result = intertwine_account.sign_in_email(cur, email, password)
+	return json.dumps(result)
+
+@app.route('/api/v1/adduser', methods=['POST'])
+def add_user():
+	# Errors dict to store all errors
+	errors = dict()
+	# Extract the POST data
+	first = request.form.get('first')
+	last = request.form.get('last')
+	email = request.form.get('email')
+	facebook_id = request.form.get('facebook_id')
+	password = request.form.get('password')
+	account_type = request.form.get('account_type')
+	# Let' validate the content the user has entered
+	if account_type == "email":
+		err = rv.invalid_name(first)
+		if err:
+			errors['first'] = err
+		err = rv.invalid_name(last)
+		if err:
+			errors['last'] = err
+		err = rv.invalid_password(password)
+		if err:
+			errors['password'] = err
+		err = rv.invalid_email(email)
+		if err:
+			errors['email'] = err
+	# Make a connection to the postgres database
+	try:
+		conn = psycopg2.connect("dbname=intertwine host=localhost user=intertwine password=intertwine")
+		cur = conn.cursor()
+		cur.connection.autocommit = True
+	except:
+		errors['connection'] = 'Connection issues on the server'
+		return errors
+	# Check if there is already an account with this email
+	if account_type == "email":
+		err = rv.duplicate_email(cur, email)
+		if err:
+			errors['email'] = err
+	# Now that we've done some validation, we can
+	# send back the error dictionary if it has any
+	# values.
+	if len(errors.keys()):
+		return json.dumps(errors)	
+	# If we don't have any errors, then we can 
+	# continue.
+	# Create the account.
+	if account_type == "email":
+		err = intertwine_account.create_account_email(cur, email=email, first=first, last=last, password=password)
+		if err:
+			errors['connection'] = err
+			return errors
+	elif account_type == "facebook":
+		result = intertwine_account.sign_in_facebook(cur, facebook_id, first, last)
+		return json.dumps(result)
+	else:
+		return json.dumps( {"error":"Incorrect account type."} )
+	# Succesfully created an account
+	#cur.connection.close()
+	return json.dumps( {"success":"true"} )
+
+
+@app.route('/api/v1/friend_requests', methods=['POST', 'GET'])
+def friendrequests():
+	"""Friend request can either be a get
+	or a post. A get will simply return
+	the results of all pending friend 
+	requests, while a post will initiate
+	a friend request.
+	"""
+	data = "[]"
+	if request.method == "GET":
+		user_id = int(request.headers.get('user_id'))
+		data = friend_requests.get_pending_requests(cur, user_id)
+	elif request.method == "POST":
+		requester_id = int(request.headers.get('user_id'))
+		requestee_id = int(request.form.get('friend_id'))
+		data = friend_requests.send_request(cur, requester_id, requestee_id)
+	return json.dumps(data)
+
+
+@app.route('/api/v1/friends', methods=['POST'])
+def get_friends():
+	user_id = request.headers.get('user_id')
+	if not user_id:
+		return json.dumps([])
+	user_id = int(user_id)
+	data = friend_requests.get_friends(cur, user_id)
+	return json.dumps(data)
+
+@app.route('/api/v1/friend_decline', methods=['POST', 'GET'])
+def deny():
+	"""This API endpoint will either get the list
+	of denied friends, with the GET method, or 
+	deny a friend request with the POST method.
+	"""
+	if request.method == "POST":
+		user_id = request.headers.get('user_id')
+		session_key = request.headers.get('session_key')
+		friend_id = request.form.get('friend_id')
+		data = friend_requests.accept_request(cur, user_id, friend_id)
+		return json.dumps(data)
+	else:
+		return json.dumps({'success':False, 'error':'Incorrect request method'})	
+
+@app.route('/api/v1/send_friend_request', methods=['POST'])
+def send_request():
+	user_id = int(request.form.get('user_id'))
+	friend_id = int(request.form.get('friend_id'))
+	data = friend_requests.send_request(cur, user_id, friend_id)
+	return json.dumps(data)
+
+@app.route('/api/v1/search_accounts', methods=['POST'])
+def find_accounts():
+	results = []
+	name = request.form.get('name')
+	if name:
+		results = search_accounts.find(cur, name)
+	return json.dumps(results)
+
+@app.route('/api/v1/friend_accept', methods=['POST'])
+def friend_accept():
+	user_id = request.headers.get('user_id')
+	session_key = request.headers.get('session_key')
+	friend_id = request.form.get('friend_id')
+	data = friend_requests.accept_request(cur, user_id, friend_id)
+	push.push_notification(cur, friend_id, "%d has accepted your friend request." % str(user_id))
+	return json.dumps(data)
+
+@app.route('/api/v1/facebook_friends', methods=['POST'])
+def facebook_friends():
+	user_id = request.headers.get('user_id')
+	session_key = request.headers.get('session_key')
+	facebook_friends = json.loads(request.data)
+	data = friend_requests.fb_friends(cur, user_id, facebook_friends)
+	return json.dumps(data)
+
+
+if __name__ == "__main__":
+	app.run(host='0.0.0.0')
+
+
