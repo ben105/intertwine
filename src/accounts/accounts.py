@@ -46,6 +46,8 @@ def create_email_account(cur, email, first, last, password):
 	Returns:
 	  Python dictionary containing success status, error and
 	  error codes, and optional payload.
+	  For this function, the payload will include the new Intertwine
+	  account ID (user_id).
 	"""
 
 	if not email:

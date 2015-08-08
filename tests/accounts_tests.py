@@ -1,23 +1,20 @@
 import unittest
 import intertwine
 import util
-import intertwine.response as response
-import intertwine.strings as strings
 import time
 
-import intertwine.accounts.intertwine_account as accounts
-import intertwine.accounts.register as register
-import intertwine.accounts.search as search
+from intertwine.accounts import accounts
+from intertwine.accounts import register
+from intertwine.accounts import search
+
+from intertwine import strings
 
 
 cur = None
 
-def cursor(cursor):
+def cur(cur):
 	global cur
-	cur = cursor
-
-def garbage_string():
-	return "daagd432$QE@"
+	cur = cur
 
 class TestAccounts(unittest.TestCase):
 	"""TestAccounts will provide the unit test framework for testing
