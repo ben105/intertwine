@@ -1,24 +1,38 @@
 import psycopg2
 from intertwine import push
+from intertwine import response
+from intertwine import strings
 
 def comment_count(cur, event_id):
-	query = """
-	SELECT
-		count(*)
-	FROM
-		comments
-	WHERE
-		events_id=%s;
+	"""Get the number of comments, given an event ID.
+
+	Keyword arguments:
+	  cur -- cursor to the database
+	  event_id -- a unique integer identifing and event
+
+	Returns:
+	  The number of comments in the given event.
 	"""
+	query = 'SELECT count(*) FROM comments WHERE events_id=%s;'
 	try:
 		cur.execute(query, (event_id,))
 	except Exception as exc:
 		logging.error('exception raised trying to retrieve comment count for event %d', event_id)
 		return {}
 	row = cur.fetchone()
-	return { "comment_count": int(row[0]) }
+	return int(row[0])
 
 def get_comments(cur, event_id):
+	"""Getting the comments for a given event ID.
+
+	Keyword arguments:
+	  cur -- cursor to the database
+	  event_id -- a unique integer identifing and event
+
+	Returns:
+	  An Intertwine response block, with a dictionary
+	  of comments in the payload.
+	"""	
 	query = """
 	SELECT
 		c.id,
@@ -39,7 +53,7 @@ def get_comments(cur, event_id):
 		cur.execute(query, (event_id,))
 	except Exception as exc:
 		logging.error('exception raised retrieving comments for event %d', event_id)
-		return []
+		return response.block(error=strings.SERVER_ERROR, code=500)
 	rows = cur.fetchall()
 	comments = []
 	for row in rows:
@@ -54,9 +68,19 @@ def get_comments(cur, event_id):
 		comment["id"] = row[0]
 		comment["comment"] = row[6]
 		comments.append(comment)
-	return comments
+	return response.block(payload=comments)
 
 def event_title(cur, event_id):
+	"""Getting the event title for a given event ID.
+
+	Keyword arguments:
+	  cur -- cursor to the database
+	  event_id -- a unique integer identifing and event
+
+	Returns:
+	  An Intertwine response block, with an event title
+	  in the payload.
+	"""
 	query = """
 	SELECT
 		title
@@ -74,6 +98,14 @@ def event_title(cur, event_id):
 	return row[0]
 
 def notify_attendees(cur, user_id, event_id, comment):
+	"""Notify attendees of the new comment.
+
+	Keyword arguments:
+	  cur -- cursor to the database
+	  user_id -- the user posting the comment
+	  event_id -- integer uniquly indentifing the event
+	  comment -- the comment (string value)
+	"""
 	poster_name = push.name(cur, user_id)
 	title = event_title(cur, event_id)
 	query = """
@@ -97,6 +129,17 @@ def notify_attendees(cur, user_id, event_id, comment):
 		push.push_notification(cur, account_id, msg)
 
 def add_comment(cur, user_id, event_id, comment):
+	"""Posting a comment to an event.
+
+	Keyword arguments:
+	  cur -- cursor to database
+	  user_id -- the user posting the comment
+	  event_id -- unique integer identifing event
+	  comment -- comment string
+
+	Returns:
+	  Intertwine response block.
+	"""
 	query = """
 	INSERT INTO
 		comments
@@ -108,6 +151,6 @@ def add_comment(cur, user_id, event_id, comment):
 		cur.execute(query, (user_id, event_id, comment))
 	except Exception as exc:
 		logging.error('exception raised trying to insert comment "%s" for event %d', comment, user_id)
-		return
+		return response.block(error=strings.SERVER_ERROR, code=500)
 	notify_attendees(cur, user_id, event_id, comment)
-	return {'success':True}
+	return response.block()

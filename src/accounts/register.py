@@ -59,6 +59,9 @@ def set_database_cursor(cursor):
 	"""This is a convenience method to point the global variable
 	to the passed in cursor reference. This way we don't create
 	a new database connection.
+
+	Keyword arguments:
+	  cursor -- cursor to the database
 	"""
 	global db_cursor
 	db_cursor = cursor
