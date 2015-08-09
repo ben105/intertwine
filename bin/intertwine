@@ -43,7 +43,7 @@ def comment_handler():
 	result = {}
 	comment = body["comment"]
 	event_id = body["event_id"]
-	result = comments.add_comment(cur, user_id, event_id, comment)
+	result = comments.comment(cur, user_id, event_id, comment)
 	return json.dumps(result)
 
 @app.route('/api/v1/activity', methods=['GET'])
@@ -165,7 +165,7 @@ def add_user():
 	# Make a connection to the postgres database
 	try:
 		conn = psycopg2.connect("dbname=intertwine host=localhost user=intertwine password=intertwine")
-		cur = conn.cursor()
+		cur = conn.cur()
 		cur.connection.autocommit = True
 	except:
 		errors['connection'] = 'Connection issues on the server'

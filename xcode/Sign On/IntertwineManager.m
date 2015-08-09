@@ -79,6 +79,9 @@ const NSString *server = @"http://ec2-52-11-184-120.us-west-2.compute.amazonaws.
     [NSURLConnection sendAsynchronousRequest:request
                                        queue:[NSOperationQueue mainQueue]
                            completionHandler:^(NSURLResponse *response, NSData *data, NSError *connectionError) {
+                               if (responseBlock == nil) {
+                                 return;
+                               }
                                if (connectionError){
                                    NSLog(@"Error connecting: %@", connectionError.userInfo);
                                    responseBlock(nil, connectionError, response);
@@ -86,18 +89,22 @@ const NSString *server = @"http://ec2-52-11-184-120.us-west-2.compute.amazonaws.
                                    if (data!=nil && [data length]) {
                                        NSError *jsonReadingError = nil;
                                        id json = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:&jsonReadingError];
-                                       if (responseBlock == nil) {
-                                           return;
-                                       }
                                        if (jsonReadingError) {
                                            responseBlock(nil, jsonReadingError, response);
                                        } else {
+                                           NSString *serverErrorMsg = [json objectForKey:@"error"];
+                                           if ([serverErrorMsg length]) {
+                                               NSMutableDictionary* details = [NSMutableDictionary dictionary];
+                                               [details setValue:serverErrorMsg forKey:NSLocalizedDescriptionKey];
+                                               NSError *err = [NSError errorWithDomain:@"IntertwineError"
+                                                                                  code:[json objectForKey:@"code"]
+                                                                              userInfo:details];
+                                               responseBlock(json, err, response);
+                                           }
                                            responseBlock(json, nil, response);
                                        }
                                    } else {
-                                       if (responseBlock != nil) {
-                                           responseBlock(nil, nil, response);
-                                       }
+                                       responseBlock(nil, nil, response);
                                    }
                                }
                            }];

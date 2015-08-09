@@ -97,17 +97,17 @@ def event_title(cur, event_id):
 	row = cur.fetchone()
 	return row[0]
 
-def notify_attendees(cur, user_id, event_id, comment):
+def notify_attendees(cur, user_id, event_id, title, comment):
 	"""Notify attendees of the new comment.
 
 	Keyword arguments:
 	  cur -- cursor to the database
 	  user_id -- the user posting the comment
 	  event_id -- integer uniquly indentifing the event
+	  title -- the title of the event
 	  comment -- the comment (string value)
 	"""
 	poster_name = push.name(cur, user_id)
-	title = event_title(cur, event_id)
 	query = """
 	SELECT
 		attendee_accounts_id

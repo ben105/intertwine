@@ -101,6 +101,7 @@ class TestAccounts(unittest.TestCase):
 		resp = accounts.sign_in_facebook(cur, facebook_id, first, last)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
+		self.assertIsNotNone(resp['payload']['user_id'])
 
 	def test_empty_facebook_login_fb_id(self):
 		first = 'Ben'
@@ -132,7 +133,7 @@ class TestAccounts(unittest.TestCase):
 			resp = accounts.sign_in_facebook(cur, facebook_id, first, last)
 			self.assertTrue(resp['success'])
 			self.assertIsNone(resp['error'])
-			time.sleep(1)
+			self.assertIsNotNone(resp['payload']['user_id'])
 
 	def test_relogin_after_deleting_fb_account(self):
 		facebook_id = '1301290360'
@@ -142,9 +143,9 @@ class TestAccounts(unittest.TestCase):
 			resp = accounts.sign_in_facebook(cur, facebook_id, first, last)
 			self.assertTrue(resp['success'])
 			self.assertIsNone(resp['error'])
+			self.assertIsNotNone(resp['payload']['user_id'])
 			cur.execute('DELETE FROM accounts WHERE facebook_id = %s', (facebook_id,)) #Facebook ID is unique
 			cur.connection.commit()
-			time.sleep(1)
 
 	# Test the sign in email feature.
 

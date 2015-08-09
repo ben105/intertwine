@@ -7,16 +7,19 @@ import psycopg2
 import re
 import logging
 
+from intertwine import response
+from intertwine import strings
+
 # Global varibale declarations
 # 
 # Includes:
 # - character limits on name fields
 # - minimum length of password (for security)
-# - the database cursor, with open connection
+# - the database cur, with open connection
 # - various error messages in response to requests
 char_limit = 20
 pass_min_length = 8
-db_cursor = None
+db_cur = None
 #
 # Server Error
 k_err_server_problem = 'There was a problem with the server validating your request'
@@ -55,16 +58,16 @@ def check_none(func):
 	return inner
 
 
-def set_database_cursor(cursor):
+def set_database_cur(cur):
 	"""This is a convenience method to point the global variable
-	to the passed in cursor reference. This way we don't create
+	to the passed in cur reference. This way we don't create
 	a new database connection.
 
 	Keyword arguments:
 	  cursor -- cursor to the database
 	"""
-	global db_cursor
-	db_cursor = cursor
+	global db_cur
+	db_cur = cur
 
 @check_none
 def invalid_name(name):
@@ -136,8 +139,8 @@ def duplicate_email(email):
 	"""
 	try:
 		logging.info("checking for duplicate account %s", email)
-		db_cursor.execute("SELECT * FROM accounts WHERE email=%s", (email,))
-		rows = db_cursor.fetchall()
+		db_cur.execute("SELECT * FROM accounts WHERE email=%s", (email,))
+		rows = db_cur.fetchall()
 		if len(rows):
 			logging.info('validation warning, duplicate account found for email %s', email)
 			return k_err_duplicate_account
