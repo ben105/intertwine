@@ -3,10 +3,10 @@ import intertwine
 import util
 import time
 
+import intertwine.testdb
 from intertwine.accounts import accounts
 from intertwine.accounts import register
 from intertwine.accounts import search
-
 from intertwine import strings
 
 
@@ -184,6 +184,40 @@ class TestAccounts(unittest.TestCase):
 		resp = accounts.sign_in_email(cur, 'ben_rooke@icloud.com', '')
 		self.assertFalse(resp['success'])
 		self.assertEqual(resp['error'], strings.VALUE_ERROR)
+
+	#def user_info(cur, user_id):
+	def test_user_info_bad_user_id(self):
+		info = accounts.user_info(cur, None)
+		self.assertIsNone(info)
+		info = accounts.user_info(cur, 555)
+		self.assertIsNone(info)
+
+	def test_user_info(self):
+		resp = accounts.create_email_account(
+			cur, email='ben_rooke@icloud.com', first='Ben', last='Rooke', password='password1')
+		self.assertTrue(resp['success'])
+		self.assertIsNone(resp['error'])
+		email_id = resp['payload']['user_id']
+
+		resp = accounts.sign_in_facebook(cur, '1301290360', 'Alex', 'Jaczak')
+		self.assertTrue(resp['success'])
+		self.assertIsNone(resp['error'])
+		facebook_id = resp['payload']['user_id']
+
+		info = accounts.user_info(cur, email_id)
+		self.assertEqual(info['id'], email_id)
+		self.assertEqual(info['first'], 'Ben')
+		self.assertEqual(info['last'], 'Rooke')
+		self.assertEqual(info['email'], 'ben_rooke@icloud.com')
+		self.assertIsNone(info['facebook_id'])
+
+		info = accounts.user_info(cur, facebook_id)
+		self.assertEqual(info['id'], facebook_id)
+		self.assertEqual(info['first'], 'Ben')
+		self.assertEqual(info['last'], 'Rooke')
+		self.assertIsNone(info['email'])
+		self.assertEqual(info['facebook_id'], facebook_id)
+
 
 
 	#

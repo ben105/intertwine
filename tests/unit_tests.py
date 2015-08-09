@@ -5,7 +5,7 @@ import intertwine
 TEST_DB = 'test__database'
 
 
-def distribute_cursor(cur):
+def distribute_cur(cur):
 	# All unit tests that should be tested.
 	# IMPORTANT: Add additional modules here, when adding
 	# unit tests.
@@ -34,7 +34,7 @@ def suite():
 if __name__ == '__main__':
 
 	cur = intertwine.testdb.start(TEST_DB)
-	distribute_cursor(cur)
+	distribute_cur(cur)
 
 	runner = unittest.TextTestRunner()
 	runner.run(suite())

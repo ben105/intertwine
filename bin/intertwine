@@ -23,14 +23,6 @@ app = Flask(__name__)
 
 cur = intertwine_psql.connect()
 
-@app.route('/api/v1/comment_count', methods=['GET'])
-def comment_count_handler():
-	user_id = int(request.headers.get("user_id"))
-	body = json.loads(request.data)
-	event_id = body["event_id"]
-	result = comments.comment_count(cur, event_id)
-	return json.dumps(result)
-
 @app.route('/api/v1/comment/<int:event_id>', methods=['GET'])
 def comment_get(event_id):
 	result = comments.get_comments(cur, event_id)
@@ -43,7 +35,10 @@ def comment_handler():
 	result = {}
 	comment = body["comment"]
 	event_id = body["event_id"]
-	result = comments.comment(cur, user_id, event_id, comment)
+	title = body["title"]
+	first = body["first"]
+	last = body["last"]
+	result = comments.comment(cur, user_id, first, last, event_id, title, comment)
 	return json.dumps(result)
 
 @app.route('/api/v1/activity', methods=['GET'])
@@ -89,8 +84,10 @@ def event_api():
 		body = json.loads(request.data)
 		friends = body["friends"]
 		title = body["title"]
+		first = body["first"]
+		last = body["last"]
 		try:
-			ret = events.create_event(cur, user_id, title, "", friends)
+			ret = events.create(cur, user_id, title, "", friends)
 		except Exception as exc:
 			print(exc)
 		for friend in friends:
@@ -107,7 +104,7 @@ def event_api():
 		print body
 		event_id = body['event_id']
 		print event_id
-		success = events.delete_event(cur, event_id)
+		success = events.delete(cur, event_id)
 		return json.dumps(success)
 
 @app.route('/api/v1/search/<name>', methods=['GET'])

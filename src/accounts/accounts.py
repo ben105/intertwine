@@ -79,9 +79,9 @@ def create_email_account(cur, email, first, last, password):
 		return response.block(error=strings.VALUE_ERROR, code=500)
 	# We have succesfully created the account!
 	logging.info('created a new account for %s %s (%s)', first, last, email)
-	row = cur.fetchone()
+	user_id = cur.fetchone()[0]
 	return response.block(payload={
-		'user_id': row[0]
+		'user_id': user_id
 	})
 
 
@@ -139,9 +139,13 @@ def sign_in_facebook(cur, facebook_id, first, last):
 	except Exception as exc:
 		logging.error('exception raised attempting to create a new Facebook account for %s %s', first, last)
 		return response.block(error=strings.VALUE_ERROR, code=500)
-	# We have successfully created a new Facebook account!	
+	# We have successfully created a new Facebook account!
+
 	logging.info('created a new Facebook account for %s %s', first, last)
-	return response.block()
+	user_id = cur.fetchone()[0]
+	return response.block(payload={
+		'user_id': user_id
+	})
 	
 
 def sign_in_email(cur, email, password):
@@ -200,4 +204,50 @@ def sign_in_email(cur, email, password):
 	# If the code has reached this point, it's an invalid login.
 	# Code 401 (unauthorized).
 	return response.block(error=strings.INVALID_LOGIN, code=401)
+
+
+def user_info(cur, user_id):
+	"""User info will get the basic information about a 
+	given account (first and last name, email, and facebook
+	ID).
+
+	Keyword arguments:
+	  cur -- cursor to the database
+	  user_id -- unique integer identifying an Intertwine account
+
+	Returns:
+	  Python dictionary of the user info.
+	  'first' : first name
+	  'last' : last name
+	  'email' : email address
+	  'facebook_id' : Facebook ID
+	"""
+	"""Get the information about a certain
+	user, given their account ID.
+
+	Keyword arguments:
+	  cur -- cursor to database
+	  creator_id -- the creator account ID
+
+	Returns:
+	  Dictionary of account information.
+	"""
+	query = 'SELECT first, last, email, facebook_id FROM accounts WHERE accounts.id = %s;'
+	try:
+		cur.execute(query, (user_id,))
+	except Exception as exc:
+		logging.error('exception raised while retrieving creator %d', creator_id)
+		return None
+	row = cur.fetchone()
+	first = row[0]
+	last = row[1]
+	email = row[2]
+	facebook_id = row[3]
+	return {
+		'id': user_id,
+		'first':first,
+		'last':last,
+		'email':email,
+		'facebook_id':facebook_id
+	}
 	

@@ -5,7 +5,6 @@ import intertwine.testdb
 
 from intertwine.friends import friends
 from intertwine.accounts import accounts
-
 from intertwine import strings
 
 cur = None
@@ -13,17 +12,6 @@ cur = None
 def cursor(cursor):
 	global cur
 	cur = cursor
-
-def insert_friends(cur, requestee, requester):
-	insert_query = """
-	INSERT INTO friends
-		(accounts_id, friend_accounts_id)
-	VALUES
-		(%s, %s);
-	"""
-	cur.execute(insert_query, (requestee, requester)) #Requestee first
-	cur.execute(insert_query, (requester, requestee)) #Requester first
-
 
 # IMPORTANT:
 # Things to think about when testing the friends.py module functions.
