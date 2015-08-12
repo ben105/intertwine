@@ -2,6 +2,7 @@
 information regarding the status and success
 of the request.
 """
+from datetime import datetime
 
 def block(payload=None, error=None, code=200):
 	"""Constructs the response block.

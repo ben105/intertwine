@@ -1,6 +1,6 @@
 import intertwine.testdb
 from intertwine.activity import events
-from intertwine.activity import feed
+from intertwine.activity import activity
 from intertwine.friends import friends
 from intertwine.accounts import accounts
 from intertwine import strings
@@ -32,10 +32,10 @@ class TestFeed(unittest.TestCase):
 
 	#def get_activity(cur, user_id):
 	def test_get_activity_bad_user_id(self):
-		resp = feed.get_activity(cur, None)
+		resp = activity.get_activity(cur, None)
 		self.assertFalse(resp['success'])
 		self.assertEqual(resp['error'], strings.VALUE_ERROR)
-		resp = feed.get_activity(cur, 555)
+		resp = activity.get_activity(cur, 555)
 		self.assertFalse(resp['success'])
 		self.assertEqual(resp['error'], strings.VALUE_ERROR)
 
@@ -64,7 +64,7 @@ class TestFeed(unittest.TestCase):
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
 		event_id = resp['payload']['event_id']
-		resp = feed.get_activity(cur, self.user_id)
+		resp = activity.get_activity(cur, self.user_id)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
 		activities = resp['payload']
@@ -93,7 +93,7 @@ class TestFeed(unittest.TestCase):
 		resp = events.create(cur, friend_id2, 'Ben', 'Rooke', 'Coffee before work', 'Peets new iced coffee', [friend_id1])
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
-		resp = feed.get_activity(cur, self.user_id)
+		resp = activity.get_activity(cur, self.user_id)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
 		activities = resp['payload']
@@ -111,7 +111,7 @@ class TestFeed(unittest.TestCase):
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
 		event_id = resp['payload']['event_id']
-		resp = feed.get_activity(cur, self.user_id)
+		resp = activity.get_activity(cur, self.user_id)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
 		activities = resp['payload']
@@ -154,7 +154,7 @@ class TestFeed(unittest.TestCase):
 		resp = events.create(cur, self.user_id, 'Ben', 'Rooke', 'Morning Hike', 'Meet at Castle Rock!', [friend_id])
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
-		resp = feed.get_activity(cur, self.user_id)
+		resp = activity.get_activity(cur, self.user_id)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
 		activities = resp['payload']

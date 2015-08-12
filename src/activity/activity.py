@@ -1,4 +1,4 @@
-from intertwine.events import events
+from intertwine.activity import events
 from intertwine import response
 from intertwine import strings
 
