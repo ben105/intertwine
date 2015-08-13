@@ -156,7 +156,7 @@ class TestAccounts(unittest.TestCase):
 
 	def test_sign_in_email(self):
 		accounts.create_email_account(self.ctx, 'ben_rooke@icloud.com', 'Ben', 'Rooke', 'password1')
-		resp = accounts.sign_in_email(self.ctx, 'ben_rooke@icloud.com', 'password1')
+		resp = accounts.sign_in_email(self.ctx, 'ben_rooke@icloud.com', 'Ben', 'Rooke', 'password1')
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
 
@@ -192,9 +192,11 @@ class TestAccounts(unittest.TestCase):
 
 	#def user_info(cur, user_id):
 	def test_user_info_bad_user_id(self):
-		info = accounts.user_info(cur, None)
+		self.ctx.user_id = None
+		info = accounts.user_info(self.ctx)
 		self.assertIsNone(info)
-		info = accounts.user_info(cur, 555)
+		self.ctx.user_id = 555
+		info = accounts.user_info(self.ctx)
 		self.assertIsNone(info)
 
 	def test_user_info(self):
@@ -238,46 +240,33 @@ class TestAccounts(unittest.TestCase):
 
 	def test_register_invalid_name(self):
 		resp = register.invalid_name('')
-		self.assertFalse(resp['success'])
-		self.assertEqual(resp['error'], strings.VALUE_ERROR)
+		self.assertEqual(resp, register.k_err_min_chars)
 		resp = register.invalid_name('   ')
-		self.assertFalse(resp['success'])
-		self.assertEqual(resp['error'], strings.VALUE_ERROR)
+		self.assertEqual(resp, register.k_err_min_chars)
 		resp = register.invalid_name('Ben Rooke')
-		self.assertFalse(resp['success'])
-		self.assertEqual(resp['error'], strings.VALUE_ERROR)
+		self.assertIsNone(resp)
 		resp = register.invalid_name('Ben')
-		self.assertEqual(resp['success'])
-		self.assertIsNone(resp['error'])
-
+		self.assertIsNone(resp)
 
 	def test_register_invalid_password(self):
 		resp = register.invalid_password('')
-		self.assertFalse(resp['success'])
-		self.assertEqual(resp['error'], strings.VALUE_ERROR)
+		self.assertEqual(resp, register.k_err_min_chars)
 		resp = register.invalid_password('minlen') # minimum length
-		self.assertFalse(resp['success'])
-		self.assertEqual(resp['error'], strings.VALUE_ERROR)
+		self.assertEqual(resp, register.k_err_password_size)
 		resp = register.invalid_password('^^^^^^^^^^^')
-		self.assertFalse(resp['success'])
-		self.assertEqual(resp['error'], strings.VALUE_ERROR)
+		self.assertEqual(resp, register.k_err_password_chars)
 		resp = register.invalid_password('valid_password')
-		self.assertEqual(resp['success'])
-		self.assertIsNone(resp['error'])
+		self.assertIsNone(resp)
 
 	def test_register_invalid_email(self):
 		resp = register.invalid_email('')
-		self.assertFalse(resp['success'])
-		self.assertEqual(resp['error'], strings.VALUE_ERROR)
+		self.assertEqual(resp, register.k_err_min_chars)
 		resp = register.invalid_email('ben_rooke') # no @domain
-		self.assertFalse(resp['success'])
-		self.assertEqual(resp['error'], strings.VALUE_ERROR)
+		self.assertEqual(resp, register.k_err_invalid_email)
 		resp = register.invalid_email('this123_email123_does123_not123_exist123@icloud.com')
-		self.assertFalse(resp['success'])
-		self.assertEqual(resp['error'], strings.VALUE_ERROR)
+		self.assertEqual(resp, register.k_err_invalid_email)
 		resp = register.invalid_email('ben_rooke@icloud.com')
-		self.assertTrue(resp['success'])
-		self.assertIsNone(resp['error'])
+		self.assertIsNone(resp)
 
 	def test_register_duplicate_email(self):
 		accounts.create_email_account(self.ctx, 'ben_rooke@icloud.com', 'Ben', 'Rooke', 'password1')

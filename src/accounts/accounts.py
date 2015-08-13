@@ -185,7 +185,7 @@ def sign_in_email(ctx, email, first, last, password):
 		account_id = str(rows[0][2])
 		logging.debug('retrieved data to authorize %s', email)
 		password_attempt = salt_and_hash(password, salt)
-		logging.debug('hashing %s\'s password attempt'. email)
+		logging.debug('hashing %s\'s password attempt', email)
 		if password_attempt == hashed_password:
 			logging.debug('%s\'s password verified', email)
 			# We can send back a good response now, the password
