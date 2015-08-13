@@ -29,7 +29,7 @@ def salt_and_hash(password, salt):
 		raise ValueError
 	return hashlib.sha256(password + salt).hexdigest()
 
-def create_email_account(cur, email, first, last, password):
+def create_email_account(ctx, email, password):
 	"""When the user tries to create an email account, we
 	must verify that they have entered correct information.
 	We verify this on the server side, because otherwise a 
@@ -37,10 +37,8 @@ def create_email_account(cur, email, first, last, password):
 	request (bypassing checks).
 
 	Keyword arguments:
-	  cur - cur to the database
+	  ctx - Intertwine context
 	  email - new email address
-	  first - first name
-	  last - last name
 	  password - new password 
 
 	Returns:
@@ -48,7 +46,8 @@ def create_email_account(cur, email, first, last, password):
 	  For this function, the payload will include the new Intertwine
 	  account ID (user_id).
 	"""
-
+	first = ctx.first
+	last = ctx.last
 	if not email:
 		logging.error('no email provided for creating an email account!')
 		return response.block(error=strings.VALUE_ERROR, code=500)
@@ -73,19 +72,19 @@ def create_email_account(cur, email, first, last, password):
 		RETURNING id;
 	"""
 	try:
-		cur.execute(query, (email, first, last, hashed_password, salt))
+		ctx.cur.execute(query, (email, first, last, hashed_password, salt))
 	except Exception as exc:
 		logging.error('exception raised while trying to create a new account for %s %s (%s)', first, last, email)
 		return response.block(error=strings.VALUE_ERROR, code=500)
 	# We have succesfully created the account!
 	logging.info('created a new account for %s %s (%s)', first, last, email)
-	user_id = cur.fetchone()[0]
+	user_id = ctx.cur.fetchone()[0]
 	return response.block(payload={
 		'user_id': user_id
 	})
 
 
-def sign_in_facebook(cur, facebook_id, first, last):
+def sign_in_facebook(ctx, facebook_id):
 	"""This method should be envoked when the user is 
 	signing on via a Facebook account. The actual 
 	authentication and authorization is done on Facebook's
@@ -93,15 +92,15 @@ def sign_in_facebook(cur, facebook_id, first, last):
 	an accout for the user, if one does not already exist.
 
 	Keyword arguments:
-	  cur - cur to the database
+	  ctx - Intertwine context
 	  facebook_id - user's unique Facebook ID
-	  first - the user's first name
-	  last - the user's last name
 
 	Returns:
 	  Python dictionary containing success status, error and
 	  error codes, and optional payload.
 	"""
+	first = ctx.first
+	last = ctx.last
 	if not facebook_id:
 		logging.error('no Facebook ID provided for signing in via Facebook!')
 		return response.block(error=strings.VALUE_ERROR, code=500)
@@ -112,14 +111,14 @@ def sign_in_facebook(cur, facebook_id, first, last):
 	# Let's see if we can find the user in our database with this
 	# Facebook ID.
 	try:
-		cur.execute("SELECT id, password FROM accounts WHERE facebook_id=%s;", (facebook_id,))
+		ctx.ctx.cur.execute("SELECT id, password FROM accounts WHERE facebook_id=%s;", (facebook_id,))
 	except:
 		logging.error('exception raised trying to look up Facebook ID %s', facebook_id)
 		return response.block(error=strings.VALUE_ERROR, code=500)
 
 	# Bail early if there already exists a facebook account
 	# with this Facebook ID.
-	rows = cur.fetchall()
+	rows = ctx.ctx.cur.fetchall()
 	if len(rows):
 		return response.block()
 	
@@ -135,26 +134,26 @@ def sign_in_facebook(cur, facebook_id, first, last):
 		RETURNING id;
 	"""
 	try:
-		cur.execute(query, (facebook_id, first, last, hashed_password, salt))
+		ctx.cur.execute(query, (facebook_id, first, last, hashed_password, salt))
 	except Exception as exc:
 		logging.error('exception raised attempting to create a new Facebook account for %s %s', first, last)
 		return response.block(error=strings.VALUE_ERROR, code=500)
 	# We have successfully created a new Facebook account!
 
 	logging.info('created a new Facebook account for %s %s', first, last)
-	user_id = cur.fetchone()[0]
+	user_id = ctx.ctx.cur.fetchone()[0]
 	return response.block(payload={
 		'user_id': user_id
 	})
 	
 
-def sign_in_email(cur, email, password):
+def sign_in_email(ctx, email, password):
 	"""This method should be envoked when the user is
 	attempting to sign into their Intertwine account
 	via their email and password credential combination.
 
 	Keyword arguments:
-	  cur - cur to the database
+	  ctx - Intertwine context
 	  email - user's email address
 	  password - user's password
 
@@ -166,13 +165,13 @@ def sign_in_email(cur, email, password):
 		logging.error('no email provided for signing into email account')
 		return response.block(error=strings.VALUE_ERROR, code=500)
 	if not password:
-		logging.error('password is missing for %s %s (%s)', first, last, email)
+		logging.error('password is missing for %s %s (%s)', ctx.first, ctx.last, email)
 		return response.block(error=strings.VALUE_ERROR, code=500)
 
 	# Attempt to look the user up in the database. They should exists
 	# if they are trying to sign in with their email address.
 	try:
-		cur.execute("SELECT password, password_salt, id FROM accounts WHERE email=%s", (email,))
+		ctx.cur.execute("SELECT password, password_salt, id FROM accounts WHERE email=%s", (email,))
 	except Exception as exc:
 		logging.error('failed to query for user with email {0}\n{1}'.format(email, exc))
 		# Our query raised an exception.
@@ -181,7 +180,7 @@ def sign_in_email(cur, email, password):
 	# With the results we get back (which is really only one row)
 	# we will extract the hashed_password and check it with the 
 	# attempted password.	
-	rows = cur.fetchall()
+	rows = ctx.cur.fetchall()
 	if len(rows):
 		hashed_password = rows[0][0]
 		salt = rows[0][1]
@@ -206,14 +205,14 @@ def sign_in_email(cur, email, password):
 	return response.block(error=strings.INVALID_LOGIN, code=401)
 
 
-def user_info(cur, user_id):
+def user_info(ctx, user_id):
 	"""User info will get the basic information about a 
 	given account (first and last name, email, and facebook
 	ID).
 
 	Keyword arguments:
-	  cur -- cursor to the database
-	  user_id -- unique integer identifying an Intertwine account
+	  ctx - Intertwine context
+	  user_id - unique integer identifying an Intertwine account
 
 	Returns:
 	  Python dictionary of the user info.
@@ -222,23 +221,13 @@ def user_info(cur, user_id):
 	  'email' : email address
 	  'facebook_id' : Facebook ID
 	"""
-	"""Get the information about a certain
-	user, given their account ID.
-
-	Keyword arguments:
-	  cur -- cursor to database
-	  creator_id -- the creator account ID
-
-	Returns:
-	  Dictionary of account information.
-	"""
 	query = 'SELECT first, last, email, facebook_id FROM accounts WHERE accounts.id = %s;'
 	try:
-		cur.execute(query, (user_id,))
+		ctx.cur.execute(query, (user_id,))
 	except Exception as exc:
 		logging.error('exception raised while retrieving creator %d', creator_id)
 		return None
-	row = cur.fetchone()
+	row = ctx.cur.fetchone()
 	first = row[0]
 	last = row[1]
 	email = row[2]

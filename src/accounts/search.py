@@ -1,19 +1,18 @@
 
-def find(cur, user_id, name):
+def find(ctx, name):
 	"""Given a user ID, search for this particular person.
 	Results should vary depending on if the person is blocked,
 	or if there is a preference to show someone higher up on 
 	the list, etc.
 
 	Keyword arguments:
-	  cur - cursor to the database
-	  user_id - the user ID performing the search
+	  ctx - Intertwine context
 	  name - name of the person we're searching for
 
 	Returns:
 	  Python dictionary representing the success of the request.
 	"""
-	
+	user_id = ctx.user_id
 	logging.debug('user ID %d searching for %s', user_id, name)
 	find_query = """
 	SELECT
@@ -37,8 +36,8 @@ def find(cur, user_id, name):
 	"""
 	try:
 		logging.debug('user ID %d running FIND query', user_id)
-		cur.execute(find_query, {'user_id':user_id, 'like1':name+'%', 'like2':name+'%', 'user_id2':user_id, 'user_id3':user_id})
-		rows = cur.fetchall()
+		ctx.cur.execute(find_query, {'user_id':user_id, 'like1':name+'%', 'like2':name+'%', 'user_id2':user_id, 'user_id3':user_id})
+		rows = ctx.cur.fetchall()
 		logging.info('user ID %d running FIND query for name %s. %d results found', user_id, name, len(rows))
 	except Exception as exc:
 		logging.error('failed to search for %s, request made by user ID %d\nException: %s', name, user_id, exc)

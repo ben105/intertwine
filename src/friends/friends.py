@@ -1,24 +1,26 @@
 import logging
+
 from intertwine import response
+from intertwine import strings
 
 def single_transaction(func):
 	def inner(*argv, **kwargs):
 		assert(len(argv)>0)
-		cur = argv[0]
-		cur.connection.autocommit = False
+		ctx.cur = argv[0]
+		ctx.cur.connection.autocommit = False
 		success = func(*argv, **kwargs)
 		if success is not None and success == False:
 			logging.error('single transaction failed, and is rolling back')
-			cur.rollback()
+			ctx.cur.rollback()
 		else:
 			logging.debug('single transaction completed')
-			cur.connection.commit()
-		cur.connection.autocommit = True
+			ctx.cur.connection.commit()
+		ctx.cur.connection.autocommit = True
 		return success
 	return inner
 
 
-# def fb_friends(cur, user_id,  fb_list):
+# def fb_friends(ctx.cur, user_id,  fb_list):
 # 	# fb_list is a list of facebook IDs of friends (who have
 # 	# an Intertwine account.
 # 	fb_conditions = ["facebook_id='{}'".format(fb_id) for fb_id in fb_list]
@@ -42,8 +44,8 @@ def single_transaction(func):
 # 	"""
 # 	rows = []
 # 	try:
-# 		cur.execute(query, (user_id, user_id))
-# 		rows = cur.fetchall()
+# 		ctx.cur.execute(query, (user_id, user_id))
+# 		rows = ctx.cur.fetchall()
 # 	except Exception as exc:
 # 		logging.error('exception raised searching for user %d Facebook friends\n%s', user_id, exc)
 # 	if len(rows):
@@ -54,22 +56,26 @@ def single_transaction(func):
 # 		return None
 
 
-def purge_blocked(cur, user_id, blocked_user_id):
+def purge_blocked(ctx, blocked_user_id):
 	delete_query = """
 	DELETE FROM blocked_accounts
 	WHERE
 		accounts_id = %s and
 		blocked_accounts_id = %s;
 	"""
-	cur.execute(delete_query, (user_id, blocked_user_id))
-
+	try:
+		ctx.cur.execute(delete_query, (ctx.user_id, blocked_user_id))
+	except Exception as exc:
+		logging.error('raised exception when user %d tried purging a block on %d\n%s', ctx.user_id, blocked_user_id, str(exc))
+		return response.block(error=strings.SERVER_ERROR, code=500)
+	return response.block()
 
 # Pending Requests
 #
 # This query will retirive the list of friends from whom
 # you have a pending request.
 # It will ignore requests you've previously denied.
-def get_pending_requests(cur, user_id):
+def get_pending_requests(ctx):
 	pending_requests_query = """
 	SELECT
 		accounts.first,
@@ -85,16 +91,16 @@ def get_pending_requests(cur, user_id):
 		friend_requests.requestee_accounts_id = %s;
 	"""
 	try:
-		cur.execute(pending_requests_query, (user_id,))
+		ctx.cur.execute(pending_requests_query, (ctx.user_id,))
 	except Exception as exc:
-		logging.error('exception raised retrieving pending requests for user %d, %s', user_id, exc)
-		return None
-	rows = cur.fetchall()
+		logging.error('exception raised retrieving pending requests for user %d, %s', ctx.user_id, exc)
+		return response.block(error=strings.SERVER_ERROR, code=500)
+	rows = ctx.cur.fetchall()
 	if len(rows):
 		return [{'account_id':row[4], 'first':row[0], 'last':row[1], 'facebook_id':row[2], 'email':row[3]} for row in rows]
 	else:
-		logging.debug('no rows returned for user %d getting pending requests', user_id)
-		return None
+		logging.debug('no rows returned for user %d getting pending requests', ctx.user_id)
+	return response.block()
 
 
 # Friend suggestions
@@ -104,7 +110,7 @@ def get_pending_requests(cur, user_id):
 # the Intertwine database for friend suggestions.
 # Of course, the list of facebook friends is different
 # for each user.
-def fb_friends(cur, user_id, friends_list):
+def fb_friends(ctx, friends_list):
 
 	# TODO:
 	# This is broken because we are showing too much
@@ -138,19 +144,20 @@ def fb_friends(cur, user_id, friends_list):
 	friend_suggestions = friend_suggestions + " and (" + condition_string + ");"
 	# Run the query
 	try:
-		cur.execute(friend_suggestions, tuple(friends_list))
+		ctx.cur.execute(friend_suggestions, tuple(friends_list))
 	except Exception as exc:
-		logging.error('exception raised when retrieving friend suggestions for user %d, %s', user_id, exc)
-		return None
-	rows = cur.fetchall()
+		logging.error('exception raised when retrieving friend suggestions for user %d, %s', ctx.user_id, exc)
+		return response.block(error=strings.SERVER_ERROR, code=500)
+	rows = ctx.cur.fetchall()
+	suggestions = []
 	if len(rows):
-		return [{'first':row[0], 'last':row[1], 'facebook_id':row[2], 'email':row[3]} for row in rows]
+		suggestions = [{'first':row[0], 'last':row[1], 'facebook_id':row[2], 'email':row[3]} for row in rows]
 	else:
-		logging.debug('no rows returned for user %d Facebook friend suggestions', user_id)
-		return None
+		logging.debug('no rows returned for user %d Facebook friend suggestions', ctx.user_id)
+	return response.block(payload=suggestions)
 
 
-def get_friends(cur, user_id):
+def get_friends(ctx):
 	friends_query = """
 	SELECT
 		accounts.first,
@@ -165,18 +172,19 @@ def get_friends(cur, user_id):
 		friends.accounts_id = %s;
 	"""
 	try:
-		cur.execute(friends_query, (user_id,))
+		ctx.cur.execute(friends_query, (ctx.user_id,))
 	except Exception as exc:
-		logging.error('exception raised while trying to retrieve friends for user %d, %s', user_id, exc)
-		return []
-	rows = cur.fetchall()
+		logging.error('exception raised while trying to retrieve friends for user %d, %s', ctx.user_id, exc)
+		return response.block(error=strings.SERVER_ERROR, code=500)
+	rows = ctx.cur.fetchall()
+	friends = []
 	if len(rows):
-		return [{'first':row[0], 'last':row[1], 'facebook_id':row[2], 'email':row[3], 'account_id':str(row[4])} for row in rows]
+		friends = [{'first':row[0], 'last':row[1], 'facebook_id':row[2], 'email':row[3], 'account_id':str(row[4])} for row in rows]
 	else:
-		logging.debug('no rows returned for user %d when retrieving friends list', user_id)
-		return []
+		logging.debug('no rows returned for user %d when retrieving friends list', ctx.user_id)
+	return response.block(payload=friends)
 
-def get_blocked(cur, user_id):
+def get_blocked(ctx):
 	blocked_query = """
 	SELECT
 		accounts.first,
@@ -190,18 +198,19 @@ def get_blocked(cur, user_id):
 		blocked_accounts.accounts_id = %s
 	"""
 	try:
-		cur.execute(blocked_query, (user_id,))
+		ctx.cur.execute(blocked_query, (ctx.user_id,))
 	except Exception as exc:
-		logging.error('raised exception while retrieving list of blocked users for user %d', user_id)
-		return None
-	rows = cur.fetchall()
+		logging.error('raised exception while retrieving list of blocked users for user %d', ctx.user_id)
+		return response.block(error=strings.SERVER_ERROR, code=500)
+	rows = ctx.cur.fetchall()
+	blocked = []
 	if len(rows):
-		return [{'first':row[0], 'last':row[1], 'facebook_id':row[2], 'email':row[3]} for row in rows]
+		blocked = [{'first':row[0], 'last':row[1], 'facebook_id':row[2], 'email':row[3]} for row in rows]
 	else:
-		logging.debug('no rows returned for user %d when retrieving blocked users', user_id)
-		return None
+		logging.debug('no rows returned for user %d when retrieving blocked users', ctx.user_id)
+	return response.block(payload=blocked)
 	
-def deny(cur, user_id, deny_id):
+def deny(ctx, deny_id):
 	deny_query = """
 	INSERT INTO
 		friend_requests
@@ -210,13 +219,13 @@ def deny(cur, user_id, deny_id):
 		(%s, %s, %s);
 	"""
 	try:
-		cur.execute(deny_query, (deny_id, user_id, True))
+		ctx.cur.execute(deny_query, (deny_id, ctx.user_id, True))
 	except Exception as exc:
-		logging.error('raised an exception while %d tried denying a friend request from %d', user_id, deny_id)
+		logging.error('raised an exception while %d tried denying a friend request from %d', ctx.user_id, deny_id)
 		return response.block(error=strings.SERVER_ERROR, code=500)
 	return response.block()
 
-def get_denied(cur, user_id):
+def get_denied(ctx):
 	denied_query = """
 	SELECT
 		accounts.first,
@@ -231,27 +240,25 @@ def get_denied(cur, user_id):
 		friend_requests.requestee_accounts_id = %s;
 	"""
 	try:
-		cur.execute(denied_query, (user_id,))
+		ctx.cur.execute(denied_query, (ctx.user_id,))
 	except Exception as exc:
-		logging.error('raised exception while retrieving list of denied users for user %d', user_id)
-		return None
-	rows = cur.fetchall()
+		logging.error('raised exception while retrieving list of denied users for user %d', ctx.user_id)
+		return response.block(error=strings.SERVER_ERROR, code=500)
+	rows = ctx.cur.fetchall()
+	denied = []
 	if len(rows):
-		return [{'first':row[0], 'last':row[1], 'facebook_id':row[2], 'email':row[3]} for row in rows]
+		denied = [{'first':row[0], 'last':row[1], 'facebook_id':row[2], 'email':row[3]} for row in rows]
 	else:
 		logging.debug('no rows returned for user %d when retrieving list of denied users')
-		return None
+	return response.block(payload=denied)
 
 
-def send_request(cur, requester, requestee):
+def send_request(ctx, requestee):
+	requester = ctx.user_id
 	logging.debug('%d attempting to send request to %d', requester, requestee)
 	if not requester or not requestee:
-		error_block = {
-			'error':'A problem has occured on the server, please try again later.',
-			'success':False
-		}
 		logging.error('missing ID in parameters provided to the "send_request" method')
-		return error_block
+		return response.block(error=strings.VALUE_ERROR, code=500)
 	insert_query = """
 	INSERT INTO friend_requests
 		(requester_accounts_id, requestee_accounts_id)
@@ -259,22 +266,16 @@ def send_request(cur, requester, requestee):
 		(%s, %s);
 	"""
 	try:
-		cur.execute(insert_query, (requester, requestee))
+		ctx.cur.execute(insert_query, (requester, requestee))
 	except Exception as exc:
 		logging.error('raised an exception while %d trying to send a friend request to %d', requester, requestee)
-		error_block = {
-			'error':'A problem has occured on the server, please try again later.',
-			'success':False
-		}
-		return error_block
+		return response.block(error=strings.SERVER_ERROR, code=500)
 	logging.debug('%d sent friend request to %d', requester, requestee)
-	success_block = {
-		'success':True
-	}
-	return success_block
+	return response.block()
 
 @single_transaction	
-def accept_request(cur, requestee, requester):
+def accept_request(ctx, requester):
+	requestee = ctx.user_id
 	# First step, add the requester as a friend
 	# This is actually a two step motion in-of-itself, because we add the mirror of the two.
 	# For example:
@@ -288,16 +289,16 @@ def accept_request(cur, requestee, requester):
 	"""
 	# Attempt to insert the first row.
 	try:
-		cur.execute(insert_query, (requestee, requester)) #Requestee first
+		ctx.cur.execute(insert_query, (requestee, requester)) #Requestee first
 	except Exception as exc:
 		logging.error('exception raised trying to commit friendship between %d and %d', requestee, requester)
-		return False
+		return response.block(error=strings.SERVER_ERROR, code=500)
 	# Attempt to insert the second row.
 	try:
-		cur.execute(insert_query, (requester, requestee)) #Requester first
+		ctx.cur.execute(insert_query, (requester, requestee)) #Requester first
 	except Exception as exc:
 		logging.error('exception raised trying to commit friendship bewteen %d and %d', requestee, requester)
-		return False
+		return response.block(error=strings.SERVER_ERROR, code=500)
 	# Now remove the request from the friend_requests table
 	delete_query = """
 	DELETE FROM
@@ -309,12 +310,14 @@ def accept_request(cur, requestee, requester):
 		requester_accounts_id = %s) ;
 	""" # We want to delete both sides, incase one person denied the other
 	try:
-		cur.execute(delete_query, (requestee, requester, requester, requestee))
+		ctx.cur.execute(delete_query, (requestee, requester, requester, requestee))
 	except Exception as exc:
 		logging.error('exception raised trying to remove friend request entry, during an accept_request')
-		return False
+		return response.block(error=strings.SERVER_ERROR, code=500)
+	return response.block()
 
-def decline_request(cur, requestee, requester):
+def decline_request(ctx, requester):
+	requestee = ctx.user_id
 	update_query = """
 	UPDATE friend_requests SET
 		denied = true
@@ -323,27 +326,27 @@ def decline_request(cur, requestee, requester):
 		requester_accounts_id=%s;
 	"""
 	try:
-		cur.execute(update_query, (requestee, requester))
+		ctx.cur.execute(update_query, (requestee, requester))
 	except Exception as exc:
 		logging.error('exception raised when %d tried to decline friend request from %d, %s', requestee, requester, exc)
 		return response.block(error=strings.SERVER_ERROR, code=500)
 	return response.block()
 
-def remove_friend(cur, user_id, friend_user_id):
+def remove_friend(ctx, friend_user_id):
 	delete_friend_query = """
 	DELETE FROM friends WHERE
 		(accounts_id=%s and friend_accounts_id=%s) or
 		(accounts_id=%s and friend_accounts_id=%s);
 	"""
 	try:
-		cur.execute(delete_friend_query, (user_id, friend_user_id, friend_user_id, user_id))
+		ctx.cur.execute(delete_friend_query, (ctx.user_id, friend_user_id, friend_user_id, ctx.user_id))
 	except Exception as exc:
-		logging.error('exception raised when %d tried to remove friend %d, %s', user_id, friend_user_id, exc)
+		logging.error('exception raised when %d tried to remove friend %d, %s', ctx.user_id, friend_user_id, exc)
 		return response.block(error=strings.SERVER_ERROR, code=500)
 	return response.block()
 
 @single_transaction
-def block(cur, user_id, block_user_id):
+def block(ctx, block_user_id):
 
 	# If this person is your friend,
 	# they should be removed as your friend first.
@@ -357,11 +360,11 @@ def block(cur, user_id, block_user_id):
 		friend_accounts_id=%s;
 	"""
 	try:
-		cur.execute(find_friend_query, (user_id, block_user_id))
+		ctx.cur.execute(find_friend_query, (ctx.user_id, block_user_id))
 	except Exception as exc:
-		logging.error('exception raised when trying to determine if user %d is friends with %d, %s', user_id, block_user_id, exc)
-		return False
-	rows = cur.fetchall()
+		logging.error('exception raised when trying to determine if user %d is friends with %d, %s', ctx.user_id, block_user_id, exc)
+		return response.block(error=strings.SERVER_ERROR, code=500)
+	rows = ctx.cur.fetchall()
 	# If a row is returned, then we should first delete
 	# the record of these two users being friends.
 	# Keep in mind.
@@ -372,7 +375,7 @@ def block(cur, user_id, block_user_id):
 		# We don't want to call the pre-defined 'remove_friend'
 		# function because that will cause a premature commitment
 		# of this transaction. Instead, we continue our own query
-		# within this current transaction, which we control when we
+		# within this ctx.current transaction, which we control when we
 		# commit. And because of the @single_transaction decorator,
 		# this transaction will be committed once the scope ends.
 		delete_friend_query = """
@@ -382,10 +385,10 @@ def block(cur, user_id, block_user_id):
 			(accounts_id=%s and friend_accounts_id=%s);
 		"""
 		try:
-			cur.execute(delete_friend_query, (user_id, block_user_id, block_user_id, user_id))
+			ctx.cur.execute(delete_friend_query, (ctx.user_id, block_user_id, block_user_id, ctx.user_id))
 		except Exception as exc:
-			logging.error('exception raised when trying to delete users %d and %d, %s', user_id, block_user_id, exc)
-			return False
+			logging.error('exception raised when trying to delete users %d and %d, %s', ctx.user_id, block_user_id, exc)
+			return response.block(error=strings.SERVER_ERROR, code=500)
 	# We can add this user to the block table now.
 	block_user_query = """
 	INSERT INTO blocked_accounts
@@ -394,7 +397,8 @@ def block(cur, user_id, block_user_id):
 		(%s, %s);
 	"""
 	try:
-		cur.execute(block_user_query, (user_id, block_user_id))
+		ctx.cur.execute(block_user_query, (ctx.user_id, block_user_id))
 	except Exception as exc:
-		logging.error('exception raised when inserting blocked users %d and %d, %s', user_id, block_user_id, exc)
-		return False
+		logging.error('exception raised when inserting blocked users %d and %d, %s', ctx.user_id, block_user_id, exc)
+		return response.block(error=strings.SERVER_ERROR, code=500)
+	return response.block()

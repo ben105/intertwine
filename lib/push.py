@@ -3,16 +3,10 @@ import binascii
 import os
 import psycopg2
 
-def device_token(cur, user_id):
-	token = None
-	try:
-		cur.execute("SELECT token FROM device_tokens WHERE accounts_id=%s;", (user_id,))
-	except:
-		return token
-	row = cur.fetchone()
-	return row[0]
+from intertwine import devices
 
-def name(cur, user_id):
+
+def name(ctx):
 	try:
 		cur.execute("SELECT first, last FROM accounts WHERE id=%s", (user_id,))
 	except Exception as exc:
@@ -21,10 +15,12 @@ def name(cur, user_id):
 	row = cur.fetchone()
 	return "{} {}".format(row[0], row[1])
 
-def push_notification(cur, user_id, msg):
-	deviceToken = str(device_token(cur, user_id))
+def push_notification(ctx, msg):
+	deviceToken = devices.get_token(ctx)
 	if not deviceToken:
-		print("Error getting device token!")
+		logging.error(
+			'error getting device token for user %d\n \
+			Push notification won\'t be sent.', ctx.user_id)
 		return
 	thePayLoad = {
 	     'aps': {
