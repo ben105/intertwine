@@ -1,6 +1,5 @@
 import unittest
 import intertwine
-import util
 import time
 
 import intertwine.testdb
@@ -11,10 +10,6 @@ from intertwine import strings
 
 
 cur = None
-
-def cur(cur):
-	global cur
-	cur = cur
 
 class TestAccounts(unittest.TestCase):
 	"""TestAccounts will provide the unit test framework for testing

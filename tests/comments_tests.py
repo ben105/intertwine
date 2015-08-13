@@ -6,6 +6,8 @@ from intertwine.activity import comments
 from intertwine.activity import events
 from intertwine.friends import friends
 
+cur = None
+
 class TestComments(unittest.TestCase):
 
 	def setUp(self):

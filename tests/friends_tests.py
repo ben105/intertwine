@@ -9,9 +9,6 @@ from intertwine import strings
 
 cur = None
 
-def cursor(cursor):
-	global cur
-	cur = cursor
 
 # IMPORTANT:
 # Things to think about when testing the friends.py module functions.

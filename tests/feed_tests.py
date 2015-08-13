@@ -5,6 +5,7 @@ from intertwine.friends import friends
 from intertwine.accounts import accounts
 from intertwine import strings
 
+cur = None
 
 class TestFeed(unittest.TestCase):
 

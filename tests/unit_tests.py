@@ -18,8 +18,8 @@ def distribute_cur(cur):
 		intertwine.search_tests
 	]
 	for module in unittest_modules:
-		if getattr(module, 'cursor', None) is not None:
-			module.cursor(cur)
+		if getattr(module, 'cur', None) is not None:
+			module.cur = cur
 
 def suite():
     """Gather all the unit tests from the other modules.
