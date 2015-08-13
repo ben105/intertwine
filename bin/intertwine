@@ -16,6 +16,8 @@ from intertwine.activity import comments
 from intertwine.activity import activity
 from intertwine import push
 from intertwine import log_manager
+from intertwine import context
+
 
 log_manager.EnableLogging()
 
@@ -29,19 +31,25 @@ except Exception as exc:
 	print(exc)
 	quit()
 
-def context():
-	return conn.cursor()
+def context(request):
+	user_id = int(request.headers.get('user_id'))
+	session_id = request.headers.get('session_id')
+	first = request.headers.get('first')
+	last = request.headers.get('last')
+	ctx = context.SecurityContext(request, conn.cursor(), user_id, session_id)
+	ctx.first = first
+	ctx.last = last
+	return ctx
 
 @app.route('/api/v1/comment/<int:event_id>', methods=['GET'])
 def comment_get(event_id):
-	cur = context()
-	result = comments.get_comments(cur, event_id)
+	ctx = context(request)
+	result = comments.get_comments(ctx, event_id)
 	return json.dumps(result)
 
 @app.route('/api/v1/comment', methods=['POST'])
 def comment_handler():
-	cur = context()
-	user_id = int(request.headers.get("user_id"))
+	ctx = context(request)
 	body = json.loads(request.data)
 	result = {}
 	comment = body["comment"]
@@ -54,16 +62,13 @@ def comment_handler():
 
 @app.route('/api/v1/activity', methods=['GET'])
 def activities():
-	import pdb; pdb.set_trace()
-	cur = context()
-	user_id = int(request.headers.get("user_id"))
+	ctx = context(request)
 	results = activity.get_activity(cur, user_id)
 	return json.dumps(results)
 
 @app.route('/api/v1/device_token', methods=['POST'])
 def set_device_token():
-	cur = context()
-	user_id = int(request.headers.get("user_id"))
+	ctx = context(request)
 	try:
 		token_data = request.data
 	except Exception as exc:
@@ -87,8 +92,7 @@ def set_device_token():
 
 @app.route('/api/v1/events', methods=['GET', 'POST', 'DELETE'])
 def event_api():
-	cur = context()
-	user_id = request.headers.get("user_id")
+	ctx = context(request)
 	if request.method == "GET":
 		try:
 			all_events = events.get_events(cur, user_id)
@@ -124,8 +128,7 @@ def event_api():
 
 @app.route('/api/v1/search/<name>', methods=['GET'])
 def search(name):
-	cur = context()
-	user_id = request.headers.get("user_id")
+	ctx = context(request)
 	data = searchfind(cur, user_id, name)
 	return json.dumps(data)
 
@@ -145,7 +148,7 @@ def sign_in():
 	The failure of this request will result in a JSON dictionary
 	posed as {'error':'Invalid login credentials'}
 	"""
-	cur = context()
+	ctx = context(request)
 	email = request.form.get('email')
 	password = request.form.get('password')
 	result = accounts.sign_in_email(cur, email, password)
@@ -153,7 +156,7 @@ def sign_in():
 
 @app.route('/api/v1/adduser', methods=['POST'])
 def add_user():
-	cur = context()
+	ctx = context(request)
 	# Errors dict to store all errors
 	errors = dict()
 	# Extract the POST data
@@ -221,10 +224,9 @@ def friendrequests():
 	requests, while a post will initiate
 	a friend request.
 	"""
-	cur = context()
+	ctx = context(request)
 	data = []
 	if request.method == "GET":
-		user_id = int(request.headers.get('user_id'))
 		data = friends.get_pending_requests(cur, user_id)
 	elif request.method == "POST":
 		requester_id = int(request.headers.get('user_id'))
@@ -235,8 +237,7 @@ def friendrequests():
 
 @app.route('/api/v1/friends', methods=['POST'])
 def get_friends():
-	cur = context()
-	user_id = request.headers.get('user_id')
+	ctx = context(request)
 	if not user_id:
 		return json.dumps([])
 	user_id = int(user_id)
@@ -249,7 +250,7 @@ def deny():
 	of denied friends, with the GET method, or 
 	deny a friend request with the POST method.
 	"""
-	cur = context()
+	ctx = context(request)
 	if request.method == "POST":
 		user_id = request.headers.get('user_id')
 		session_key = request.headers.get('session_key')
@@ -261,7 +262,7 @@ def deny():
 
 @app.route('/api/v1/send_friend_request', methods=['POST'])
 def send_request():
-	cur = context()
+	ctx = context(request)
 	user_id = int(request.form.get('user_id'))
 	friend_id = int(request.form.get('friend_id'))
 	data = friendssend_request(cur, user_id, friend_id)
@@ -269,7 +270,7 @@ def send_request():
 
 @app.route('/api/v1/friend_accept', methods=['POST'])
 def friend_accept():
-	cur = context()
+	ctx = context(request)
 	user_id = request.headers.get('user_id')
 	session_key = request.headers.get('session_key')
 	friend_id = request.form.get('friend_id')
@@ -279,7 +280,7 @@ def friend_accept():
 
 @app.route('/api/v1/facebook_friends', methods=['POST'])
 def facebook_friends():
-	cur = context()
+	ctx = context(request)
 	user_id = request.headers.get('user_id')
 	session_key = request.headers.get('session_key')
 	facebook_friends = json.loads(request.data)
