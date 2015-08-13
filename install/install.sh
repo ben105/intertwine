@@ -22,7 +22,7 @@ ln -s /opt/intertwine/ /usr/lib/python2.7/intertwine 2> /dev/null
 
 # Copy all the module containers into this 
 # new parent directory.
-cp -R "${src_dir}/." "${lib_dir}/." /opt/intertwine/
+cp -R "${src_dir}/." "${lib_dir}/." "${cur_dir}/../db/testdb.py" /opt/intertwine/
 for f in `ls $src_dir`
 do
 	touch "/opt/intertwine/${f}/__init__.py"
