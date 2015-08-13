@@ -26,6 +26,7 @@ k_err_server_problem = 'There was a problem with the server validating your requ
 #
 # First and Last Name Errors
 k_err_char_limit = 'Please enter a name with less than {} characters'.format(char_limit)
+k_err_min_chars = 'Cannot enter an empty string'
 k_err_invalid_characters = 'Use only letters for your name'
 #
 # Password Errors
@@ -51,6 +52,8 @@ def invalid_name(name):
 	Return value:
 	Either an error string, or a None value.
 	"""
+	if not name:
+		return k_err_min_chars
 	if len(name) > char_limit:
 		logging.warning('validation warning, "%s" name greater than character limit', name)
 		return k_err_char_limit
@@ -70,6 +73,8 @@ def invalid_password(password):
 	Return value:
 	Either an error string, or a None value.
 	"""
+	if not password:
+		return k_err_min_chars
 	if len(password) < pass_min_length:
 		logging.warning('validation warning, password is less than minimum length (%d)', pass_min_length)
 		return k_err_password_size
@@ -90,6 +95,8 @@ def invalid_email(email):
 	Return value:
 	Either an error string, or a None value.
 	"""
+	if not email:
+		return k_err_min_chars
 	if not validate_email.validate_email(email, check_mx=True):
 		logging.warning('validation warning, failed to validate email %s', email)
 		return k_err_invalid_email
@@ -105,6 +112,8 @@ def duplicate_email(ctx, email):
 	Return value:
 	Either an error string, or a None value.
 	"""
+	if not email:
+		return k_err_min_chars
 	try:
 		logging.info("checking for duplicate account %s", email)
 		ctx.cur.execute("SELECT * FROM accounts WHERE email=%s", (email,))
