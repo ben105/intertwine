@@ -29,7 +29,7 @@ def salt_and_hash(password, salt):
 		raise ValueError
 	return hashlib.sha256(password + salt).hexdigest()
 
-def create_email_account(ctx, email, password):
+def create_email_account(ctx, email, first, last, password):
 	"""When the user tries to create an email account, we
 	must verify that they have entered correct information.
 	We verify this on the server side, because otherwise a 
@@ -46,8 +46,6 @@ def create_email_account(ctx, email, password):
 	  For this function, the payload will include the new Intertwine
 	  account ID (user_id).
 	"""
-	first = ctx.first
-	last = ctx.last
 	if not email:
 		logging.error('no email provided for creating an email account!')
 		return response.block(error=strings.VALUE_ERROR, code=500)
@@ -84,7 +82,7 @@ def create_email_account(ctx, email, password):
 	})
 
 
-def sign_in_facebook(ctx, facebook_id):
+def sign_in_facebook(ctx, first, last, facebook_id):
 	"""This method should be envoked when the user is 
 	signing on via a Facebook account. The actual 
 	authentication and authorization is done on Facebook's
@@ -99,8 +97,6 @@ def sign_in_facebook(ctx, facebook_id):
 	  Python dictionary containing success status, error and
 	  error codes, and optional payload.
 	"""
-	first = ctx.first
-	last = ctx.last
 	if not facebook_id:
 		logging.error('no Facebook ID provided for signing in via Facebook!')
 		return response.block(error=strings.VALUE_ERROR, code=500)
@@ -147,13 +143,15 @@ def sign_in_facebook(ctx, facebook_id):
 	})
 	
 
-def sign_in_email(ctx, email, password):
+def sign_in_email(ctx, email, first, last, password):
 	"""This method should be envoked when the user is
 	attempting to sign into their Intertwine account
 	via their email and password credential combination.
 
 	Keyword arguments:
 	  ctx - Intertwine context
+	  first - user's first name
+	  last - user's last name
 	  email - user's email address
 	  password - user's password
 
@@ -165,7 +163,7 @@ def sign_in_email(ctx, email, password):
 		logging.error('no email provided for signing into email account')
 		return response.block(error=strings.VALUE_ERROR, code=500)
 	if not password:
-		logging.error('password is missing for %s %s (%s)', ctx.first, ctx.last, email)
+		logging.error('password is missing for %s %s (%s)', first, last, email)
 		return response.block(error=strings.VALUE_ERROR, code=500)
 
 	# Attempt to look the user up in the database. They should exists
@@ -205,7 +203,7 @@ def sign_in_email(ctx, email, password):
 	return response.block(error=strings.INVALID_LOGIN, code=401)
 
 
-def user_info(ctx, user_id):
+def user_info(ctx):
 	"""User info will get the basic information about a 
 	given account (first and last name, email, and facebook
 	ID).
@@ -223,7 +221,7 @@ def user_info(ctx, user_id):
 	"""
 	query = 'SELECT first, last, email, facebook_id FROM accounts WHERE accounts.id = %s;'
 	try:
-		ctx.cur.execute(query, (user_id,))
+		ctx.cur.execute(query, (ctx.user_id,))
 	except Exception as exc:
 		logging.error('exception raised while retrieving creator %d', creator_id)
 		return None
@@ -233,7 +231,7 @@ def user_info(ctx, user_id):
 	email = row[2]
 	facebook_id = row[3]
 	return {
-		'id': user_id,
+		'id': ctx.user_id,
 		'first':first,
 		'last':last,
 		'email':email,

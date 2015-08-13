@@ -5,9 +5,6 @@ src_dir="${cur_dir}/../src"
 lib_dir="${cur_dir}/../lib"
 
 
-# We need to set up the database.
-
-
 # If Intertwine is currently running, shut it down.
 status intertwine 2> /dev/null | grep "running" && stop intertwine
 

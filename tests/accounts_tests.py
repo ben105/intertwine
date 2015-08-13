@@ -11,10 +11,20 @@ from intertwine import strings
 
 cur = None
 
+class FalseSecurityContext(object):
+	def __init__(self, cur, user_id, first, last):
+		self.cur = cur
+		self.user_id = user_id
+		self.first = first
+		self.last = last
+
 class TestAccounts(unittest.TestCase):
 	"""TestAccounts will provide the unit test framework for testing
 	the accounts module.
 	"""	
+
+	def setUp(self):
+		self.ctx = FalseSecurityContext(cur, None, '', '')
 
 	def tearDown(self):
 		cur.execute("DELETE FROM accounts;")
@@ -55,35 +65,35 @@ class TestAccounts(unittest.TestCase):
 	
 	def test_empty_email_create_email(self):
 		resp = accounts.create_email_account(
-				cur, email='', first='Ben', last='Rooke', password='password1')
+				self.ctx, email='', first='Ben', last='Rooke', password='password1')
 		self.assertFalse(resp['success'])
 		self.assertEqual(resp['error'], strings.VALUE_ERROR)
 
 	def test_empty_first_create_email(self):
 		resp = accounts.create_email_account(
-				cur, email='ben_rooke@icloud.com', first='', last='Rooke', password='password1')
+				self.ctx, email='ben_rooke@icloud.com', first='', last='Rooke', password='password1')
 		self.assertFalse(resp['success'])
 		self.assertEqual(resp['error'], strings.VALUE_ERROR)
 
 	def test_empty_last_create_email(self):
 		resp = accounts.create_email_account(
-				cur, email='ben_rooke@icloud.com', first='Ben', last='', password='password1')
+				self.ctx, email='ben_rooke@icloud.com', first='Ben', last='', password='password1')
 		self.assertFalse(resp['success'])
 		self.assertEqual(resp['error'], strings.VALUE_ERROR)
 
 	def test_empty_password_create_email(self):
 		resp = accounts.create_email_account(
-				cur, email='ben_rooke@icloud.com', first='Ben', last='Rooke', password='')
+				self.ctx, email='ben_rooke@icloud.com', first='Ben', last='Rooke', password='')
 		self.assertFalse(resp['success'])
 		self.assertEqual(resp['error'], strings.VALUE_ERROR)
 
 	def test_duplicate_email_account(self):
-		accounts.create_email_account(cur, 'ben_rooke@icloud.com', 'Ben', 'Rooke', 'password1')
-		cur.connection.commit()
-		cur.execute('SELECT * FROM accounts WHERE email=%s', ('ben_rooke@icloud.com',))
-		rows = cur.fetchall()
+		accounts.create_email_account(self.ctx.cur, 'ben_rooke@icloud.com', 'Ben', 'Rooke', 'password1')
+		self.ctx.cur.connection.commit()
+		self.ctx.cur.execute('SELECT * FROM accounts WHERE email=%s', ('ben_rooke@icloud.com',))
+		rows = self.ctx.cur.fetchall()
 		self.assertEqual(len(rows), 1)
-		resp = accounts.create_email_account(cur, 'ben_rooke@icloud.com', 'Ben', 'Rooke', 'password1')
+		resp = accounts.create_email_account(self.ctx, 'ben_rooke@icloud.com', 'Ben', 'Rooke', 'password1')
 		self.assertFalse(resp['success'])
 		self.assertEqual(resp['error'], strings.SERVER_ERROR)
 
@@ -93,7 +103,7 @@ class TestAccounts(unittest.TestCase):
 		facebook_id = '1301290360'
 		first = 'Ben'
 		last = 'Rooke'
-		resp = accounts.sign_in_facebook(cur, facebook_id, first, last)
+		resp = accounts.sign_in_facebook(self.ctx, facebook_id, first, last)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
 		self.assertIsNotNone(resp['payload']['user_id'])
@@ -101,7 +111,7 @@ class TestAccounts(unittest.TestCase):
 	def test_empty_facebook_login_fb_id(self):
 		first = 'Ben'
 		last = 'Rooke'
-		resp = accounts.sign_in_facebook(cur, '', first, last)
+		resp = accounts.sign_in_facebook(self.ctx, '', first, last)
 		self.assertFalse(resp['success'])
 		self.assertEqual(resp['error'], strings.VALUE_ERROR)
 		# self.assertEqual(resp['error'], <some error string>)
@@ -111,12 +121,12 @@ class TestAccounts(unittest.TestCase):
 		first = 'Ben'		
 		last = 'Rooke'
 		# Empty first name.
-		resp = accounts.sign_in_facebook(cur, facebook_id, '', last)
+		resp = accounts.sign_in_facebook(self.ctx, facebook_id, '', last)
 		self.assertFalse(resp['success'])
 		self.assertEqual(resp['error'], strings.VALUE_ERROR)
 		#self.assertEqual(resp['error'], <some error string> )
 		# Empty last name.
-		resp = accounts.sign_in_facebook(cur, facebook_id, first, '')
+		resp = accounts.sign_in_facebook(self.ctx, facebook_id, first, '')
 		self.assertFalse(resp['success'])
 		self.assertEqual(resp['error'], strings.VALUE_ERROR)
 
@@ -125,7 +135,7 @@ class TestAccounts(unittest.TestCase):
 		first = 'Ben'		
 		last = 'Rooke'
 		for i in range(5):
-			resp = accounts.sign_in_facebook(cur, facebook_id, first, last)
+			resp = accounts.sign_in_facebook(self.ctx, facebook_id, first, last)
 			self.assertTrue(resp['success'])
 			self.assertIsNone(resp['error'])
 			self.assertIsNotNone(resp['payload']['user_id'])
@@ -135,7 +145,7 @@ class TestAccounts(unittest.TestCase):
 		first = 'Ben'		
 		last = 'Rooke'
 		for i in range(5):
-			resp = accounts.sign_in_facebook(cur, facebook_id, first, last)
+			resp = accounts.sign_in_facebook(self.ctx, facebook_id, first, last)
 			self.assertTrue(resp['success'])
 			self.assertIsNone(resp['error'])
 			self.assertIsNotNone(resp['payload']['user_id'])
@@ -145,38 +155,38 @@ class TestAccounts(unittest.TestCase):
 	# Test the sign in email feature.
 
 	def test_sign_in_email(self):
-		accounts.create_email_account(cur, 'ben_rooke@icloud.com', 'Ben', 'Rooke', 'password1')
-		resp = accounts.sign_in_email(cur, 'ben_rooke@icloud.com', 'password1')
+		accounts.create_email_account(self.ctx, 'ben_rooke@icloud.com', 'Ben', 'Rooke', 'password1')
+		resp = accounts.sign_in_email(self.ctx, 'ben_rooke@icloud.com', 'password1')
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
 
 	def test_sign_in_multiple_times(self):
-		accounts.create_email_account(cur, 'ben_rooke@icloud.com', 'Ben', 'Rooke', 'password1')
+		accounts.create_email_account(self.ctx, 'ben_rooke@icloud.com', 'Ben', 'Rooke', 'password1')
 		for i in range(5):
-			resp = accounts.sign_in_email(cur, 'ben_rooke@icloud.com', 'password1')
+			resp = accounts.sign_in_email(self.ctx, 'ben_rooke@icloud.com', 'password1')
 			self.assertTrue(resp['success'])
 			self.assertIsNone(resp['error'])
-		cur.execute('DELETE FROM accounts WHERE email = %s;', ('ben_rooke@icloud.com',))
-		cur.connection.commit()
-		resp = accounts.sign_in_email(cur, 'ben_rooke@icloud.com', 'password1')
+		self.ctx.cur.execute('DELETE FROM accounts WHERE email = %s;', ('ben_rooke@icloud.com',))
+		self.ctx.cur.connection.commit()
+		resp = accounts.sign_in_email(self.ctx, 'ben_rooke@icloud.com', 'password1')
 		self.assertFalse(resp['success'])
 		self.assertEqual(resp['error'], strings.INVALID_LOGIN)
 
 	def test_sign_in_invalid_credentials(self):
-		accounts.create_email_account(cur, 'ben_rooke@icloud.com', 'Ben', 'Rooke', 'password1')
-		resp = accounts.sign_in_email(cur, 'ben@icloud.com', 'Ben', 'Rooke', 'password1')
+		accounts.create_email_account(self.ctx, 'ben_rooke@icloud.com', 'Ben', 'Rooke', 'password1')
+		resp = accounts.sign_in_email(self.ctx, 'ben@icloud.com', 'Ben', 'Rooke', 'password1')
 		self.assertFalse(resp['success'])
 		self.assertEqual(resp['error'], strings.INVALID_LOGIN)
-		resp = accounts.sign_in_email(cur, 'ben_rooke@icloud.com', 'Ben', 'Rooke', 'incorrect_password')
+		resp = accounts.sign_in_email(self.ctx, 'ben_rooke@icloud.com', 'Ben', 'Rooke', 'incorrect_password')
 		self.assertFalse(resp['success'])
 		self.assertEqual(resp['error'], strings.INVALID_LOGIN)
 
 	def test_sign_in_missing_email(self):
-		resp = accounts.sign_in_email(cur,'', 'password')
+		resp = accounts.sign_in_email(self.ctx,'', 'Ben', 'Rooke', 'password')
 		self.assertFalse(resp['success'])
 		self.assertIsNotNone(resp['error'])
 		self.assertEqual(resp['error'], strings.VALUE_ERROR)
-		resp = accounts.sign_in_email(cur, 'ben_rooke@icloud.com', '')
+		resp = accounts.sign_in_email(self.ctx, 'ben_rooke@icloud.com', 'Ben', 'Rooke', '')
 		self.assertFalse(resp['success'])
 		self.assertEqual(resp['error'], strings.VALUE_ERROR)
 
@@ -189,24 +199,24 @@ class TestAccounts(unittest.TestCase):
 
 	def test_user_info(self):
 		resp = accounts.create_email_account(
-			cur, email='ben_rooke@icloud.com', first='Ben', last='Rooke', password='password1')
+			self.ctx, email='ben_rooke@icloud.com', first='Ben', last='Rooke', password='password1')
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
 		email_id = resp['payload']['user_id']
 
-		resp = accounts.sign_in_facebook(cur, '1301290360', 'Alex', 'Jaczak')
+		resp = accounts.sign_in_facebook(self.ctx, '1301290360', 'Alex', 'Jaczak')
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
 		facebook_id = resp['payload']['user_id']
 
-		info = accounts.user_info(cur, email_id)
+		info = accounts.user_info(self.ctx, email_id)
 		self.assertEqual(info['id'], email_id)
 		self.assertEqual(info['first'], 'Ben')
 		self.assertEqual(info['last'], 'Rooke')
 		self.assertEqual(info['email'], 'ben_rooke@icloud.com')
 		self.assertIsNone(info['facebook_id'])
 
-		info = accounts.user_info(cur, facebook_id)
+		info = accounts.user_info(self.ctx, facebook_id)
 		self.assertEqual(info['id'], facebook_id)
 		self.assertEqual(info['first'], 'Ben')
 		self.assertEqual(info['last'], 'Rooke')
@@ -270,7 +280,7 @@ class TestAccounts(unittest.TestCase):
 		self.assertIsNone(resp['error'])
 
 	def test_register_duplicate_email(self):
-		accounts.create_email_account(cur, 'ben_rooke@icloud.com', 'Ben', 'Rooke')
+		accounts.create_email_account(self.ctx, 'ben_rooke@icloud.com', 'Ben', 'Rooke')
 		isDupe = register.duplicate_email('observer105@gmail.com') # Not in the database
 		self.assertFalse(isDupe)
 		isDupe = register.duplicate_email('ben_rooke@icloud.com')
@@ -283,28 +293,28 @@ class TestAccounts(unittest.TestCase):
 	# - we see more relevant people at the top
 
 	def test_find_with_success(self):
-		resp = accounts.create_email_account(cur, 'ben_rooke@icloud.com', 'Ben', 'Rooke')
+		resp = accounts.create_email_account(self.ctx, 'ben_rooke@icloud.com', 'Ben', 'Rooke', 'password1')
 		user_id = resp['payload']['user_id']
-		accounts.create_email_account(cur, 'amulcahy@scu.edu', 'Alex', 'Mulcahy')
-		accounts.sign_in_facebook(cur, '1301290360', 'Alex', 'Jaczak')
+		accounts.create_email_account(self.ctx, 'amulcahy@scu.edu', 'Alex', 'Mulcahy' , 'password2')
+		accounts.sign_in_facebook(self.ctx, '1301290360', 'Alex', 'Jaczak')
 		
-		results = search.find(cur, user_id, 'Alex')
+		results = search.find(self.ctx, 'Alex')
 		self.assertEqual(len(results), 2)
 		names = [result['first'] for result in results]
 		self.assertTrue(all(map(lambda x: x == 'Alex', names)))
 		
-		results = search.find(cur, user_id, 'alex')
+		results = search.find(self.ctx, 'alex')
 		self.assertEqual(len(results), 2)
 		names = [result['first'] for result in results]
 		self.assertTrue(all(map(lambda x: x == 'Alex', names)))
 
-		results = search.find(cur, user_id, 'alex mulcahy')
+		results = search.find(self.ctx, 'alex mulcahy')
 		self.assertEqual(len(results), 1)
 		result = results[0]
 		name = "{} {}".format(result['first'], result['last'])
 		self.assertEqual(name, 'Alex Mulcahy')
 
-		results = search.find(cur, user_id, 'Bobby')
+		results = search.find(self.ctx, 'Bobby')
 		self.assertEqual(len(results), 0)
 		
 
