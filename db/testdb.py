@@ -38,7 +38,7 @@ def start(db_name='testdb'):
 	"""
 	# Sign in with intertwine user, who does have permission
 	# to create databases.
-	conn = psycopg2.connect('user=intertwine password=intertwine')
+	conn = psycopg2.connect('dbname=intertwine host=intertwine.cntms98hv39g.us-west-2.rds.amazonaws.com user=intertwine password=intertwine')
 	cur = conn.cursor()
 	cur.connection.autocommit = True
 	try:
@@ -49,7 +49,7 @@ def start(db_name='testdb'):
 		cur.execute('CREATE DATABASE {};'.format(db_name,))
 	# Initialize the database with the script to build the schema.
 	sqlscript = 'schema.sql'
-	sqlscript_path = os.path.join('/home/calgrove/intertwine', sqlscript)
+	sqlscript_path = os.path.join('/home/calgrove/intertwine/db', sqlscript)
 	init(cur, sqlscript_path)
 	
 	return cur
