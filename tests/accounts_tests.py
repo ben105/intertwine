@@ -168,7 +168,7 @@ class TestAccounts(unittest.TestCase):
 			self.assertIsNone(resp['error'])
 		self.ctx.cur.execute('DELETE FROM accounts WHERE email = %s;', ('ben_rooke@icloud.com',))
 		self.ctx.cur.connection.commit()
-		resp = accounts.sign_in_email(self.ctx, 'ben_rooke@icloud.com', 'password1')
+		resp = accounts.sign_in_email(self.ctx, 'ben_rooke@icloud.com', 'Ben', 'Rooke', 'password1')
 		self.assertFalse(resp['success'])
 		self.assertEqual(resp['error'], strings.INVALID_LOGIN)
 
@@ -281,9 +281,9 @@ class TestAccounts(unittest.TestCase):
 
 	def test_register_duplicate_email(self):
 		accounts.create_email_account(self.ctx, 'ben_rooke@icloud.com', 'Ben', 'Rooke', 'password1')
-		isDupe = register.duplicate_email('observer105@gmail.com') # Not in the database
+		isDupe = register.duplicate_email(self.ctx, 'observer105@gmail.com') # Not in the database
 		self.assertFalse(isDupe)
-		isDupe = register.duplicate_email('ben_rooke@icloud.com')
+		isDupe = register.duplicate_email(self.ctx, 'ben_rooke@icloud.com')
 		self.assertTrue(isDupe)
 
 
