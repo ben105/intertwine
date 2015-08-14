@@ -107,14 +107,14 @@ def sign_in_facebook(ctx, facebook_id, first, last):
 	# Let's see if we can find the user in our database with this
 	# Facebook ID.
 	try:
-		ctx.ctx.cur.execute("SELECT id, password FROM accounts WHERE facebook_id=%s;", (facebook_id,))
+		ctx.cur.execute("SELECT id, password FROM accounts WHERE facebook_id=%s;", (facebook_id,))
 	except:
 		logging.error('exception raised trying to look up Facebook ID %s', facebook_id)
 		return response.block(error=strings.VALUE_ERROR, code=500)
 
 	# Bail early if there already exists a facebook account
 	# with this Facebook ID.
-	rows = ctx.ctx.cur.fetchall()
+	rows = ctx.cur.fetchall()
 	if len(rows):
 		return response.block()
 	
@@ -137,7 +137,7 @@ def sign_in_facebook(ctx, facebook_id, first, last):
 	# We have successfully created a new Facebook account!
 
 	logging.info('created a new Facebook account for %s %s', first, last)
-	user_id = ctx.ctx.cur.fetchone()[0]
+	user_id = ctx.cur.fetchone()[0]
 	return response.block(payload={
 		'user_id': user_id
 	})
