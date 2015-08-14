@@ -82,7 +82,7 @@ def create_email_account(ctx, email, first, last, password):
 	})
 
 
-def sign_in_facebook(ctx, first, last, facebook_id):
+def sign_in_facebook(ctx, facebook_id, first, last):
 	"""This method should be envoked when the user is 
 	signing on via a Facebook account. The actual 
 	authentication and authorization is done on Facebook's

@@ -263,8 +263,6 @@ class TestAccounts(unittest.TestCase):
 		self.assertEqual(resp, register.k_err_min_chars)
 		resp = register.invalid_email('ben_rooke') # no @domain
 		self.assertEqual(resp, register.k_err_invalid_email)
-		resp = register.invalid_email('this123_email123_does123_not123_exist123@icloud.com')
-		self.assertEqual(resp, register.k_err_invalid_email)
 		resp = register.invalid_email('ben_rooke@icloud.com')
 		self.assertIsNone(resp)
 
