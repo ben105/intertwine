@@ -226,6 +226,8 @@ def user_info(ctx):
 		logging.error('exception raised while retrieving creator %d', creator_id)
 		return None
 	row = ctx.cur.fetchone()
+	if row = None:
+		return None
 	first = row[0]
 	last = row[1]
 	email = row[2]

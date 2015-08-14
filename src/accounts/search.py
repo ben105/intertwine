@@ -1,3 +1,4 @@
+import logging
 
 def find(ctx, name):
 	"""Given a user ID, search for this particular person.

@@ -163,7 +163,7 @@ class TestAccounts(unittest.TestCase):
 	def test_sign_in_multiple_times(self):
 		accounts.create_email_account(self.ctx, 'ben_rooke@icloud.com', 'Ben', 'Rooke', 'password1')
 		for i in range(5):
-			resp = accounts.sign_in_email(self.ctx, 'ben_rooke@icloud.com', 'password1')
+			resp = accounts.sign_in_email(self.ctx, 'ben_rooke@icloud.com', 'Ben', 'Rooke', 'password1')
 			self.assertTrue(resp['success'])
 			self.assertIsNone(resp['error'])
 		self.ctx.cur.execute('DELETE FROM accounts WHERE email = %s;', ('ben_rooke@icloud.com',))
@@ -280,7 +280,7 @@ class TestAccounts(unittest.TestCase):
 		self.assertIsNone(resp['error'])
 
 	def test_register_duplicate_email(self):
-		accounts.create_email_account(self.ctx, 'ben_rooke@icloud.com', 'Ben', 'Rooke')
+		accounts.create_email_account(self.ctx, 'ben_rooke@icloud.com', 'Ben', 'Rooke', 'password1')
 		isDupe = register.duplicate_email('observer105@gmail.com') # Not in the database
 		self.assertFalse(isDupe)
 		isDupe = register.duplicate_email('ben_rooke@icloud.com')
