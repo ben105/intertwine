@@ -1,27 +1,38 @@
+import unittest
 import psycopg2
+
 import intertwine.testdb
+
 from intertwine import push
 from intertwine import strings
 from intertwine.activity import comments
 from intertwine.activity import events
 from intertwine.friends import friends
+from intertwine.accounts import accounts
 
 cur = None
+
+class FalseSecurityContext(object):
+	def __init__(self, cur):
+		self.cur = cur
+		self.user_id = None
+		self.first = ''
+		self.last = ''
 
 class TestComments(unittest.TestCase):
 
 	def setUp(self):
-		if cur is None:
-			raise ValueError('database cursor must be set before running test case')
-		resp = accounts.create_email_account(cur, 'ben_rooke@icloud.com', 'Ben', 'Rooke', 'password1')
-		self.user_id = resp['payload']['user_id']
+		self.ctx = FalseSecurityContext(cur)
+		resp = accounts.create_email_account(self.ctx, email='ben_rooke@icloud.com', first='Ben', last='Rooke', password='password1')
+		self.ctx.user_id = resp['payload']['user_id']
+		
 
 		facebook_friends = {'Rae Jonathans':'456', 'Ben Rooke':'123', 'Ashley Sellers':'789'}
 		self.friend_ids = []
 		for k, v in facebook_friends.iteritems():
 			name_components = k.split()
 			first = name_components[0]; last = name_components[1]
-			resp = accounts.sign_in_facebook(cur, v, first, last)
+			resp = accounts.sign_in_facebook(self.ctx, v, first, last)
 			friend_id = resp['payload']['user_id']
 			self.friend_ids.append(friend_id)
 
@@ -32,85 +43,91 @@ class TestComments(unittest.TestCase):
 		cur.execute('DELETE FROM comments;')
 		cur.execute('DELETE FROM events;')
 
-	#def comment_count(cur, event_id):
+	#def comment_count(self.ctx, event_id):
 	def test_comment_count_none_event_id(self):
-		count = comments.comment_count(cur, None)
+		count = comments.comment_count(self.ctx, None)
 		self.assertEqual(count, 0)
 	
 	def test_comment_count_no_comments(self):
 		friend_id = self.friend_ids[0]
-		resp = friends.send_request(cur, self.user_id, friend_id)
+		fctx = FalseSecurityContext(cur)
+		fctx.user_id = friend_id
+
+		resp = friends.send_request(self.ctx, friend_id)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
-		resp = friends.accept_request(cur, friend_id, self.user_id)
+		resp = friends.accept_request(fctx, ctx.user_id)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
-		resp = events.create(cur, self.user_id, 'Coffee before work', 'Peets new iced coffee', [friend_id])
+		resp = events.create(self.ctx, 'Coffee before work', 'Peets new iced coffee', [friend_id])
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
 		event_id = resp['payload']['event_id']
-		count = comments.comment_count(cur, event_id)
+		count = comments.comment_count(self.ctx, event_id)
 		self.assertEqual(count, 0)
 	
 	def test_comment_count_with_comments(self):
 		friend_id = self.friend_ids[0]
-		resp = friends.send_request(cur, self.user_id, friend_id)
+		fctx = FalseSecurityContext(cur)
+		fctx.user_id = friend_id
+
+		resp = friends.send_request(self.ctx, friend_id)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
-		resp = friends.accept_request(cur, friend_id, self.user_id)
+		resp = friends.accept_request(self.ctx, friend_id, self.user_id)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
-		resp = events.create(cur, self.user_id, 'Coffee before work', 'Peets new iced coffee', [friend_id])
+		resp = events.create(self.ctx, 'Coffee before work', 'Peets new iced coffee', [friend_id])
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
 		event_id = resp['payload']['event_id']
 
 		# Make some comments!
-		resp = comments.comment(cur, friend_id, 'Rae', 'Jonathans', event_id, 'Coffee before work', 'You trying to leave before 7:00?')
+		resp = comments.comment(self.ctx, friend_id, 'Rae', 'Jonathans', event_id, 'Coffee before work', 'You trying to leave before 7:00?')
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
-		count = comments.comment_count(cur, event_id)
+		count = comments.comment_count(self.ctx, event_id)
 		self.assertEqual(count, 1)
 		cur.execute('SELECT count(*) FROM comments WHERE events_id=%s;', (event_id,))
 		count = cur.fetchone()[0]
 		self.assertEqual(count, 1)
 	
 		# Add another comment and check count again.
-		resp = comments.comment(cur, self.user_id, 'Ben', 'Rooke', event_id, 'Coffee before work', 'Yeah. Is that cool?')
+		resp = comments.comment(self.ctx, 'Ben', 'Rooke', event_id, 'Coffee before work', 'Yeah. Is that cool?')
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
-		count = comments.comment_count(cur, event_id)
+		count = comments.comment_count(self.ctx, event_id)
 		self.assertEqual(count, 2)
 		cur.execute('SELECT count(*) FROM comments WHERE events_id=%s;', (event_id,))
 		count = cur.fetchone()[0]
 		self.assertEqual(count, 2)
 
 	def test_comment_count_event_does_not_exist(self):
-		resp = comments.comment_count(cur, 2)
+		resp = comments.comment_count(self.ctx, 2)
 		self.assertEqual(count, 0)
 	
 	
-	#def get_comments(cur, event_id):
+	#def get_comments(self.ctx, event_id):
 	def test_get_comments_none_event(self):
-		resp = comments.get_comments(cur, None)
+		resp = comments.get_comments(self.ctx, None)
 		self.assertFalse(resp['success'])
 		self.assertEqual(resp['error'], strings.VALUE_ERROR)
 
 	def test_get_comments_no_comments(self):
 		# Test payload is empty list
 		friend_id = self.friend_ids[0]
-		resp = friends.send_request(cur, self.user_id, friend_id)
+		resp = friends.send_request(self.ctx, friend_id)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
-		resp = friends.accept_request(cur, friend_id, self.user_id)
+		resp = friends.accept_request(self.ctx, friend_id, self.user_id)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
-		resp = events.create(cur, self.user_id, 'Coffee before work', 'Peets new iced coffee', [friend_id])
+		resp = events.create(self.ctx, 'Coffee before work', 'Peets new iced coffee', [friend_id])
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
 		event_id = resp['payload']['event_id']
 
-		resp = comments.get_comments(cur, event_id)
+		resp = comments.get_comments(self.ctx, event_id)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
 		self.assertEqual(0, len(resp['payload']))
@@ -118,23 +135,26 @@ class TestComments(unittest.TestCase):
 	def test_get_comments_with_comments(self):
 		# Inspect each comment
 		friend_id = self.friend_ids[0]
-		resp = friends.send_request(cur, self.user_id, friend_id)
+		fctx = FalseSecurityContext(cur)
+		fctx.user_id = friend_id
+
+		resp = friends.send_request(self.ctx, friend_id)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
-		resp = friends.accept_request(cur, friend_id, self.user_id)
+		resp = friends.accept_request(self.ctx, friend_id, self.user_id)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
-		resp = events.create(cur, self.user_id, 'Coffee before work', 'Peets new iced coffee', [friend_id])
+		resp = events.create(self.ctx, 'Coffee before work', 'Peets new iced coffee', [friend_id])
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
 		event_id = resp['payload']['event_id']
 
 		# Make a comment.
-		resp = comments.comment(cur, friend_id, 'Rae', 'Jonathans', event_id, 'Coffee before work', 'You trying to leave before 7:00?')
+		resp = comments.comment(self.ctx, friend_id, 'Rae', 'Jonathans', event_id, 'Coffee before work', 'You trying to leave before 7:00?')
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
 
-		resp = comments.get_comments(cur, event_id)
+		resp = comments.get_comments(self.ctx, event_id)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
 		posted_comments = resp['payload']
@@ -157,11 +177,11 @@ class TestComments(unittest.TestCase):
 		self.assertEqual(posted_comment['comment'], 'You trying to leave before 7:00?')
 
 		# Make another comment, and check when there is a list > 1.
-		resp = comments.comment(cur, self.user_id, 'Ben', 'Rooke', event_id, 'Coffee before work', 'Heck no!')
+		resp = comments.comment(self.ctx, 'Ben', 'Rooke', event_id, 'Coffee before work', 'Heck no!')
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
 
-		resp = comments.get_comments(cur, event_id)
+		resp = comments.get_comments(self.ctx, event_id)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
 		posted_comments = resp['payload']
@@ -184,208 +204,235 @@ class TestComments(unittest.TestCase):
 
 	def test_get_comments_event_does_not_exist(self):
 		# Expect NOT FOUND.
-		resp = comments.get_comments(cur, 333666999)
+		resp = comments.get_comments(self.ctx, 333666999)
 		self.assertFalse(resp['success'])
 		self.assertEqual(resp['error'], strings.NOT_FOUND)
 
 	
 	# Notify attendees!
-	#def notify_attendees(cur, user_id, event_id, title, comment):
+	#def notify_attendees(self.ctx, user_id, event_id, title, comment):
 	def test_notify_no_event_exists(self):
-		succ = comments.notify_attendees(cur, self.user_id, 'Ben', 'Rooke', 555, 'Coffee before work', 'Hello, world!')
+		succ = comments.notify_attendees(self.ctx, 'Ben', 'Rooke', 555, 'Coffee before work', 'Hello, world!')
 		self.assertFalse(succ)
 
 	def test_notify_no_attendees(self):
 		friend_id = self.friend_ids[0]
-		resp = friends.send_request(cur, self.user_id, friend_id)
+		fctx = FalseSecurityContext(cur)
+		fctx.user_id = friend_id
+
+		resp = friends.send_request(self.ctx, friend_id)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
-		resp = friends.accept_request(cur, friend_id, self.user_id)
+		resp = friends.accept_request(self.ctx, friend_id, self.user_id)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
-		resp = events.create(cur, self.user_id, 'Coffee before work', 'Peets new iced coffee', [friend_id])
+		resp = events.create(self.ctx, 'Coffee before work', 'Peets new iced coffee', [friend_id])
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
 		event_id = resp['payload']['event_id']
 		# Remove the attendess (a freak accident!)
 		cur.execute('DELETE FROM event_attendees;')
-		succ = comments.notify_attendees(cur, self.user_id, 'Ben', 'Rooke', event_id, 'Coffee before work', 'Hello, world!')
+		succ = comments.notify_attendees(self.ctx, 'Ben', 'Rooke', event_id, 'Coffee before work', 'Hello, world!')
 		self.assertFalse(succ)
 
 	def test_notify_success(self):
 		friend_id = self.friend_ids[0]
-		resp = friends.send_request(cur, self.user_id, friend_id)
+		fctx = FalseSecurityContext(cur)
+		fctx.user_id = friend_id
+
+		resp = friends.send_request(self.ctx, friend_id)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
-		resp = friends.accept_request(cur, friend_id, self.user_id)
+		resp = friends.accept_request(self.ctx, friend_id, self.user_id)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
-		resp = events.create(cur, self.user_id, 'Coffee before work', 'Peets new iced coffee', [friend_id])
+		resp = events.create(self.ctx, 'Coffee before work', 'Peets new iced coffee', [friend_id])
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
 		event_id = resp['payload']['event_id']
-		succ = comments.notify_attendees(cur, self.user_id, 'Ben', 'Rooke', event_id, 'Coffee before work', 'Hello, world!')
+		succ = comments.notify_attendees(self.ctx, 'Ben', 'Rooke', event_id, 'Coffee before work', 'Hello, world!')
 		self.assertTrue(succ)
 
 	def test_notify_bad_user_id(self):
 		friend_id = self.friend_ids[0]
-		resp = friends.send_request(cur, self.user_id, friend_id)
+		fctx = FalseSecurityContext(cur)
+		fctx.user_id = friend_id
+
+		resp = friends.send_request(self.ctx, friend_id)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
-		resp = friends.accept_request(cur, friend_id, self.user_id)
+		resp = friends.accept_request(self.ctx, friend_id, self.user_id)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
-		resp = events.create(cur, self.user_id, 'Coffee before work', 'Peets new iced coffee', [friend_id])
+		resp = events.create(self.ctx, 'Coffee before work', 'Peets new iced coffee', [friend_id])
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
 		event_id = resp['payload']['event_id']
 		# We are just going to call this function with a bad
 		# user_id, and it should just fail gracefully (i.e. not raise an exception).
-		succ = comments.notify_attendees(cur, None, 'Ben', 'Rooke', event_id, 'Coffee before work', 'Hello, world!')
+		succ = comments.notify_attendees(self.ctx, None, 'Ben', 'Rooke', event_id, 'Coffee before work', 'Hello, world!')
 		self.assertFalse(succ)
-		succ = comments.notify_attendees(cur, self.user_id, None, 'Rooke', event_id, 'Coffee before work', 'Hello, world!')
+		succ = comments.notify_attendees(self.ctx, None, 'Rooke', event_id, 'Coffee before work', 'Hello, world!')
 		self.assertFalse(succ)
-		succ = comments.notify_attendees(cur, self.user_id, 'Ben', None, event_id, 'Coffee before work', 'Hello, world!')
+		succ = comments.notify_attendees(self.ctx, 'Ben', None, event_id, 'Coffee before work', 'Hello, world!')
 		self.assertFalse(succ)
-		succ = comments.notify_attendees(cur, self.user_id, None, '', event_id, 'Coffee before work', 'Hello, world!')
+		succ = comments.notify_attendees(self.ctx, None, '', event_id, 'Coffee before work', 'Hello, world!')
 		self.assertFalse(succ)
-		succ = comments.notify_attendees(cur, self.user_id, '', None, event_id, 'Coffee before work', 'Hello, world!')
+		succ = comments.notify_attendees(self.ctx, '', None, event_id, 'Coffee before work', 'Hello, world!')
 		self.assertFalse(succ)
 
 	def test_notify_bad_event_id(self):
-		succ = comments.notify_attendees(cur, self.user_id, None, 'Ben', 'Rooke', 'Coffee before work', 'Hello, world!')
+		succ = comments.notify_attendees(self.ctx, None, 'Ben', 'Rooke', 'Coffee before work', 'Hello, world!')
 		self.assertFalse(succ)
 
 	def test_notify_bad_title(self):
 		# Test empty string as well as None.
 		friend_id = self.friend_ids[0]
-		resp = friends.send_request(cur, self.user_id, friend_id)
+		fctx = FalseSecurityContext(cur)
+		fctx.user_id = friend_id
+
+		resp = friends.send_request(self.ctx, friend_id)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
-		resp = friends.accept_request(cur, friend_id, self.user_id)
+		resp = friends.accept_request(self.ctx, friend_id, self.user_id)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
-		resp = events.create(cur, self.user_id, 'Coffee before work', 'Peets new iced coffee', [friend_id])
+		resp = events.create(self.ctx, 'Coffee before work', 'Peets new iced coffee', [friend_id])
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
 		event_id = resp['payload']['event_id']
-		succ = comments.notify_attendees(cur, self.user_id, 'Ben', 'Rooke', event_id, '', 'Hello, world!')
+		succ = comments.notify_attendees(self.ctx, 'Ben', 'Rooke', event_id, '', 'Hello, world!')
 		self.assertFalse(succ)
-		succ = comments.notify_attendees(cur, self.user_id, 'Ben', 'Rooke', event_id, None, 'Hello, world!')
+		succ = comments.notify_attendees(self.ctx, 'Ben', 'Rooke', event_id, None, 'Hello, world!')
 		self.assertFalse(succ)
 
 	def test_notify_bad_comment(self):
 		# Test empty string as well as None.
 		friend_id = self.friend_ids[0]
-		resp = friends.send_request(cur, self.user_id, friend_id)
+		fctx = FalseSecurityContext(cur)
+		fctx.user_id = friend_id
+
+		resp = friends.send_request(self.ctx, friend_id)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
-		resp = friends.accept_request(cur, friend_id, self.user_id)
+		resp = friends.accept_request(self.ctx, friend_id, self.user_id)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
-		resp = events.create(cur, self.user_id, 'Coffee before work', 'Peets new iced coffee', [friend_id])
+		resp = events.create(self.ctx, 'Coffee before work', 'Peets new iced coffee', [friend_id])
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
 		event_id = resp['payload']['event_id']
-		succ = comments.notify_attendees(cur, self.user_id, 'Ben', 'Rooke', event_id, 'Coffee before work', None)
+		succ = comments.notify_attendees(self.ctx, 'Ben', 'Rooke', event_id, 'Coffee before work', None)
 		self.assertFalse(succ)
-		succ = comments.notify_attendees(cur, self.user_id, 'Ben', 'Rooke', event_id, 'Coffee before work', '')
+		succ = comments.notify_attendees(self.ctx, 'Ben', 'Rooke', event_id, 'Coffee before work', '')
 		self.assertFalse(succ)
 
 
 	# Posting a comment!
-	#def comment(cur, user_id, event_id, title, comment):
+	#def comment(self.ctx, user_id, event_id, title, comment):
 	def test_comment_bad_user_id(self):
 		friend_id = self.friend_ids[0]
-		resp = friends.send_request(cur, self.user_id, friend_id)
+		fctx = FalseSecurityContext(cur)
+		fctx.user_id = friend_id
+
+		resp = friends.send_request(self.ctx, friend_id)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
-		resp = friends.accept_request(cur, friend_id, self.user_id)
+		resp = friends.accept_request(self.ctx, friend_id, self.user_id)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
-		resp = events.create(cur, self.user_id, 'Coffee before work', 'Peets new iced coffee', [friend_id])
+		resp = events.create(self.ctx, 'Coffee before work', 'Peets new iced coffee', [friend_id])
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
 		event_id = resp['payload']['event_id']
-		resp = comments.comment(cur, None, 'Ben', 'Rooke', event_id, 'Coffee before work', 'Hello, world!')
+		resp = comments.comment(self.ctx, None, 'Ben', 'Rooke', event_id, 'Coffee before work', 'Hello, world!')
 		self.assertFalse(resp['success'])
 		self.assertEqual(resp['error'], strings.VALUE_ERROR)
-		resp = comments.comment(cur, self.user_id, '', 'Rooke', event_id, 'Coffee before work', 'Hello, world!')
+		resp = comments.comment(self.ctx, '', 'Rooke', event_id, 'Coffee before work', 'Hello, world!')
 		self.assertFalse(resp['success'])
 		self.assertEqual(resp['error'], strings.VALUE_ERROR)
-		resp = comments.comment(cur, self.user_id, None, 'Rooke', event_id, 'Coffee before work', 'Hello, world!')
+		resp = comments.comment(self.ctx, None, 'Rooke', event_id, 'Coffee before work', 'Hello, world!')
 		self.assertFalse(resp['success'])
 		self.assertEqual(resp['error'], strings.VALUE_ERROR)
-		resp = comments.comment(cur, self.user_id, 'Ben', '', event_id, 'Coffee before work', 'Hello, world!')
+		resp = comments.comment(self.ctx, 'Ben', '', event_id, 'Coffee before work', 'Hello, world!')
 		self.assertFalse(resp['success'])
 		self.assertEqual(resp['error'], strings.VALUE_ERROR)
-		resp = comments.comment(cur, self.user_id, 'Ben', None, event_id, 'Coffee before work', 'Hello, world!')
+		resp = comments.comment(self.ctx, 'Ben', None, event_id, 'Coffee before work', 'Hello, world!')
 		self.assertFalse(resp['success'])
 		self.assertEqual(resp['error'], strings.VALUE_ERROR)
 
 	def test_comment_bad_event_id(self):
-		resp = comments.comment(cur, self.user_id, 'Ben', 'Rooke', 555, 'Coffee before work', 'Hello, world!')
+		resp = comments.comment(self.ctx, 'Ben', 'Rooke', 555, 'Coffee before work', 'Hello, world!')
 		self.assertFalse(resp['success'])
 		self.assertEqual(resp['error'], strings.VALUE_ERROR)
 
 	def test_comment_bad_title(self):
 		# Test empty string as well as None.
 		friend_id = self.friend_ids[0]
-		resp = friends.send_request(cur, self.user_id, friend_id)
+		fctx = FalseSecurityContext(cur)
+		fctx.user_id = friend_id
+
+		resp = friends.send_request(self.ctx, friend_id)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
-		resp = friends.accept_request(cur, friend_id, self.user_id)
+		resp = friends.accept_request(self.ctx, friend_id, self.user_id)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
-		resp = events.create(cur, self.user_id, 'Coffee before work', 'Peets new iced coffee', [friend_id])
+		resp = events.create(self.ctx, 'Coffee before work', 'Peets new iced coffee', [friend_id])
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
 		event_id = resp['payload']['event_id']
-		resp = comments.comment(cur, self.user_id, 'Ben', 'Rooke', event_id, '', 'Hello, world!')
+		resp = comments.comment(self.ctx, 'Ben', 'Rooke', event_id, '', 'Hello, world!')
 		self.assertFalse(resp['success'])
 		self.assertEqual(resp['error'], strings.VALUE_ERROR)
-		resp = comments.comment(cur, self.user_id, 'Ben', 'Rooke', event_id, None, 'Hello, world!')
+		resp = comments.comment(self.ctx, 'Ben', 'Rooke', event_id, None, 'Hello, world!')
 		self.assertFalse(resp['success'])
 		self.assertEqual(resp['error'], strings.VALUE_ERROR)
 
 	def test_comment_bad_comment(self):
 		# Test empty string as well as None.
 		friend_id = self.friend_ids[0]
-		resp = friends.send_request(cur, self.user_id, friend_id)
+		fctx = FalseSecurityContext(cur)
+		fctx.user_id = friend_id
+
+		resp = friends.send_request(self.ctx, friend_id)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
-		resp = friends.accept_request(cur, friend_id, self.user_id)
+		resp = friends.accept_request(self.ctx, friend_id, self.user_id)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
-		resp = events.create(cur, self.user_id, 'Coffee before work', 'Peets new iced coffee', [friend_id])
+		resp = events.create(self.ctx, 'Coffee before work', 'Peets new iced coffee', [friend_id])
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
 		event_id = resp['payload']['event_id']
-		resp = comments.comment(cur, self.user_id, 'Ben', 'Rooke', event_id, '', 'Hello, world!')
+		resp = comments.comment(self.ctx, 'Ben', 'Rooke', event_id, '', 'Hello, world!')
 		self.assertFalse(resp['success'])
 		self.assertEqual(resp['error'], strings.VALUE_ERROR)
-		resp = comments.comment(cur, self.user_id, 'Ben', 'Rooke', event_id, None, 'Hello, world!')
+		resp = comments.comment(self.ctx, 'Ben', 'Rooke', event_id, None, 'Hello, world!')
 		self.assertFalse(resp['success'])
 		self.assertEqual(resp['error'], strings.VALUE_ERROR)
 
 	def test_comment_no_event_exists(self):
-		resp = comments.comment(cur, self.user_id, 'Ben', 'Rooke', 555555, 'Coffee before work', 'Hello, world!')
+		resp = comments.comment(self.ctx, 'Ben', 'Rooke', 555555, 'Coffee before work', 'Hello, world!')
 		self.assertFalse(resp['success'])
 		self.assertEqual(resp['error'], strings.NOT_FOUND)
 
 	def test_comment(self):
 		friend_id = self.friend_ids[0]
-		resp = friends.send_request(cur, self.user_id, friend_id)
+		fctx = FalseSecurityContext(cur)
+		fctx.user_id = friend_id
+
+		resp = friends.send_request(self.ctx, friend_id)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
-		resp = friends.accept_request(cur, friend_id, self.user_id)
+		resp = friends.accept_request(self.ctx, friend_id, self.user_id)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
-		resp = events.create(cur, self.user_id, 'Coffee before work', 'Peets new iced coffee', [friend_id])
+		resp = events.create(self.ctx, 'Coffee before work', 'Peets new iced coffee', [friend_id])
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
 		event_id = resp['payload']['event_id']
-		resp = comments.comment(cur, self.user_id, 'Ben', 'Rooke', event_id, 'Coffee before work', 'Hello, world!')
+		resp = comments.comment(self.ctx, 'Ben', 'Rooke', event_id, 'Coffee before work', 'Hello, world!')
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
 

@@ -8,16 +8,16 @@ from intertwine import push
 def single_transaction(func):
 	def inner(*argv, **kwargs):
 		assert(len(argv)>0)
-		ctx.cursor = argv[0]
-		ctx.cursor.connection.autocommit = False
+		ctx = argv[0]
+		ctx.cur.connection.autocommit = False
 		success = func(*argv, **kwargs)
 		if type(success) is bool and success == False:
 			logging.error('single transaction failed, and is rolling back')
-			ctx.cursor.rollback()
+			ctx.cur.rollback()
 		else:
 			logging.debug('single transaction completed')
-			ctx.cursor.connection.commit()
-		ctx.cursor.connection.autocommit = True
+			ctx.cur.connection.commit()
+		ctx.cur.connection.autocommit = True
 		return success
 	return inner
 
@@ -56,10 +56,10 @@ def create(ctx, title, description, attendees):
 			logging.error('exception raised while inserting attendee %d to activity %s\n%s', user, title, str(exc))
 			return response.block(error=strings.SERVER_ERROR, code=500)
 		try:
-			push.push_notification(ctx.cur, user, "{} {} created a new event: {}".format(first, last, title))
+			push.push_notification(ctx, "{} {} created a new event: {}".format(first, last, title))
 		except Exception as exc:
-			logging.error('exception raised while inserting attendee %d to activity %s\n%s', user, title, str(exc))
-			return response.block(error=strings.SERVER_ERROR, code=500)
+			logging.error('exception raised trying to send push notification while inserting attendee %d to activity %s\n%s', user, title, str(exc))
+			#return response.block(error=strings.SERVER_ERROR, code=500)
 	# TODO: Return success or error
 	return response.block(payload={
 		'event_id': event_id

@@ -1,3 +1,4 @@
+from intertwine import response
 import logging
 
 def find(ctx, name):
@@ -38,11 +39,11 @@ def find(ctx, name):
 	try:
 		logging.debug('user ID %d running FIND query', user_id)
 		ctx.cur.execute(find_query, {'user_id':user_id, 'like1':name+'%', 'like2':name+'%', 'user_id2':user_id, 'user_id3':user_id})
-		rows = ctx.cur.fetchall()
-		logging.info('user ID %d running FIND query for name %s. %d results found', user_id, name, len(rows))
 	except Exception as exc:
 		logging.error('failed to search for %s, request made by user ID %d\nException: %s', name, user_id, exc)
-		return None
-
+		return response.block(error=strings.SERVER_ERROR, code=500)
+	rows = ctx.cur.fetchall()
+	logging.info('user ID %d running FIND query for name %s. %d results found', user_id, name, len(rows))
 	logging.debug('Success FIND query, user ID %d results for search on name %s', user_id, name)
-	return [{'account_id':row[4], 'first':row[0], 'last':row[1], 'facebook_id':row[2], 'email':row[3], 'sent':row[5]} for row in rows]
+	results = [{'account_id':row[4], 'first':row[0], 'last':row[1], 'facebook_id':row[2], 'email':row[3], 'sent':row[5]} for row in rows]
+	return response.block(payload=results)

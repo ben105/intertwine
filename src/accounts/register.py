@@ -9,6 +9,7 @@ import logging
 
 from intertwine import response
 from intertwine import strings
+from intertwine.accounts import accounts
 
 # Global varibale declarations
 # 
@@ -125,3 +126,38 @@ def duplicate_email(ctx, email):
 		logging.error('validation exception raised validating email, %s', exc)
 		return k_err_server_problem
 	return None
+
+def register(ctx, first, last, email, password, facebook_id, account_type):
+	# Let' validate the content the user has entered
+	errors = {}
+	if account_type == "email":
+		err = register.invalid_name(first)
+		if err:
+			errors['first'] = err
+		err = register.invalid_name(last)
+		if err:
+			errors['last'] = err
+		err = register.invalid_password(password)
+		if err:
+			errors['password'] = err
+		err = register.invalid_email(email)
+		if err:
+			errors['email'] = err
+		err = register.duplicate_email(cur, email)
+		if err:
+			errors['email'] = err
+	# Now that we've done some validation, we can
+	# send back the error dictionary if it has any
+	# values.
+	if len(errors.keys()):
+		return response.block(error='One of the registration fields was invalid', payload=errors, code=INVALID_LOGIN)    
+	# If we don't have any errors, then we can 
+	# continue.
+	# Create the account.
+	if account_type == "email":
+		return accounts.create_account_email(ctx, email=email, first=first, last=last, password=password)
+	elif account_type == "facebook":
+		return accounts.sign_in_facebook(ctx, facebook_id, first, last)
+	return response.block(error="Incorrect account type.", code=SERVER_ERROR)
+
+

@@ -3,23 +3,6 @@ import logging
 from intertwine import response
 from intertwine import strings
 
-def single_transaction(func):
-	def inner(*argv, **kwargs):
-		assert(len(argv)>0)
-		ctx.cur = argv[0]
-		ctx.cur.connection.autocommit = False
-		success = func(*argv, **kwargs)
-		if success is not None and success == False:
-			logging.error('single transaction failed, and is rolling back')
-			ctx.cur.rollback()
-		else:
-			logging.debug('single transaction completed')
-			ctx.cur.connection.commit()
-		ctx.cur.connection.autocommit = True
-		return success
-	return inner
-
-
 # def fb_friends(ctx.cur, user_id,  fb_list):
 # 	# fb_list is a list of facebook IDs of friends (who have
 # 	# an Intertwine account.

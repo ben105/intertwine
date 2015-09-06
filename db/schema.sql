@@ -31,6 +31,7 @@ id serial PRIMARY KEY,
 title varchar(100),
 description varchar(500),
 creator integer NOT NULL references accounts(id),
+completed boolean DEFAULT false,
 updated_time timestamp DEFAULT now(),
 created_time timestamp DEFAULT now()
 );

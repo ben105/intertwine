@@ -21,8 +21,8 @@ def block(payload=None, error=None, code=200):
 		payload = {}
 
 	# Check that the provided payload is a string type.
-	if type(payload) is not dict:
-		raise ValueError('expecting payload to be type dict, but got type {}'.format(type(payload)))
+	if type(payload) is not dict and type(payload) is not list:
+		raise ValueError('expecting payload to be type dict/list, but got type {}'.format(type(payload)))
 	if error is not None and type(error) is not str:
 		raise ValueError('expecting error to be type str, but got type {}'.format(type(error)))
 	if type(code) is not int:

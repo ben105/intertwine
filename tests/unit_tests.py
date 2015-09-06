@@ -1,14 +1,20 @@
 import unittest
 import psycopg2
 import intertwine
+import intertwine.testdb
+import os
+
+test_dir = os.path.dirname(os.path.realpath(__file__))
 
 TEST_DB = 'test__database'
 
-
 def distribute_cur(cur):
 	# All unit tests that should be tested.
-	# IMPORTANT: Add additional modules here, when adding
-	# unit tests.
+	# First let's look at all files in the directory.
+	tests = os.listdir(test_dir)
+	tests.remove(__file__)
+	tests = map(lambda x: x.strip('.py'), tests)
+	print tests
 	unittest_modules = [
 		intertwine.accounts_tests,
 		intertwine.activity_tests,

@@ -14,12 +14,18 @@ from intertwine.accounts import accounts
 from intertwine.activity import events
 from intertwine.activity import comments
 from intertwine.activity import activity
-from intertwine import push
-from intertwine import log_manager
 from intertwine import context
 
 
-log_manager.EnableLogging()
+enableLogging = True
+if len(sys.argv) > 1:
+	arg = sys.argv[1]
+	if arg == '-v' or arg == '--verbose':
+		enableLogging = False
+
+if enableLogging:
+	from intertwine import log_manager
+	log_manager.EnableLogging()
 
 app = Flask(__name__)
 
@@ -27,28 +33,26 @@ db_server = 'intertwine.cntms98hv39g.us-west-2.rds.amazonaws.com'
 conn = None
 try:
 	conn = psycopg2.connect("dbname=intertwine host=%s user=intertwine password=intertwine" % db_server)
+	conn.autocommit = True
 except Exception as exc:
 	logging.error('exception raised trying to connect to database\n%s', str(exc))
 	quit()
 
-def context(request):
-	ctx = context.SecurityContext(request, conn.cursor())
-	ctx.first = first
-	ctx.last = last
-	return ctx
+def create_context(request):
+	return context.SecurityContext(request, conn.cursor())
 
 
 ####### Comments ########
 
 @app.route('/api/v1/comment/<int:event_id>', methods=['GET'])
 def comment_get(event_id):
-	ctx = context(request)
+	ctx = create_context(request)
 	resp = comments.get_comments(ctx, event_id)
 	return json.dumps(resp)
 
 @app.route('/api/v1/comment', methods=['POST'])
 def comment_handler():
-	ctx = context(request)
+	ctx = create_context(request)
 	# Get all the information from the POST body.
 	body = json.loads(request.data)
 	comment = body["comment"]
@@ -63,13 +67,14 @@ def comment_handler():
 
 @app.route('/api/v1/activity', methods=['GET'])
 def activities():
-	ctx = context(request)
+	ctx = create_context(request)
+	print('getting activities')
 	resp = activity.get_activity(ctx)
 	return json.dumps(resp)
 
 @app.route('/api/v1/events', methods=['GET', 'POST', 'DELETE'])
 def event_api():
-	ctx = context(request)
+	ctx = create_context(request)
 
 	# If user is asking for their activities.
 	if request.method == "GET":
@@ -78,8 +83,6 @@ def event_api():
 	# Or if the user is creating an activity.
 	elif request.method == "POST":
 		body = json.loads(request.data)
-		first = body.get('first')
-		last = body.get('last')
 		title = body.get('title')
 		friends = body.get('friends')
 		desc = body.get('description')
@@ -99,7 +102,7 @@ def event_api():
 
 @app.route('/api/v1/device_token', methods=['POST'])
 def set_device_token():
-	ctx = context(request)
+	ctx = create_context(request)
 	token_data = request.data
 	return devices.add(token_data)
 
@@ -109,7 +112,7 @@ def set_device_token():
 
 @app.route('/api/v1/search/<name>', methods=['GET'])
 def search(name):
-	ctx = context(request)
+	ctx = create_context(request)
 	resp = search.find(ctx, name)
 	return json.dumps(resp)
 
@@ -124,82 +127,29 @@ def sign_in():
 	A Post form is required with this request.
 
 	Keyword arguments:
-	email -- the email address of the user signing in
-	password -- the password associated with the email's account
+	  email - the email address of the user signing in
+	  password - the password associated with the email's account
 
-	The success of this request will result in a JSON dictionary
-	posed as {'success':'true'}
-
-	The failure of this request will result in a JSON dictionary
-	posed as {'error':'Invalid login credentials'}
+	Returns:
+	  Intertwine response block.
 	"""
-	ctx = context(request)
+	ctx = create_context(request)
 	email = request.form.get('email')
 	password = request.form.get('password')
-	result = accounts.sign_in_email(ctx, email, password)
-	return json.dumps(result)
+	return accounts.sign_in_email(ctx, email, password)
 
 @app.route('/api/v1/adduser', methods=['POST'])
 def add_user():
-	ctx = context(request)
+	ctx = create_context(request)
 	# Errors dict to store all errors
-	errors = dict()
-	# Extract the POST data
 	first = request.form.get('first')
 	last = request.form.get('last')
 	email = request.form.get('email')
-	facebook_id = request.form.get('facebook_id')
 	password = request.form.get('password')
+	facebook_id = request.form.get('facebook_id')
 	account_type = request.form.get('account_type')
-	# Let' validate the content the user has entered
-	if account_type == "email":
-		err = register.invalid_name(first)
-		if err:
-			errors['first'] = err
-		err = register.invalid_name(last)
-		if err:
-			errors['last'] = err
-		err = register.invalid_password(password)
-		if err:
-			errors['password'] = err
-		err = register.invalid_email(email)
-		if err:
-			errors['email'] = err
-	# Make a connection to the postgres database
-	try:
-		conn = psycopg2.connect("dbname=intertwine host=localhost user=intertwine password=intertwine")
-		cur = conn.cur()
-		cur.connection.autocommit = True
-	except:
-		errors['connection'] = 'Connection issues on the seregisterer'
-		return errors
-	# Check if there is already an account with this email
-	if account_type == "email":
-		err = register.duplicate_email(cur, email)
-		if err:
-			errors['email'] = err
-	# Now that we've done some validation, we can
-	# send back the error dictionary if it has any
-	# values.
-	if len(errors.keys()):
-		return json.dumps(errors)	
-	# If we don't have any errors, then we can 
-	# continue.
-	# Create the account.
-	if account_type == "email":
-		err = accounts.create_account_email(cur, email=email, first=first, last=last, password=password)
-		if err:
-			errors['connection'] = err
-			return errors
-	elif account_type == "facebook":
-		result = accounts.sign_in_facebook(cur, facebook_id, first, last)
-		return json.dumps(result)
-	else:
-		return json.dumps( {"error":"Incorrect account type."} )
-	# Succesfully created an account
-	#cur.connection.close()
-	return json.dumps( {"success":"true"} )
-
+	resp = register.register(ctx, first, last, email, password, facebook_id, account_type)
+	return json.dumps(resp)
 
 
 ####### Friend Requests ########
@@ -212,7 +162,7 @@ def friendrequests():
 	requests, while a post will initiate
 	a friend request.
 	"""
-	ctx = context(request)
+	ctx = create_context(request)
 	data = []
 	if request.method == "GET":
 		data = friends.get_pending_requests(ctx)
@@ -225,7 +175,7 @@ def friendrequests():
 
 @app.route('/api/v1/friends', methods=['POST'])
 def get_friends():
-	ctx = context(request)
+	ctx = create_context(request)
 	data = friends.get_friends(ctx)
 	return json.dumps(data)
 
@@ -235,21 +185,21 @@ def deny():
 	of denied friends, with the GET method, or 
 	deny a friend request with the POST method.
 	"""
-	ctx = context(request)
+	ctx = create_context(request)
 	friend_id = request.form.get('friend_id')
 	resp = friends.accept_request(ctx, friend_id)
 	return json.dumps(resp)
 
 @app.route('/api/v1/send_friend_request', methods=['POST'])
 def send_request():
-	ctx = context(request)
+	ctx = create_context(request)
 	friend_id = int(request.form.get('friend_id'))
 	data = friends.send_request(ctx, friend_id)
 	return json.dumps(data)
 
 @app.route('/api/v1/friend_accept', methods=['POST'])
 def friend_accept():
-	ctx = context(request)
+	ctx = create_context(request)
 	friend_id = request.form.get('friend_id')
 	data = friends.accept_request(ctx, friend_id)
 	# push.push_notification(cur, friend_id, "%d has accepted your friend request." % str(user_id))
@@ -257,7 +207,7 @@ def friend_accept():
 
 @app.route('/api/v1/facebook_friends', methods=['POST'])
 def facebook_friends():
-	ctx = context(request)
+	ctx = create_context(request)
 	facebook_friends = json.loads(request.data)
 	data = friends.fb_friends(ctx, facebook_friends)
 	return json.dumps(data)

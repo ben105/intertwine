@@ -1,3 +1,4 @@
+from intertwine.accounts import accounts
 from intertwine.activity import events
 from intertwine import response
 from intertwine import strings
@@ -41,7 +42,7 @@ def get_activity(ctx):
 		ctx.cur.execute(query, (user_id,))
 	except Exception as exc:
 		logging.error('exception raised while trying to populate the activity feed for user %d', user_id)
-		return response.block(strings.SERVER_ERROR, code=500)
+		return response.block(error=strings.SERVER_ERROR, code=500)
 	activities = []
 	rows = ctx.cur.fetchall()
 	for row in rows:
@@ -49,9 +50,12 @@ def get_activity(ctx):
 		event["id"] = row[0]
 		event["title"] = row[1]
 		event["description"] = row[2]
-		event["creator"] = events.get_creator(ctx.cur, row[3])
+		event["creator"] = accounts.user_info(ctx.cur, row[3])
 		event["updated_time"] = str(row[4])
-		event["attendees"] = events.get_attendees(ctx.cur, row[0])
+		resp = events.get_attendees(ctx, row[0])
+		if resp['error'] is not None:
+			return resp
+		event["attendees"] = resp['payload']
 		activities.append(event)
 	logging.debug('fetched %d activities for user %d', len(activities), user_id)
 	return response.block(payload=activities)	
