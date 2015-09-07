@@ -172,9 +172,15 @@
 
 - (void) loadEvents {
     [IntertwineManager getEventsWithResponse:^(id json, NSError *error, NSURLResponse *response) {
+
+        NSLog(@"JSON: %@", json);
         if(error) {
             NSLog(@"Error occured!!\n%@", error);
             return;
+        }
+        
+        if (!json) {
+            NSLog(@"No JSON in response");
         }
         
         // Date formatter used in loop.
@@ -226,6 +232,7 @@
 
 - (void)loadFriends {
     [IntertwineManager friends:^(id json, NSError *error, NSURLResponse *response) {
+        NSLog(@"JSON: %@", json);
         if (error) {
             NSLog(@"Error occured!! Friends were not loaded. Error: %@", error);
             return;

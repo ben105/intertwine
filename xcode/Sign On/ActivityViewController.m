@@ -7,31 +7,97 @@
 //
 
 #import "ActivityViewController.h"
+#import "ActivityTableViewCell.h"
 #import "EventObject.h"
 #import "Friend.h"
-#import "IntertwineManager+Activity.h"
+#import "FriendsViewController.h"
 #import "CommentViewController.h"
 
+#import "IntertwineManager+Activity.h"
+#import "IntertwineManager+Friends.h"
+
+
+const CGFloat headerHeight = 58.0;
+const CGFloat footerHeight = 50.0;
+const CGFloat y_toolBarItems = 27.0;
+#define y_footer CGRectGetHeight([[UIScreen mainScreen] bounds]) - footerHeight
+
+const CGFloat slideSideBarsAnimationSpeed = 0.3;
+
 @interface ActivityViewController ()
-- (void) _loadEvents;
+
+@property (nonatomic, strong) NewActivityViewController *createActivityVC;
+@property (nonatomic, strong) UIImageView *backgroundImage;
+@property (nonatomic, strong) UIView *header;
+@property (nonatomic, strong) UIView *footer;
+@property (nonatomic, strong) UILabel *titleLabel;
+@property (nonatomic, strong) UIButton *gearButton;
+
+@property (nonatomic, strong) UIControl *blackSheet;
+- (void) _clearSubViewControllers;
+
+@property (nonatomic, strong) UIButton *newActivityButton;
+- (void) _newActivity;
+- (void) _loadActivities;
+
+@property (nonatomic, strong) NSArray *friends;
+@property (nonatomic, strong) UIButton *friendsButton;
+- (void) _loadFriends;
+- (void) _presentFriendsViewController;
+
 @end
 
 @implementation ActivityViewController
 
-- (BOOL)prefersStatusBarHidden {
-    return YES;
+- (UIStatusBarStyle)preferredStatusBarStyle
+{
+    return UIStatusBarStyleLightContent;
 }
+
+- (void) _clearSubViewControllers {
+    [UIView animateWithDuration:slideSideBarsAnimationSpeed animations:^{
+        self.blackSheet.alpha = 0;
+        
+        CGRect friendsSideFrame = self.view.frame;
+        friendsSideFrame.origin.x = friendsSideFrame.size.width;
+        friendsSideFrame.origin.y = 0;
+        self.friendsVC.view.frame = friendsSideFrame;
+    }];
+}
+
+
 
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do any additional setup after loading the view.
     self.events = [[NSMutableArray alloc] init];
+    
+    self.view.backgroundColor = [UIColor colorWithRed:23.0/255.0 green:60.0/255.0 blue:104.0/255.0 alpha:1.0];
+    [self.view addSubview:self.backgroundImage];
+    [self.view addSubview:self.header];
+    [self.view addSubview:self.footer];
+
+    CGRect frame = self.footer.frame;
+    frame.origin.x = 0;
+    frame.origin.y = 0;
+    self.newActivityButton.frame = frame;
+    [self.footer addSubview:self.newActivityButton];
+
     [self.view addSubview:self.activityTableView];
+    
+    [self.view addSubview:self.titleLabel];
+    self.titleLabel.text = @"Activities";
+    
+    [self.view addSubview:self.gearButton];
+    [self.view addSubview:self.friendsButton];
+    [self.view addSubview:self.blackSheet];
+    [self.view addSubview:self.friendsVC.view];
 }
 
 - (void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
-    [self _loadEvents];
+    [self _loadActivities];
+    [self _loadFriends];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -49,7 +115,63 @@
 }
 */
 
-- (void) _loadEvents {
+#pragma mark - New Activity
+
+- (void) _newActivity {
+    [self presentViewController:self.createActivityVC animated:YES completion:nil];
+}
+
+- (void) closeEventCreation {
+    [self.createActivityVC dismissViewControllerAnimated:YES completion:^{
+        [self _loadActivities];
+    }];
+}
+
+#pragma mark - Friends
+
+- (void)_loadFriends {
+    [IntertwineManager friends:^(id json, NSError *error, NSURLResponse *response) {
+        if (error) {
+            NSLog(@"Error occured!! Friends were not loaded. Error: %@", error);
+            return;
+        }
+        if (!json) {
+            NSLog(@"No JSON returned back from request.");
+            return;
+        }
+        NSMutableArray *newFriendsArray = [[NSMutableArray alloc] init];
+        for (NSDictionary *friendDictionary in json) {
+            Friend *friend = [[Friend alloc] init];
+            friend.first = [friendDictionary objectForKey:@"first"];
+            friend.last = [friendDictionary objectForKey:@"last"];
+            friend.emailAddress = [friendDictionary objectForKey:@"email"];
+            friend.facebookID = [friendDictionary objectForKey:@"facebook_id"];
+            friend.accountID = [friendDictionary objectForKey:@"account_id"];
+            [newFriendsArray addObject:friend];
+        }
+        self.friends = newFriendsArray;
+    }];
+}
+
+- (void) _presentFriendsViewController {
+    CGRect screenRect = [[UIScreen mainScreen] bounds];
+    screenRect.origin.x = CGRectGetWidth(screenRect);
+    screenRect.origin.y = 0;
+    self.friendsVC.view.frame = screenRect;
+    
+    [UIView animateWithDuration:slideSideBarsAnimationSpeed animations:^{
+        self.blackSheet.alpha = 1;
+        CGRect screenRect = [[UIScreen mainScreen] bounds];
+        screenRect.origin.x = 320 - 218;
+        self.friendsVC.view.frame = screenRect;
+    }];
+}
+
+
+
+#pragma mark - Events
+
+- (void) _loadActivities {
     [IntertwineManager getActivityFeedWithResponse:^(id json, NSError *error, NSURLResponse *response) {
         if(error) {
             NSLog(@"Error occured!!\n%@", error);
@@ -161,7 +283,7 @@
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-    return outterCellHeight;
+    return activityCellHeight;
 }
 
 #pragma mark - Table View Data Source
@@ -171,18 +293,13 @@
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    EventTableViewCell *cell = (EventTableViewCell*)[tableView dequeueReusableCellWithIdentifier:@"cell"];
+    ActivityTableViewCell *cell = (ActivityTableViewCell*)[tableView dequeueReusableCellWithIdentifier:@"cell"];
     if (!cell) {
-        cell = [[EventTableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"cell" indentLength:10.0];
+        cell = [[ActivityTableViewCell alloc] initWithReuseIdentifier:@"cell"];
     }
     EventObject *event = [self.events objectAtIndex:indexPath.row];
     cell.event = event;
-    cell.delegate = self;
-    cell.eventLabel.text = event.eventTitle;
-    
-    NSString *facebookID = event.creator.facebookID;
-    
-    [cell setCreatorThumbnailWithID:facebookID facebook:YES];
+    cell.titleLabel.text = event.eventTitle;
     [cell setAttendees:[event attendees]];
     
     return cell;
@@ -192,13 +309,121 @@
 
 - (UITableView*)activityTableView {
     if (!_activityTableView) {
-        NSLog(@"\nScreen rect: %@\nThis view's rect: %@", NSStringFromCGRect([[UIScreen mainScreen] bounds]), NSStringFromCGRect(self.view.frame));
-        _activityTableView = [[UITableView alloc] initWithFrame:self.view.frame style:UITableViewStylePlain];
+        /* Readjust the height of the table view by the height of the header. */
+        CGRect frame = self.view.frame;
+        frame.size.height -= headerHeight;
+        frame.size.height -= footerHeight;
+        frame.origin.y += headerHeight;
+        
+        _activityTableView = [[UITableView alloc] initWithFrame:frame style:UITableViewStylePlain];
         _activityTableView.backgroundColor = [UIColor clearColor];
         _activityTableView.delegate = self;
         _activityTableView.dataSource = self;
+        _activityTableView.separatorStyle = UITableViewCellSeparatorStyleNone;
     }
     return _activityTableView;
+}
+
+- (UIImageView*)backgroundImage {
+    if (!_backgroundImage) {
+        _backgroundImage = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"BackgroundImage.png"]];
+        _backgroundImage.frame = [[UIScreen mainScreen] bounds];
+        _backgroundImage.alpha = 0.25;
+    }
+    return _backgroundImage;
+}
+
+- (UIView*)header {
+    if (!_header) {
+        _header = [[UIView alloc] initWithFrame:CGRectMake(0, 0, CGRectGetWidth(self.view.frame), headerHeight)];
+        _header.backgroundColor = [UIColor colorWithRed:20.0/255.0 green:81.0/255.0 blue:121.0/255.0 alpha:1.0];
+    }
+    return _header;
+}
+
+- (UIView*)footer {
+    if (!_footer) {
+        _footer = [[UIView alloc] initWithFrame:CGRectMake(-5, y_footer, CGRectGetWidth(self.view.frame) + 10, footerHeight + 2)];
+        _footer.backgroundColor = [UIColor colorWithRed:20.0/255.0 green:81.0/255.0 blue:121.0/255.0 alpha:1.0];
+        _footer.layer.borderColor = [[UIColor whiteColor] CGColor];
+        _footer.layer.borderWidth = 1.0;
+    }
+    return _footer;
+}
+
+- (UILabel*)titleLabel {
+    if (!_titleLabel) {
+        _titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, y_toolBarItems, CGRectGetWidth(self.view.frame), 24)];
+        _titleLabel.backgroundColor = [UIColor clearColor];
+        _titleLabel.textColor = [UIColor whiteColor];
+        _titleLabel.textAlignment = NSTextAlignmentCenter;
+        _titleLabel.font = [UIFont fontWithName:@"HelveticaNeue-Light" size:22];
+    }
+    return _titleLabel;
+}
+
+- (UIButton*)gearButton {
+    if (!_gearButton) {
+        _gearButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        [_gearButton setBackgroundImage:[UIImage imageNamed:@"gear.png"] forState:UIControlStateNormal];
+        _gearButton.frame = CGRectMake(10.0, y_toolBarItems, 26.0, 26.0);
+    }
+    return _gearButton;
+}
+
+- (UIButton*)friendsButton {
+    if (!_friendsButton) {
+        _friendsButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        [_friendsButton setBackgroundImage:[UIImage imageNamed:@"friends.png"] forState:UIControlStateNormal];
+        [_friendsButton addTarget:self action:@selector(_presentFriendsViewController) forControlEvents:UIControlEventTouchUpInside];
+        
+        CGFloat screenWidth = CGRectGetWidth([[UIScreen mainScreen] bounds]);
+        _friendsButton.frame = CGRectMake(screenWidth - 36.0, y_toolBarItems, 26.0, 26.0);
+    }
+    return _friendsButton;
+}
+
+- (UIView*)newActivityButton {
+    if (!_newActivityButton) {
+        _newActivityButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        [_newActivityButton setTitle:@"+" forState:UIControlStateNormal];
+        [_newActivityButton addTarget:self action:@selector(_newActivity) forControlEvents:UIControlEventTouchUpInside];
+    }
+    return _newActivityButton;
+}
+
+- (NewActivityViewController*)createActivityVC {
+    if (!_createActivityVC) {
+        _createActivityVC = [NewActivityViewController new];
+        _createActivityVC.delegate = self;
+        _createActivityVC.friends = self.friends;
+    }
+    return _createActivityVC;
+}
+
+- (FriendsViewController*)friendsVC {
+    if (!_friendsVC) {
+        CGRect screenRect = [[UIScreen mainScreen] bounds];
+        screenRect.origin.x = CGRectGetWidth(screenRect);
+        screenRect.origin.y = 0;
+        
+        _friendsVC = [FriendsViewController new];
+        _friendsVC.view.frame = screenRect;
+    }
+    return _friendsVC;
+}
+
+- (UIView*)blackSheet {
+    if (!_blackSheet) {
+        CGRect frame = self.view.frame;
+        frame.origin.x = 0;
+        frame.origin.y = 0;
+        _blackSheet = [[UIControl alloc] initWithFrame:frame];
+        _blackSheet.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0.55];
+        _blackSheet.alpha = 0;
+        [_blackSheet addTarget:self action:@selector(_clearSubViewControllers) forControlEvents:UIControlEventTouchUpInside];
+    }
+    return _blackSheet;
 }
 
 @end

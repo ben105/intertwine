@@ -43,8 +43,8 @@ typedef enum {
 + (BOOL)setAccountID:(NSString*)accountID;
 + (NSString*)accountIDFilePath;
 
-+ (NSString*)getHash;
-+ (BOOL)setHashkey:(NSString*)hashkey;
++ (NSString*)getTokenKey;
++ (BOOL)setTokenKey:(NSString*)tokenKey;
 
 + (NSMutableURLRequest*)getRequest:(NSString*)endpoint;
 + (void)sendRequest:(NSMutableURLRequest*)request response:(void (^)(id json, NSError* error, NSURLResponse *resp))responseBlock;
@@ -58,3 +58,6 @@ typedef enum {
 + (void) clearCredentialCache;
 
 @end
+
+extern NSString *firstName;
+extern NSString *lastName;

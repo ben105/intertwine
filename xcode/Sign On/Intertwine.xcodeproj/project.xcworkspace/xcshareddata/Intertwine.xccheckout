@@ -11,17 +11,17 @@
 	<key>IDESourceControlProjectOriginsDictionary</key>
 	<dict>
 		<key>B6327F23336471F4F3B72C70A3657F0ECD335996</key>
-		<string>test-intertwine.cloudapp.net:/opt/git/intertwine.git</string>
+		<string>ec2-54-188-199-29.us-west-2.compute.amazonaws.com:/opt/git/intertwine.git</string>
 	</dict>
 	<key>IDESourceControlProjectPath</key>
-	<string>Sign On/Intertwine.xcodeproj</string>
+	<string>xcode/Sign On/Intertwine.xcodeproj</string>
 	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
 	<dict>
 		<key>B6327F23336471F4F3B72C70A3657F0ECD335996</key>
-		<string>../../..</string>
+		<string>../../../..</string>
 	</dict>
 	<key>IDESourceControlProjectURL</key>
-	<string>test-intertwine.cloudapp.net:/opt/git/intertwine.git</string>
+	<string>ec2-54-188-199-29.us-west-2.compute.amazonaws.com:/opt/git/intertwine.git</string>
 	<key>IDESourceControlProjectVersion</key>
 	<integer>111</integer>
 	<key>IDESourceControlProjectWCCIdentifier</key>

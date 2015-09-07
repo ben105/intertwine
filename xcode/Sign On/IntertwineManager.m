@@ -31,12 +31,27 @@ AccountType _accountType;
     return data;
 }
 
+#pragma mark - Account Name
+
+NSString *firstName = nil;
+NSString *lastName = nil;
++(NSString*)fullName {
+    if (lastName == nil) {
+        if (firstName == nil) {
+            return nil;
+        }
+        return firstName;
+    }
+    return [NSString stringWithFormat:@"%@ %@", firstName, lastName];
+}
+
+
 NSString *_facebookID = nil;
 NSString *_facebookName = nil;
 NSString *_accountID = nil;
-NSString *_hashkey = nil;
+NSString *_tokenKey = nil;
 NSData *_deviceToken = nil;
-const NSString *server = @"http://ec2-52-11-184-120.us-west-2.compute.amazonaws.com:5000";
+const NSString *server = @"http://ec2-54-188-199-29.us-west-2.compute.amazonaws.com:5000";
 
 
 
@@ -93,7 +108,7 @@ const NSString *server = @"http://ec2-52-11-184-120.us-west-2.compute.amazonaws.
                                            responseBlock(nil, jsonReadingError, response);
                                        } else {
                                            NSString *serverErrorMsg = [json objectForKey:@"error"];
-                                           if ([serverErrorMsg length]) {
+                                           if (serverErrorMsg != [NSNull null] && [serverErrorMsg length]) {
                                                NSMutableDictionary* details = [NSMutableDictionary dictionary];
                                                [details setValue:serverErrorMsg forKey:NSLocalizedDescriptionKey];
                                                NSError *err = [NSError errorWithDomain:@"IntertwineError"
@@ -101,7 +116,7 @@ const NSString *server = @"http://ec2-52-11-184-120.us-west-2.compute.amazonaws.
                                                                               userInfo:details];
                                                responseBlock(json, err, response);
                                            }
-                                           responseBlock(json, nil, response);
+                                           responseBlock([json objectForKey:@"payload"], nil, response);
                                        }
                                    } else {
                                        responseBlock(nil, nil, response);
@@ -137,6 +152,13 @@ const NSString *server = @"http://ec2-52-11-184-120.us-west-2.compute.amazonaws.
 + (void)registeredFacebookID:(NSString*)facebookID username:(NSString*)username {
     _facebookID = facebookID;
     _facebookName = username;
+    NSArray *nameComponents = [username componentsSeparatedByString:@" "];
+    NSAssert([nameComponents count] > 0, @"There must be at least one name component for the registered Facebook account.");
+    firstName = [nameComponents objectAtIndex:0];
+    if ([nameComponents count] > 1) {
+        // Assign to the last object, incase the person has a middle name(s).
+        lastName = [nameComponents lastObject];
+    }
 }
 
 + (NSString*) facebookID {
@@ -205,10 +227,11 @@ const NSString *server = @"http://ec2-52-11-184-120.us-west-2.compute.amazonaws.
                     NSLog(@"Server Error: %@", serverError);
                 }
                 if(isFacebook) {
-                    NSString *hashkey = [json objectForKey:@"session_key"];
-                    NSNumber *accountIDNumber = [json objectForKey:@"account_id"];
-                    NSString *accountid = [NSString stringWithFormat:@"%d", [accountIDNumber integerValue]];
-                    [IntertwineManager setHashkey:hashkey];
+                    NSDictionary *payload = [json objectForKey:@"payload"];
+                    NSString *tokenKey = [payload objectForKey:@"token_key"];
+                    NSNumber *accountIDNumber = [payload objectForKey:@"user_id"];
+                    NSString *accountid = [NSString stringWithFormat:@"%ld", (long)[accountIDNumber integerValue]];
+                    [IntertwineManager setTokenKey:tokenKey];
                     [IntertwineManager setAccountID:accountid];
                 }
                 if (completion)
@@ -237,9 +260,9 @@ const NSString *server = @"http://ec2-52-11-184-120.us-west-2.compute.amazonaws.
             NSError *err = nil;
             id json = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:&err];
             if (json && !err) {
-                NSString *hashkey = [json objectForKey:@"hashkey"];
+                NSString *tokenKey = [json objectForKey:@"tokenKey"];
                 NSString *accountid = [json objectForKey:@"accountid"];
-                [IntertwineManager setHashkey:hashkey];
+                [IntertwineManager setTokenKey:tokenKey];
                 [IntertwineManager setAccountID:accountid];
                 [IntertwineManager setAccountType:kAccountTypeEmail];
             }
@@ -253,9 +276,9 @@ const NSString *server = @"http://ec2-52-11-184-120.us-west-2.compute.amazonaws.
     return [directoryPath stringByAppendingPathComponent:@"account_id.out"];
 }
 
-+ (NSString*)hashkeyFilePath {
++ (NSString*)tokenKeyFilePath {
     NSString *directoryPath = [IntertwineManager filePath];
-    return [directoryPath stringByAppendingPathComponent:@"hashkey.out"];
+    return [directoryPath stringByAppendingPathComponent:@"tokenKey.out"];
 }
 
 + (NSString*)getAccountID {
@@ -281,26 +304,26 @@ const NSString *server = @"http://ec2-52-11-184-120.us-west-2.compute.amazonaws.
     return [data writeToFile:filePath atomically:YES];
 }
 
-+ (NSString*)getHash {
-    if (_hashkey) {
-        return _hashkey;
++ (NSString*)getTokenKey {
+    if (_tokenKey) {
+        return _tokenKey;
     }
-    NSString *filePath = [IntertwineManager hashkeyFilePath];
+    NSString *filePath = [IntertwineManager tokenKeyFilePath];
     NSData *data = [NSData dataWithContentsOfFile:filePath];
     if (!data)
         return nil;
-    NSString *hashkey = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-    [IntertwineManager setHashkey:hashkey];
-    return hashkey;
+    NSString *tokenKey = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+    [IntertwineManager setTokenKey:tokenKey];
+    return tokenKey;
 }
 
-+ (BOOL)setHashkey:(NSString*)hashkey {
-    if (!hashkey)
++ (BOOL)setTokenKey:(NSString*)tokenKey {
+    if (!tokenKey)
         return NO;
-    _hashkey = hashkey;
+    _tokenKey = tokenKey;
     // Write the new account ID to file, to save for relaunches
-    NSString *filePath = [IntertwineManager hashkeyFilePath];
-    NSData *data = [hashkey dataUsingEncoding:NSUTF8StringEncoding];
+    NSString *filePath = [IntertwineManager tokenKeyFilePath];
+    NSData *data = [tokenKey dataUsingEncoding:NSUTF8StringEncoding];
     return [data writeToFile:filePath atomically:YES];
 
 }
@@ -308,13 +331,20 @@ const NSString *server = @"http://ec2-52-11-184-120.us-west-2.compute.amazonaws.
 
 + (void)attachCredentialsToRequest:(NSMutableURLRequest*)request {
     NSString *accountID = [IntertwineManager getAccountID];
-    NSString *sessionKey = [IntertwineManager getHash];
+    NSString *sessionKey = [IntertwineManager getTokenKey];
 
     if (accountID != nil){
         [request setValue:accountID forHTTPHeaderField:@"user_id"];
     }
     if (sessionKey != nil) {
         [request setValue:sessionKey forHTTPHeaderField:@"session_key"];
+    }
+    
+    if (firstName != nil) {
+        [request setValue:firstName forHTTPHeaderField:@"first"];
+    }
+    if (lastName != nil) {
+        [request setValue:lastName forHTTPHeaderField:@"last"];
     }
 }
 
@@ -339,7 +369,7 @@ const NSString *server = @"http://ec2-52-11-184-120.us-west-2.compute.amazonaws.
 
 + (void) clearCredentialCache{
     [IntertwineManager setAccountID:@""];
-    [IntertwineManager setHashkey:@""];
+    [IntertwineManager setTokenKey:@""];
 }
 
 

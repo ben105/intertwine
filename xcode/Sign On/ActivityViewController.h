@@ -8,12 +8,15 @@
 
 #import <UIKit/UIKit.h>
 #import "EventTableViewCell.h"
+#import "NewActivityViewController.h"
 
-@interface ActivityViewController : UIViewController <EventTableViewCellDelegate, UITableViewDataSource, UITableViewDelegate>
+@class FriendsViewController;
+
+@interface ActivityViewController : UIViewController <ActivityCreationDelegate, EventTableViewCellDelegate, UITableViewDataSource, UITableViewDelegate>
 
 @property (nonatomic, strong) UITableView *activityTableView;
 @property (nonatomic, strong) NSMutableArray *events;
 
-
+@property (nonatomic, strong) FriendsViewController *friendsVC;
 
 @end

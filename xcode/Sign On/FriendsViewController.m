@@ -7,14 +7,21 @@
 //
 
 #import "FriendsViewController.h"
+#import "FriendsTableViewCell.h"
 #import "IntertwineManager+Friends.h"
 #import "SendRequestViewController.h"
 #import "PendingRequestTableViewCell.h"
+
+const CGFloat viewWidth = 290;
 
 @interface FriendsViewController ()
 
 @property (nonatomic, strong) NSMutableArray *tableData;
 @property (nonatomic, strong) NSArray *sectionTitles;
+
+
+@property (nonatomic, strong) UIView *header;
+@property (nonatomic, strong) UILabel *titleLabel;
 
 @end
 
@@ -41,24 +48,21 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.profilePictureView.profileID = self.user.objectID;
-    self.nameLabel.text = self.user.name;
+//    self.profilePictureView.profileID = self.user.objectID;
+//    self.nameLabel.text = self.user.name;
+    self.view.backgroundColor = [UIColor colorWithRed:20.0/255.0 green:81.0/255.0 blue:121.0/255.0 alpha:0.88];
     self.tableData = [[NSMutableArray alloc] initWithArray:@[@[], @[]]];
     self.sectionTitles = [[NSArray alloc] initWithObjects:@"Friends", @"Pending Requests", nil];
     self.cellIdentifiers = [[NSArray alloc] initWithObjects: @"friend_cell", @"pending_cell", nil];
-    [self.navigationController setHidesBarsOnSwipe:YES];
+    [self.view addSubview:self.friendsTableView];
+    [self.view addSubview:self.header];
+    [self.view addSubview:self.titleLabel];
+//    [self.navigationController setHidesBarsOnSwipe:YES];
 }
 
 - (void)viewDidAppear:(BOOL)animated {
     [self getFriends];
-    [self getPendingRequests];
-    
-    UIBarButtonItem *done = [[UIBarButtonItem alloc] initWithTitle:@"Exit" style:UIBarButtonItemStyleDone target:self action:@selector(done)];
-    
-    UIBarButtonItem *add = [[UIBarButtonItem alloc] initWithTitle:@"+" style:UIBarButtonItemStylePlain target:self action:@selector(add)];
-    [self.navigationItem setLeftBarButtonItem:done animated:NO];
-    [self.navigationItem setRightBarButtonItem:add animated:NO];
-    
+//    [self getPendingRequests];
     [super viewDidAppear:YES];
 }
 
@@ -83,7 +87,6 @@
         if (!error) {
             if (json) {
                 [self.tableData replaceObjectAtIndex:1 withObject:json];
-                [self getFriends];
             } else {
                 [self.tableData replaceObjectAtIndex:1 withObject:@[]];
             }
@@ -99,9 +102,6 @@
                                  , NSURLResponse *response) {
         // If there is valid json returned, we will insert it into the friends array.
         if (!error) {
-            for (NSDictionary *friend in json) {
-                NSString *first = [friend objectForKey:@"first"];
-                NSString *last = [friend objectForKey:@"last"];            }
             if (json) {
                 [self.tableData replaceObjectAtIndex:0 withObject:json];
             } else {
@@ -109,7 +109,6 @@
             }
             [self.friendsTableView reloadData];
         }
-        [self.friendsTableView reloadData];
     }];
 
 }
@@ -135,7 +134,13 @@
 
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return [self.tableData count];
+    NSUInteger count = 0;
+    for (NSArray *data in self.tableData) {
+        if ([data count] > 0) {
+            count++;
+        }
+    }
+    return count;
 }
 
 
@@ -144,9 +149,21 @@
 }
 
 
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
+    return friendsCellHeight;
+}
 
-
-
+- (void)tableView:(UITableView *)tableView willDisplayHeaderView:(UIView *)view forSection:(NSInteger)section
+{
+    if([view isKindOfClass:[UITableViewHeaderFooterView class]]){
+        
+        UITableViewHeaderFooterView *tableViewHeaderFooterView = (UITableViewHeaderFooterView *) view;
+        tableViewHeaderFooterView.textLabel.textColor = [UIColor whiteColor];
+        tableViewHeaderFooterView.textLabel.font = [UIFont fontWithName:@"HelveticaNeue" size:11];
+        tableViewHeaderFooterView.textLabel.backgroundColor = [UIColor clearColor];
+        tableViewHeaderFooterView.backgroundView.backgroundColor = [UIColor clearColor];
+    }
+}
 
 
 
@@ -155,23 +172,24 @@
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-
     NSString *cellIdentifier = [self.cellIdentifiers objectAtIndex:indexPath.section];
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:cellIdentifier];
+    FriendsTableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:cellIdentifier];
     if (!cell) {
         if (indexPath.section == 0) {
-            cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:cellIdentifier];
+            cell = [[FriendsTableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:cellIdentifier];
         } else if (indexPath.section == 1) {
             cell = [[PendingRequestTableViewCell alloc] initWithReuseIdentifier:cellIdentifier];
         }
     }
     NSDictionary<FBGraphUser>* friend = [[self.tableData objectAtIndex:indexPath.section] objectAtIndex:indexPath.row];
     NSString *friendName = [NSString stringWithFormat:@"%@ %@", [friend objectForKey:@"first"], [friend objectForKey:@"last"]];
-    if (indexPath.section == 1) {
-        [(PendingRequestTableViewCell*)cell setAccountID:[friend objectForKey:@"account_id"]];
-        [(PendingRequestTableViewCell*)cell setDelegate:self];
-    }
-    cell.textLabel.text = friendName;
+//    if (indexPath.section == 1) {
+//        [(PendingRequestTableViewCell*)cell setAccountID:[friend objectForKey:@"account_id"]];
+//        [(PendingRequestTableViewCell*)cell setDelegate:self];
+//    }
+    cell.friendLabel.text = friendName;
+    cell.friendProfilePicture.profileID = [friend objectForKey:@"facebook_id"];
+    cell.accountID = [friend objectForKey:@"id"];
     return cell;
 }
 
@@ -179,5 +197,40 @@
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
+
+
+
+#pragma mark - Lazy Loading
+
+- (UITableView*)friendsTableView {
+    CGFloat height = CGRectGetHeight([[UIScreen mainScreen] bounds]);
+    if (!_friendsTableView) {
+        _friendsTableView = [[UITableView alloc] initWithFrame:CGRectMake(0, 58, viewWidth, height) style:UITableViewStylePlain];
+        _friendsTableView.delegate = self;
+        _friendsTableView.dataSource = self;
+        _friendsTableView.separatorStyle = UITableViewCellSeparatorStyleNone;
+        _friendsTableView.backgroundColor = [UIColor clearColor];
+    }
+    return _friendsTableView;
+}
+
+- (UIView*)header {
+    if (!_header) {
+        _header = [[UIView alloc] initWithFrame:CGRectMake(0, 0, viewWidth, 50)];
+        _header.backgroundColor = [UIColor colorWithRed:1 green:1 blue:1 alpha:0.3];
+    }
+    return _header;
+}
+
+- (UILabel*)titleLabel {
+    if (!_titleLabel) {
+        _titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 22, viewWidth, 31)];
+        _titleLabel.backgroundColor = [UIColor clearColor];
+        _titleLabel.textColor = [UIColor whiteColor];
+        _titleLabel.textAlignment = NSTextAlignmentCenter;
+        _titleLabel.text = @"People";
+    }
+    return _titleLabel;
+}
 
 @end

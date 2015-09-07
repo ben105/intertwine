@@ -17,12 +17,12 @@
 
 @interface FriendsViewController : UIViewController <UITableViewDataSource, UITableViewDelegate>
 
-@property (nonatomic, weak) id <FBGraphUser> user;
+//@property (nonatomic, weak) id <FBGraphUser> user;
+//
+//@property (nonatomic, weak) IBOutlet FBProfilePictureView *profilePictureView;
+//@property (nonatomic, weak) IBOutlet UILabel *nameLabel;
 
-@property (nonatomic, weak) IBOutlet FBProfilePictureView *profilePictureView;
-@property (nonatomic, weak) IBOutlet UILabel *nameLabel;
-
-@property (nonatomic, weak) IBOutlet UITableView *friendsTableView;
+@property (nonatomic, strong) UITableView *friendsTableView;
 @property (nonatomic, strong) NSArray *cellIdentifiers;
 
 - (IBAction)done;
