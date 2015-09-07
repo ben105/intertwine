@@ -80,7 +80,7 @@ def fb_friends(ctx, friends_list):
 	# Generate a list of compairson conditions, with placeholders
 	conditions = list()
 	for i in range(0, len(friends_list)):
-			conditions.append("accounts.id = %s")
+			conditions.append("accounts.facebook_id = %s")
 	# Instantiate the friend suggestion query
 	# without the condition that it should match
 	# with the list of friends provided.
