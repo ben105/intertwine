@@ -67,7 +67,6 @@ class TestFriendRequests(unittest.TestCase):
 		self.assertEqual(len(resp['payload']), 0)
 
 	def test_fb_friends_with_single_item_list(self):
-		import pdb. pdb.set_trace()
 		resp = friends.fb_friends(self.ctx, ['123'])
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])

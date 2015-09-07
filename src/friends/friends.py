@@ -104,7 +104,7 @@ def fb_friends(ctx, friends_list):
 			SELECT requester_accounts_id FROM friend_requests WHERE requestee_accounts_id=%s
 			) and 
 		accounts.id not in (
-			SELECT friend_accounts_id FROM friends WHERE accounts_id=%s);
+			SELECT friend_accounts_id FROM friends WHERE accounts_id=%s)
 	"""
 	# Expand the conditions list into a condition string
 	condition_string = " or ".join(conditions)
