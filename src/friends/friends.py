@@ -86,30 +86,39 @@ def fb_friends(ctx, friends_list):
 	# with the list of friends provided.
 	friend_suggestions = """
 	SELECT
+		accounts.id,
 		accounts.first,
 		accounts.last,
 		accounts.facebook_id,
 		accounts.email
 	FROM 
-		accounts, friends
+		accounts
 	WHERE 
-		  accounts.id not in (SELECT blocked_accounts_id FROM blocked_accounts) and
-		  accounts.id not in (SELECT requestee_accounts_id FROM friend_requests) and
-		  accounts.id not in (SELECT requester_accounts_id FROM friend_requests)
+		accounts.id not in (
+			SELECT blocked_accounts_id FROM blocked_accounts WHERE accounts_id=%s
+			) and
+		accounts.id not in (
+			SELECT requestee_accounts_id FROM friend_requests WHERE requester_accounts_id=%s
+			) and
+		accounts.id not in (
+			SELECT requester_accounts_id FROM friend_requests WHERE requestee_accounts_id=%s
+			) and 
+		accounts.id not in (
+			SELECT friend_accounts_id FROM friends WHERE accounts_id=%s);
 	"""
 	# Expand the conditions list into a condition string
 	condition_string = " or ".join(conditions)
 	friend_suggestions = friend_suggestions + " and (" + condition_string + ");"
 	# Run the query
 	try:
-		ctx.cur.execute(friend_suggestions, tuple(friends_list))
+		ctx.cur.execute(friend_suggestions, (ctx.user_id,)*4 + tuple(friends_list))
 	except Exception as exc:
 		logging.error('exception raised when retrieving friend suggestions for user %d, %s', ctx.user_id, exc)
 		return response.block(error=strings.SERVER_ERROR, code=500)
 	rows = ctx.cur.fetchall()
 	suggestions = []
 	if len(rows):
-		suggestions = [{'first':row[0], 'last':row[1], 'facebook_id':row[2], 'email':row[3]} for row in rows]
+		suggestions = [{'id':row[0], 'first':row[1], 'last':row[2], 'facebook_id':row[3], 'email':row[4]} for row in rows]
 	else:
 		logging.debug('no rows returned for user %d Facebook friend suggestions', ctx.user_id)
 	return response.block(payload=suggestions)
