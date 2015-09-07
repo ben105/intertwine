@@ -61,7 +61,8 @@ CREATE TABLE friend_requests (
 id serial PRIMARY KEY,
 requester_accounts_id integer NOT NULL references accounts(id),
 requestee_accounts_id integer NOT NULL references accounts(id),
-denied boolean DEFAULT FALSE 
+denied boolean DEFAULT FALSE,
+constraint request_constraint unique (requester_accounts_id, requestee_accounts_id)
 );
 
 CREATE TABLE blocked_accounts (

@@ -72,7 +72,7 @@ def create_email_account(ctx, email, first, last, password):
 	try:
 		ctx.cur.execute(query, (email, first, last, hashed_password, salt))
 	except Exception as exc:
-		logging.error('exception raised while trying to create a new account for %s %s (%s)', first, last, email)
+		logging.error('exception raised while trying to create a new account for %s %s (%s)\n%s', first, last, email, str(exc))
 		return response.block(error=strings.SERVER_ERROR, code=500)
 	# We have succesfully created the account!
 	logging.info('created a new account for %s %s (%s)', first, last, email)
