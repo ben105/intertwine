@@ -9,16 +9,39 @@
 #import <UIKit/UIKit.h>
 
 @class EventObject;
+@class IntertwineButton;
+@class ActivityTableViewCell;
+
+@protocol ActivityCellDelegate <NSObject>
+@optional
+- (void)didSelectCommentButton:(EventObject*)event forCell:(ActivityTableViewCell*)cell;
+- (void)didSelectLikeButton:(EventObject*)event forCell:(ActivityTableViewCell*)cell;
+- (void)didSelectCompleteButton:(EventObject*)event forCell:(ActivityTableViewCell*)cell;
+@end
+
+
 
 @interface ActivityTableViewCell : UITableViewCell
 
-@property (nonatomic, strong) UIScrollView *scrollView;
+@property (nonatomic, weak) id<ActivityCellDelegate> delegate;
+
+@property (nonatomic, strong) IntertwineButton *completedButton;
+@property (nonatomic, strong) IntertwineButton *commentButton;
+@property (nonatomic, strong) IntertwineButton *likeButton;
+
 @property (nonatomic, strong) UILabel *titleLabel;
+- (void)setTitle:(NSString*)title;
+
 @property (nonatomic, strong) NSArray *attendees;
 
 - (id) initWithReuseIdentifier:(NSString*)reuseIdentifier;
 
 @property (nonatomic, strong) EventObject *event;
+
+- (void) resize;
++ (CGFloat) cellHeightForString:(NSString*)title andAttendeeCount:(NSUInteger)count;
+
+- (void)completed:(BOOL)isComplete;
 
 @end
 

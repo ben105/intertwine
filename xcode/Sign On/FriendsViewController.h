@@ -15,18 +15,18 @@
 - (void) acceptedFriendRequest:(PendingRequestTableViewCell*)cell;
 @end
 
-@interface FriendsViewController : UIViewController <UITableViewDataSource, UITableViewDelegate>
+@interface FriendsViewController : UIViewController <UITableViewDataSource, UITableViewDelegate, UISearchBarDelegate, FriendsDelegate>
 
 //@property (nonatomic, weak) id <FBGraphUser> user;
 //
 //@property (nonatomic, weak) IBOutlet FBProfilePictureView *profilePictureView;
 //@property (nonatomic, weak) IBOutlet UILabel *nameLabel;
 
+@property (nonatomic, strong) UITableView *searchResultsTableView;
 @property (nonatomic, strong) UITableView *friendsTableView;
 @property (nonatomic, strong) NSArray *cellIdentifiers;
 
 - (IBAction)done;
-- (void) add;
 
 - (void)getPendingRequests;
 - (void)getFriends;

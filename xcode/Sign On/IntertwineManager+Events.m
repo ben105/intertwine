@@ -11,18 +11,20 @@
 
 const NSString *eventsEndpoint = @"/api/v1/events";
 const NSString *commentsEndpoint = @"/api/v1/comment";
+const NSString *eventCompleteEndpoint = @"/api/v1/event_complete";
 
 @implementation IntertwineManager (Events)
 
 #pragma mark - Comment Create/Read
 
-+ (void) addComment:(NSString*)comment forEvent:(NSNumber*)eventNumber withResponse:(void (^)(id json, NSError *error, NSURLResponse *response))responseBlock {
++ (void) addComment:(NSString*)comment forEvent:(NSString*)title eventNumber:(NSNumber*)eventNumber withResponse:(void (^)(id json, NSError *error, NSURLResponse *response))responseBlock {
     /* 
      * Create a NSDictionary of the body we want to POST
      */
     NSMutableDictionary *body = [[NSMutableDictionary alloc] init];
     [body setObject:comment forKey:@"comment"];
     [body setObject:eventNumber forKey:@"event_id"];
+    [body setObject:title forKey:@"title"];
     
     NSData *data = [IntertwineManager loadJSON:body];
     if (data == nil)
@@ -115,6 +117,33 @@ const NSString *commentsEndpoint = @"/api/v1/comment";
 + (void) getEventsWithResponse:(void (^)(id json, NSError *error, NSURLResponse *response))responseBlock {
     NSMutableURLRequest *request = [IntertwineManager getRequest:(NSString*)eventsEndpoint];
     [request setHTTPMethod:@"GET"];
+    [IntertwineManager sendRequest:request response:responseBlock];
+}
+
+
+
++(void)completeEvent:(NSNumber *)eventID withTitle:(NSString*)title withResponse:(void (^)(id, NSError *, NSURLResponse *))responseBlock {
+    /*
+     * A simple dictionary with one key-value pair,
+     * event_id: event ID
+     */
+    unsigned long int event_id = [eventID unsignedIntegerValue];
+    NSMutableDictionary *body = [[NSMutableDictionary alloc] initWithObjects:@[[NSString stringWithFormat:@"%lu",(unsigned long)event_id], title] forKeys:@[@"event_id", @"title"]];
+    
+    /*
+     * Convert the NSMutableDictionary into JSON data.
+     */
+    NSError *error = nil;
+    NSData *data = [NSJSONSerialization dataWithJSONObject:body options:0 error:&error];
+    if (error) {
+        NSLog(@"Error occured trying to serialize to JSON data, when completing an event.");
+        return;
+    }
+    
+    NSMutableURLRequest *request = [IntertwineManager getRequest:(NSString*)eventCompleteEndpoint];
+    [request setHTTPMethod:@"POST"];
+    [request setHTTPBody:data];
+    [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
     [IntertwineManager sendRequest:request response:responseBlock];
 }
 

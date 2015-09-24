@@ -48,6 +48,16 @@ const CGFloat friendsCellHeight = 60.0;
     // Configure the view for the selected state
 }
 
+- (void)isFaded:(BOOL)faded {
+    if (faded) {
+        self.friendProfilePicture.alpha = 0.5;
+        self.friendLabel.alpha = 0.5;
+    } else {
+        self.friendProfilePicture.alpha = 1;
+        self.friendLabel.alpha = 1;
+    }
+}
+
 - (void)setAccountID:(NSString *)accountID {
     _accountID = accountID;
     self.friendProfilePicture.profileID = accountID;

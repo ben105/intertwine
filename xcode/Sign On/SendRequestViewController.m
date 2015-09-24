@@ -54,6 +54,7 @@
                                                   NSDictionary* result,
                                                   NSError *error) {
         if (error || [result count] == 0) {
+            NSLog(@"Failed to retrieve list of Facebook friends\n%@", error);
             return;
         }
         NSArray* friends = [result objectForKey:@"data"];
