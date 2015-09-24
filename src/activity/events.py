@@ -100,6 +100,57 @@ def get_attendees(ctx, event_id):
 	attendees = [{"first":a[0], "last":a[1], "email":a[2], "facebook_id":a[3], "id":a[4]} for a in results] 
 	return response.block(payload=attendees)
 
+def response_for_events(ctx, events):
+	pass
+
+def get_events_with_user(ctx, user_id):
+	pass
+
+def get_events_for_user(ctx, user_id):
+	# Query for all events for the user ID
+	query = """
+	SELECT 
+		events.id, 
+		events.title, 
+		events.description, 
+		events.creator,
+		events.updated_time 
+	FROM 
+		accounts, 
+		events, 
+		event_attendees 
+	WHERE 
+		accounts.id = event_attendees.attendee_accounts_id and 
+		event_attendees.events_id = events.id and 
+		accounts.id = %s
+	ORDER BY
+		events.updated_time DESC;
+	"""
+	try:
+		ctx.cur.execute(query, (user_id,))
+	except Exception as exc:
+		logging.error('exception raised trying to retrieve list of events for user %d', user_id)
+		return response.block(error=strings.SERVER_ERROR, code=500)
+	rows = ctx.cur.fetchall()
+	events = []
+	for row in rows:
+		# Get the creator's account information
+		creator = accounts.user_info(ctx.cur, row[3])
+		if creator is None:
+			logging.error('could not find creator for event %d', row[3])
+			continue
+		event = {}
+		event["id"] = row[0]
+		event["title"] = row[1]
+		event["description"] = row[2]
+		event["creator"] = creator
+		event["updated_time"] = str(row[4]).split('.')[0]
+		event["attendees"] = get_attendees(ctx.cur, event["id"])
+		event["comment_count"] = comments.comment_count(ctx.cur, event["id"])
+		# Append to the end of events list
+		events.append(event)
+	return response.block(payload=events)
+
 def get_events(ctx):
 	"""Get the list of events for a user ID.
 
