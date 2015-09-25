@@ -47,6 +47,15 @@ def start(db_name='testdb'):
 		cur.execute('DROP DATABASE {};'.format(db_name,))
 		cur.connection.commit()
 		cur.execute('CREATE DATABASE {};'.format(db_name,))
+
+	# Drop the previous connection and reconnect with the new database.
+	# (DUH!!)
+	conn.close()
+	cur.close()
+	conn = psycopg2.connect('dbname={} host=intertwine.cntms98hv39g.us-west-2.rds.amazonaws.com user=intertwine password=intertwine'.format(db_name))
+	cur = conn.cursor()
+	cur.connection.autocommit = True
+	
 	# Initialize the database with the script to build the schema.
 	sqlscript = 'schema.sql'
 	sqlscript_path = os.path.join('/home/calgrove/intertwine/db', sqlscript)
