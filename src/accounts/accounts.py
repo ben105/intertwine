@@ -237,7 +237,7 @@ def user_info(cur, accounts_id):
 	email = row[2]
 	facebook_id = row[3]
 	return {
-		'id': accounts_id,
+		'id': str(accounts_id),
 		'first':first,
 		'last':last,
 		'email':email,

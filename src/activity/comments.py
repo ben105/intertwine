@@ -126,8 +126,8 @@ def comment(ctx, event_id, title, comment):
 	except Exception as exc:
 		logging.error('exception raised trying to insert comment "%s" for event %d', comment, ctx.user_id)
 		return response.block(error=strings.SERVER_ERROR, code=500)
-	notify_attendees(ctx.cur, ctx.user_id, ctx.first, ctx.last, event_id, title, comment)
 	comment_id = ctx.cur.fetchone()[0]
+	notify_attendees(ctx, event_id, title, comment)
 	return response.block(payload={
 		'comment_id': comment_id
 	})

@@ -1,5 +1,6 @@
 from intertwine.accounts import accounts
 from intertwine.activity import events
+from intertwine.activity import comments
 from intertwine import response
 from intertwine import strings
 
@@ -26,7 +27,8 @@ def get_activity(ctx):
 		events.title,
 		events.description,
 		events.creator,
-		events.updated_time
+		events.updated_time,
+		events.completed
 	FROM
 		events
 	INNER JOIN 	event_attendees
@@ -52,10 +54,12 @@ def get_activity(ctx):
 		event["description"] = row[2]
 		event["creator"] = accounts.user_info(ctx.cur, row[3])
 		event["updated_time"] = str(row[4])
+		event["completed"] = row[5]
 		resp = events.get_attendees(ctx, row[0])
 		if resp['error'] is not None:
 			return resp
 		event["attendees"] = resp['payload']
+		event["comment_count"] = comments.comment_count(ctx, event["id"])
 		activities.append(event)
 	logging.debug('fetched %d activities for user %d', len(activities), user_id)
 	return response.block(payload=activities)	

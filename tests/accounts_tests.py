@@ -8,16 +8,18 @@ from intertwine.accounts import accounts
 from intertwine.accounts import register
 from intertwine.accounts import search
 from intertwine import strings
-
+from intertwine import context
 
 cur = None
 
-class FalseSecurityContext(object):
-	def __init__(self, cur, user_id, first, last):
-		self.cur = cur
-		self.user_id = user_id
-		self.first = first
-		self.last = last
+class FalseRequest(object):
+	def __init__(self, user_id=None, first='', last=''):
+		self.headers = { 'user_id':user_id, 'first':first, 'last':last }
+
+def FalseSecurityContext(cur, user_id=None, first='', last=''):
+	request = FalseRequest(user_id, first, last)
+	return context.SecurityContext(request, cur)
+
 
 class TestAccounts(unittest.TestCase):
 	"""TestAccounts will provide the unit test framework for testing
@@ -194,11 +196,9 @@ class TestAccounts(unittest.TestCase):
 
 	#def user_info(cur, user_id):
 	def test_user_info_bad_user_id(self):
-		self.ctx.user_id = None
-		info = accounts.user_info(self.ctx)
+		info = accounts.user_info(self.ctx.cur, None)
 		self.assertIsNone(info)
-		self.ctx.user_id = 555
-		info = accounts.user_info(self.ctx)
+		info = accounts.user_info(self.ctx.cur, 555)
 		self.assertIsNone(info)
 
 	def test_user_info(self):
@@ -214,15 +214,14 @@ class TestAccounts(unittest.TestCase):
 		facebook_id = resp['payload']['user_id']
 
 		self.ctx.user_id = email_id
-		info = accounts.user_info(self.ctx)
+		info = accounts.user_info(self.ctx.cur, email_id)
 		self.assertEqual(info['id'], email_id)
 		self.assertEqual(info['first'], 'Ben')
 		self.assertEqual(info['last'], 'Rooke')
 		self.assertEqual(info['email'], 'ben_rooke@icloud.com')
 		self.assertIsNone(info['facebook_id'])
 
-		self.ctx.user_id = facebook_id
-		info = accounts.user_info(self.ctx)
+		info = accounts.user_info(self.ctx.cur, facebook_id)
 		self.assertEqual(info['id'], facebook_id)
 		self.assertEqual(info['first'], 'Alex')
 		self.assertEqual(info['last'], 'Jaczak')

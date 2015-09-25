@@ -54,7 +54,7 @@ class TestFriendRequests(unittest.TestCase):
 	# who are your Facebook friends.
 	# Parameters: cur, user_id, fb_list
 	def test_fb_friends_bad_user_id(self):
-		fcontext = FalseSecurityContext(cur, 555, 'Ben', 'Rooke')
+		fcontext = FalseSecurityContext(cur, None, 'Ben', 'Rooke')
 		resp = friends.fb_friends(fcontext, ['123', '456', '789'])
 		self.assertFalse(resp['success'])
 		self.assertEqual(resp['error'], strings.VALUE_ERROR)
@@ -91,7 +91,7 @@ class TestFriendRequests(unittest.TestCase):
 	def test_fb_friends_with_one_who_has_blocked(self):
 		cur.execute('SELECT id FROM accounts WHERE facebook_id = %s;', ('456',))
 		blocker_id = cur.fetchone()[0]
-		resp = friends.block_user(self.ctx, blocker_id)
+		resp = friends.block(self.ctx, blocker_id)
 		self.assertTrue(resp['success'])
 		resp = friends.fb_friends(self.ctx, ['456'])
 		self.assertTrue(resp['success'])
@@ -177,11 +177,6 @@ class TestFriendRequests(unittest.TestCase):
 		self.assertEqual(0, len(resp['payload']))
 
 	def test_blocking_with_bad_user_id(self):
-		resp = friends.block(self.ctx, '123')
-		self.assertFalse(resp['success'])
-		self.assertEqual(resp['error'], strings.VALUE_ERROR)
-
-	def test_blocking_with_bad_block_id(self):
 		resp = friends.block(self.ctx, None)
 		self.assertFalse(resp['success'])
 		self.assertEqual(resp['error'], strings.VALUE_ERROR)
@@ -232,7 +227,7 @@ class TestFriendRequests(unittest.TestCase):
 	def test_purge_block_bad_user_id(self):
 		resp = friends.purge_blocked(self.ctx, self.user_id)
 		self.assertFalse(resp['success'])
-		self.assertEqual(resp['error'], strings.VALUE_ERROR)
+		self.assertEqual(resp['error'], strings.NOT_FOUND)
 
 	def test_purge_block_bad_block_id(self):
 		resp = friends.purge_blocked(self.ctx, None)
@@ -294,7 +289,8 @@ class TestFriendRequests(unittest.TestCase):
 	# Make sure we don't show people who are blocked.
 	#def get_pending_requests(cursor, user_id):
 	def test_pending_requests_bad_user_id(self):
-		resp = friends.get_pending_requests(cur, None)
+		fcontext = FalseSecurityContext(cur, None, 'Ben', 'Rooke')
+		resp = friends.get_pending_requests(fcontext)
 		self.assertFalse(resp['success'])
 		self.assertEqual(resp['error'], strings.VALUE_ERROR)
 
@@ -302,7 +298,7 @@ class TestFriendRequests(unittest.TestCase):
 		resp = friends.get_pending_requests(self.ctx)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
-		cur.execute('SELECT count(*) FROM friend_requests WHERE requestee_accounts_id=%s;', (self.user_id))
+		cur.execute('SELECT count(*) FROM friend_requests WHERE requestee_accounts_id=%s;', (self.user_id,))
 		row = cur.fetchone()
 		count = int(row[0])
 		self.assertEqual(count, 0)
@@ -317,7 +313,7 @@ class TestFriendRequests(unittest.TestCase):
 		resp = friends.get_pending_requests(self.ctx)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
-		cur.execute('SELECT count(*) FROM friend_requests WHERE requestee_accounts_id=%s;', (self.user_id))
+		cur.execute('SELECT count(*) FROM friend_requests WHERE requestee_accounts_id=%s;', (self.user_id,))
 		row = cur.fetchone()
 		count = int(row[0])
 		self.assertEqual(count, 1)
@@ -335,7 +331,7 @@ class TestFriendRequests(unittest.TestCase):
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
 		self.assertEqual(0, len(resp['payload']))
-		cur.execute('SELECT count(*) FROM friends WHERE accounts_id=%s;', (self.user_id))
+		cur.execute('SELECT count(*) FROM friends WHERE accounts_id=%s;', (self.user_id,))
 		row = cur.fetchone()
 		count = int(row[0])
 		self.assertEqual(count, 0)
@@ -353,7 +349,7 @@ class TestFriendRequests(unittest.TestCase):
 		resp = friends.get_friends(self.ctx)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
-		cur.execute('SELECT count(*) FROM friends WHERE accounts_id=%s;', (self.user_id))
+		cur.execute('SELECT count(*) FROM friends WHERE accounts_id=%s;', (self.user_id,))
 		row = cur.fetchone()
 		count = int(row[0])
 		self.assertEqual(count, 1)
@@ -374,7 +370,7 @@ class TestFriendRequests(unittest.TestCase):
 		resp = friends.get_friends(self.ctx)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
-		cur.execute('SELECT count(*) FROM friends WHERE accounts_id=%s;', (self.user_id))
+		cur.execute('SELECT count(*) FROM friends WHERE accounts_id=%s;', (self.user_id,))
 		row = cur.fetchone()
 		count = int(row[0])
 		self.assertEqual(count, 0)
@@ -402,7 +398,7 @@ class TestFriendRequests(unittest.TestCase):
 		resp = friends.get_friends(self.ctx)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
-		cur.execute('SELECT count(*) FROM friends WHERE accounts_id=%s;', (self.user_id))
+		cur.execute('SELECT count(*) FROM friends WHERE accounts_id=%s;', (self.user_id,))
 		row = cur.fetchone()
 		count = int(row[0])
 		self.assertEqual(count, 1)
@@ -426,7 +422,7 @@ class TestFriendRequests(unittest.TestCase):
 		cur.execute('SELECT id FROM accounts WHERE facebook_id = %s;', ('456',))
 		person_id = cur.fetchone()[0]
 		fcontext = FalseSecurityContext(cur, person_id, 'Rae', 'Jonathans')
-		resp = friends.send_request(fcontext, self.user_id)
+		resp = friends.decline_request(fcontext, self.user_id)
 		self.assertFalse(resp['success'])
 		self.assertEqual(resp['error'], strings.NOT_FOUND)
 
@@ -518,7 +514,9 @@ class TestFriendRequests(unittest.TestCase):
 		self.assertEqual(resp['error'], strings.VALUE_ERROR)
 
 	def test_send_request_does_not_exist(self):
-		resp = friends.send_request(self.ctx, person_id)
+		cur.execute('SELECT id FROM accounts WHERE facebook_id = %s;', ('456',))
+		person_id = cur.fetchone()[0]
+		resp = friends.send_request(self.ctx, '567')
 		self.assertFalse(resp['success'])
 		self.assertEqual(resp['error'], strings.NOT_FOUND)
 
@@ -574,7 +572,7 @@ class TestFriendRequests(unittest.TestCase):
 	def test_accept_bad_requestee(self):
 		resp = friends.accept_request(self.ctx, '123')
 		self.assertFalse(resp['success'])
-		self.assertEqual(resp['error'], strings.VALUE_ERROR)
+		self.assertEqual(resp['error'], strings.NOT_FOUND)
 
 	def test_accept_bad_requester(self):
 		resp = friends.accept_request(self.ctx, None)
@@ -597,7 +595,8 @@ class TestFriendRequests(unittest.TestCase):
 		fcontext = FalseSecurityContext(cur, person_id, 'Rae', 'Jonathans')
 		resp = friends.send_request(fcontext, self.user_id)
 		self.assertTrue(resp['success'])
-		resp = friends.accept_request(self.ctx, person_id)
+		xcontext = FalseSecurityContext(cur, None, 'Ben', 'Rooke')
+		resp = friends.accept_request(xcontext, person_id)
 		self.assertFalse(resp['success'])
 		self.assertEqual(resp['error'], strings.VALUE_ERROR)
 
@@ -610,11 +609,9 @@ class TestFriendRequests(unittest.TestCase):
 		resp = friends.accept_request(self.ctx, person_id)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
-		resp = friends.send_request(fcontext, self.user_id)
-		self.assertFalse(resp['success'])
 		resp = friends.accept_request(self.ctx, person_id)
 		self.assertFalse(resp['success'])
-		self.assertEqual(resp['error'], strings.VALUE_ERROR)
+		self.assertEqual(resp['error'], strings.NOT_FOUND)
 
 	def test_accept(self):
 		cur.execute('SELECT id FROM accounts WHERE facebook_id = %s;', ('456',))
@@ -634,7 +631,7 @@ class TestFriendRequests(unittest.TestCase):
 
 if __name__ == '__main__':
 	# Disable logging in the code.
-	# logging.disable(logging.CRITICAL)
+	logging.disable(logging.CRITICAL)
 
 	cur = intertwine.testdb.start()
 	

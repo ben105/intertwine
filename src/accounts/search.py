@@ -45,5 +45,5 @@ def find(ctx, name):
 	rows = ctx.cur.fetchall()
 	logging.info('user ID %d running FIND query for name %s. %d results found', user_id, name, len(rows))
 	logging.debug('Success FIND query, user ID %d results for search on name %s', user_id, name)
-	results = [{'account_id':row[4], 'first':row[0], 'last':row[1], 'facebook_id':row[2], 'email':row[3], 'sent':row[5]} for row in rows]
+	results = [{'id':str(row[4]), 'first':row[0], 'last':row[1], 'facebook_id':row[2], 'email':row[3], 'sent':row[5]} for row in rows]
 	return response.block(payload=results)

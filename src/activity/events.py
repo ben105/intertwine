@@ -46,8 +46,14 @@ def create(ctx, title, description, attendees):
 	except Exception as exc:
 		logging.error('exception raised while trying to insert user\'s %d activity (%s) into the database', user_id, title)
 		return response.block(error=strings.SERVER_ERROR, code=500)
-	# Add the attendees to the event.	
 	event_id = ctx.cur.fetchone()[0]
+
+	for user in attendees:
+		try:
+			push.push_notification(ctx.cur, user, "{} {} created a new event: {}".format(first, last, title))
+		except Exception as exc:
+			logging.error('exception raised trying to send push notification while inserting attendee %d to activity %s\n%s', user, title, str(exc))
+	# Add the attendees to the event.	
 	attendees.append(user_id)
 	for user in attendees:
 		try:
@@ -55,10 +61,6 @@ def create(ctx, title, description, attendees):
 		except Exception as exc:
 			logging.error('exception raised while inserting attendee %d to activity %s\n%s', user, title, str(exc))
 			return response.block(error=strings.SERVER_ERROR, code=500)
-		try:
-			push.push_notification(ctx, "{} {} created a new event: {}".format(first, last, title))
-		except Exception as exc:
-			logging.error('exception raised trying to send push notification while inserting attendee %d to activity %s\n%s', user, title, str(exc))
 			#return response.block(error=strings.SERVER_ERROR, code=500)
 	# TODO: Return success or error
 	return response.block(payload={
@@ -117,7 +119,8 @@ def get_events(ctx):
 		events.title, 
 		events.description, 
 		events.creator,
-		events.updated_time 
+		events.updated_time,
+		events.completed
 	FROM 
 		accounts, 
 		events, 
@@ -149,7 +152,8 @@ def get_events(ctx):
 		event["creator"] = creator
 		event["updated_time"] = str(row[4]).split('.')[0]
 		event["attendees"] = get_attendees(ctx.cur, event["id"])
-		event["comment_count"] = comments.comment_count(ctx.cur, event["id"])
+		event["comment_count"] = comments.comment_count(ctx, event["id"])
+		event["completed"] = row[5]
 		# Append to the end of events list
 		events.append(event)
 	return response.block(payload=events)
@@ -169,6 +173,35 @@ def delete(ctx, event_id):
 	try:
 		ctx.cur.execute(query, (event_id,))
 	except Exception as exc:
-		logging.error('exception raised trying to delete event %d', event_id)
+		logging.error('exception raised when user %d trying to delete event %d', ctx.user_id, event_id)
 		return response.block(error=strings.SERVER_ERROR, code=500)
+	return response.block()
+
+def complete(ctx, event_id, title):
+	"Complete an event given an event ID"
+	query = 'UPDATE events SET completed=true, updated_time=now() WHERE id=%s;'
+	try:
+		ctx.cur.execute(query, (event_id,))
+	except Exception as exc:
+		logging.error('exception raised when user %d trying to complete an event %d', ctx.user_id, event_id)
+		return response.block(error=strings.SERVER_ERROR, code=500)
+	query = """
+	SELECT
+		attendee_accounts_id
+	FROM
+		event_attendees
+	WHERE
+		events_id = %s and attendee_accounts_id <> %s;
+	"""
+	try:
+		ctx.cur.execute(query, (event_id, ctx.user_id))
+	except Exception as exc:
+		logging.error('exception raised notifying users of a completed event %d', event_id)
+		return
+	rows = ctx.cur.fetchall()
+	if len(rows) > 0:
+		for row in rows:
+			account_id = row[0]
+			msg = '{} {} marked {} as complete!'.format(ctx.first, ctx.last, title)
+			push.push_notification(ctx.cur, account_id, msg)
 	return response.block()

@@ -55,6 +55,8 @@ def invalid_name(name):
 	"""
 	if not name:
 		return k_err_min_chars
+	if len(name.strip()) == 0:
+		return k_err_min_chars
 	if len(name) > char_limit:
 		logging.warning('validation warning, "%s" name greater than character limit', name)
 		return k_err_char_limit

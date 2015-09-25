@@ -15,7 +15,7 @@ from intertwine.activity import events
 from intertwine.activity import comments
 from intertwine.activity import activity
 from intertwine import context
-
+from intertwine import devices
 
 enableLogging = True
 if len(sys.argv) > 1:
@@ -68,7 +68,6 @@ def comment_handler():
 @app.route('/api/v1/activity', methods=['GET'])
 def activities():
 	ctx = create_context(request)
-	print('getting activities')
 	resp = activity.get_activity(ctx)
 	return json.dumps(resp)
 
@@ -96,22 +95,29 @@ def event_api():
 
 	return json.dumps(resp)
 
-
-
+@app.route('/api/v1/event_complete', methods=['POST'])
+def event_complete():
+	ctx = create_context(request)
+	body = json.loads(request.data)
+	event_id = body.get('event_id')
+	title = body.get('title')
+	resp = events.complete(ctx, event_id, title)
+	return json.dumps(resp)
+	
 ####### Device Token ########
 
 @app.route('/api/v1/device_token', methods=['POST'])
 def set_device_token():
 	ctx = create_context(request)
 	token_data = request.data
-	return devices.add(token_data)
-
+	resp = devices.add(ctx, token_data)
+	return json.dumps(resp)
 
 
 ####### Searching ########
 
 @app.route('/api/v1/search/<name>', methods=['GET'])
-def search(name):
+def search_name(name):
 	ctx = create_context(request)
 	resp = search.find(ctx, name)
 	return json.dumps(resp)

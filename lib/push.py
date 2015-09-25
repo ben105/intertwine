@@ -15,12 +15,12 @@ def name(ctx):
 	row = cur.fetchone()
 	return "{} {}".format(row[0], row[1])
 
-def push_notification(ctx, msg):
-	deviceToken = devices.get_token(ctx)
+def push_notification(cur, user_id, msg):
+	deviceToken = devices.get_token(cur, user_id)
 	if not deviceToken:
 		logging.error(
 			'error getting device token for user %d\n \
-			Push notification won\'t be sent.', ctx.user_id)
+			Push notification won\'t be sent.', user_id)
 		return
 	thePayLoad = {
 	     'aps': {
@@ -34,7 +34,7 @@ def push_notification(ctx, msg):
 	# Format the data
 	theFormat = '!BH32sH%ds' % len(data)
 	# Put everything together
-	theNotification = struct.pack( theFormat, 0, 32, deviceToken, len(data), data )
+	theNotification = struct.pack( theFormat, 0, 32, str(deviceToken), len(data), data )
 	# Create the SSL socket
 	ssl_sock = ssl.wrap_socket( socket.socket( socket.AF_INET, socket.SOCK_STREAM ), certfile = theCertfile )
 	ssl_sock.connect( theHost )

@@ -21,8 +21,9 @@ created_time timestamp DEFAULT now()
 
 CREATE TABLE device_tokens (
 id serial PRIMARY KEY,
-accounts_id integer NOT NULL references accounts(id),
-token varchar(256) NOT NULL
+accounts_id integer NOT NULL references accounts(id) on delete cascade,
+token bytea NOT NULL,
+constraint token_constraint unique (accounts_id, token)
 );
 
 
@@ -39,14 +40,14 @@ created_time timestamp DEFAULT now()
 
 CREATE TABLE event_attendees (
 id serial PRIMARY KEY,
-events_id integer NOT NULL references events(id),
+events_id integer NOT NULL references events(id) on delete cascade,
 attendee_accounts_id integer NOT NULL references accounts(id)
 );
 
 
 CREATE TABLE comments (
 id serial PRIMARY KEY,
-events_id integer NOT NULL references events(id),
+events_id integer NOT NULL references events(id) on delete cascade,
 accounts_id integer NOT NULL references accounts(id),
 comment varchar(200) NOT NULL
 );

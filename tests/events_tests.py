@@ -1,3 +1,5 @@
+import unittest
+
 import intertwine.testdb
 from intertwine.activity import events
 from intertwine.activity import comments

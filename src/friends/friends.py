@@ -1,3 +1,4 @@
+import psycopg2
 import logging
 
 from intertwine import response
@@ -5,6 +6,12 @@ from intertwine import strings
 from intertwine import util
 
 def purge_blocked(ctx, blocked_user_id):
+	if ctx.user_id is None:
+		logging.error('failed to purge blocked ID because ctx.user_id is None')
+		return response.block(error=strings.VALUE_ERROR, code=500)
+	if blocked_user_id is None:
+		logging.error('failed to purge blocked ID because blocked_user_id is None')
+		return response.block(error=strings.VALUE_ERROR, code=500)
 	delete_query = """
 	DELETE FROM blocked_accounts
 	WHERE
@@ -17,9 +24,8 @@ def purge_blocked(ctx, blocked_user_id):
 	except Exception as exc:
 		logging.error('raised exception when user %d tried purging a block on %d\n%s', ctx.user_id, blocked_user_id, str(exc))
 		return response.block(error=strings.SERVER_ERROR, code=500)
-	row = ctx.cur.fetchone()
-	count = int(row[0])
-	if count == 0:
+	rows = ctx.cur.fetchall()
+	if len(rows) == 0:
 		return response.block(error=strings.NOT_FOUND, code=404)
 	return response.block()
 
@@ -29,6 +35,9 @@ def purge_blocked(ctx, blocked_user_id):
 # you have a pending request.
 # It will ignore requests you've previously denied.
 def get_pending_requests(ctx):
+	if ctx.user_id is None:
+		logging.error('failed to get pending requests with ctx.user_id is None')
+		return response.block(error=strings.VALUE_ERROR, code=500)
 	pending_requests_query = """
 	SELECT
 		accounts.first,
@@ -48,12 +57,13 @@ def get_pending_requests(ctx):
 	except Exception as exc:
 		logging.error('exception raised retrieving pending requests for user %d, %s', ctx.user_id, exc)
 		return response.block(error=strings.SERVER_ERROR, code=500)
+	payload = []
 	rows = ctx.cur.fetchall()
 	if len(rows):
-		return [{'account_id':row[4], 'first':row[0], 'last':row[1], 'facebook_id':row[2], 'email':row[3]} for row in rows]
+		payload = [{'account_id':row[4], 'first':row[0], 'last':row[1], 'facebook_id':row[2], 'email':row[3]} for row in rows]
 	else:
 		logging.debug('no rows returned for user %d getting pending requests', ctx.user_id)
-	return response.block()
+	return response.block(payload=payload)
 
 
 # Friend suggestions
@@ -239,6 +249,16 @@ def send_request(ctx, requestee):
 	if requester == requestee:
 		logging.error('failed to send request, requester (%d) cannot match requestee (%d).', requester, requestee)
 		return response.block(error=strings.VALUE_ERROR, code=500)
+	# Check if the two accounts are friends.
+	friends_query = 'SELECT count(*) FROM friends WHERE accounts_id=%s and friend_accounts_id=%s;'
+	try:
+		ctx.cur.execute(friends_query, (requester, requestee))
+	except Exception as exc:
+		return response.block(error=strings.SERVER_ERROR, code=500)
+	row = ctx.cur.fetchone()
+	count = int(row[0])
+	if count > 0:
+		return response.block(error=strings.SERVER_ERROR, code=500)
 	
 	# We should check first that the user has not been blocked by the requestee
 	requestee_blocked_query = 'SELECT blocked_accounts_id FROM blocked_accounts WHERE accounts_id=%s;'
@@ -262,6 +282,13 @@ def send_request(ctx, requestee):
 	"""
 	try:
 		ctx.cur.execute(insert_query, (requester, requestee))
+	except psycopg2.IntegrityError as intexc:
+		if 'duplicate' in str(intexc):
+			logging.info('%d sent a request to %d multiple times', requester, requestee)
+			return response.block(error=strings.SERVER_ERROR, code=500)
+			
+		logging.warning('failed to send request because one of the accounts did not exists in the accounts table')
+		return response.block(error=strings.NOT_FOUND, code=404)
 	except Exception as exc:
 		logging.error('raised an exception while %d trying to send a friend request to %d\n%s', requester, requestee, str(exc))
 		return response.block(error=strings.SERVER_ERROR, code=500)
@@ -277,7 +304,25 @@ def accept_request(ctx, requester):
 	if requestee is None:
 		logging.error('failed trying to accept request because requestee value is None')
 		return response.block(error=strings.VALUE_ERROR, code=500)
-	# First step, add the requester as a friend
+	# Now remove the request from the friend_requests table
+	delete_query = """
+	DELETE FROM
+		friend_requests
+	WHERE
+		(requestee_accounts_id = %s and
+		requester_accounts_id = %s) or
+		(requestee_accounts_id = %s and
+		requester_accounts_id = %s) 
+	RETURNING *;
+	""" # We want to delete both sides, incase one person denied the other
+	try:
+		ctx.cur.execute(delete_query, (requestee, requester, requester, requestee))
+	except Exception as exc:
+		logging.error('exception raised trying to remove friend request entry, during an accept_request')
+		return response.block(error=strings.SERVER_ERROR, code=500)
+	rows = ctx.cur.fetchall()
+	if len(rows) == 0:
+		return response.block(error=strings.NOT_FOUND, code=404)
 	# This is actually a two step motion in-of-itself, because we add the mirror of the two.
 	# For example:
 	# A -> B are friends
@@ -291,6 +336,9 @@ def accept_request(ctx, requester):
 	# Attempt to insert the first row.
 	try:
 		ctx.cur.execute(insert_query, (requestee, requester)) #Requestee first
+	except psycopg2.IntegrityError as intexc:
+		logging.warning('failed to accept request because requester %d was not found in accounts table')
+		return response.block(error=strings.NOT_FOUND, code=404)
 	except Exception as exc:
 		logging.error('exception raised trying to commit friendship between %d and %d', requestee, requester)
 		return response.block(error=strings.SERVER_ERROR, code=500)
@@ -300,40 +348,43 @@ def accept_request(ctx, requester):
 	except Exception as exc:
 		logging.error('exception raised trying to commit friendship bewteen %d and %d', requestee, requester)
 		return response.block(error=strings.SERVER_ERROR, code=500)
-	# Now remove the request from the friend_requests table
-	delete_query = """
-	DELETE FROM
-		friend_requests
-	WHERE
-		(requestee_accounts_id = %s and
-		requester_accounts_id = %s) or
-		(requestee_accounts_id = %s and
-		requester_accounts_id = %s) ;
-	""" # We want to delete both sides, incase one person denied the other
-	try:
-		ctx.cur.execute(delete_query, (requestee, requester, requester, requestee))
-	except Exception as exc:
-		logging.error('exception raised trying to remove friend request entry, during an accept_request')
-		return response.block(error=strings.SERVER_ERROR, code=500)
 	return response.block()
 
 def decline_request(ctx, requester):
 	requestee = ctx.user_id
+	if requestee is None:
+		logging.error('failed to decline request because ctx.user_id is None')
+		return response.block(error=strings.VALUE_ERROR, code=500)
+	if requester is None:
+		logging.error('failed to decline request because requester is None')
+		return response.block(error=strings.VALUE_ERROR, code=500)
+		
 	update_query = """
 	UPDATE friend_requests SET
 		denied = true
 	WHERE
 		requestee_accounts_id=%s and
-		requester_accounts_id=%s;
+		requester_accounts_id=%s
+	RETURNING *;
 	"""
 	try:
 		ctx.cur.execute(update_query, (requestee, requester))
 	except Exception as exc:
 		logging.error('exception raised when %d tried to decline friend request from %d, %s', requestee, requester, exc)
 		return response.block(error=strings.SERVER_ERROR, code=500)
+	rows = ctx.cur.fetchall()
+	if len(rows) == 0:
+		logging.warning('trying to decline a request that does not exist')
+		return response.block(error=strings.NOT_FOUND, code=404)
 	return response.block()
 
 def remove_friend(ctx, friend_user_id):
+	if ctx.user_id is None:
+		logging.error('failed to remove friend because ctx.user_id is None')
+		return response.block(error=strings.VALUE_ERROR, code=500)
+	if friend_user_id is None:
+		logging.error('failed to remove friend because friend_user_id is None')
+		return response.block(error=strings.VALUE_ERROR, code=500)
 	delete_friend_query = """
 	DELETE FROM friends WHERE
 		(accounts_id=%s and friend_accounts_id=%s) or
@@ -345,9 +396,8 @@ def remove_friend(ctx, friend_user_id):
 	except Exception as exc:
 		logging.error('exception raised when %d tried to remove friend %d, %s', ctx.user_id, friend_user_id, exc)
 		return response.block(error=strings.SERVER_ERROR, code=500)
-	row = ctx.cur.fetchone()
-	count = int(row[0])
-	if count == 0:
+	rows = ctx.cur.fetchall()
+	if len(rows) == 0:
 		return response.block(error=strings.NOT_FOUND, code=500)
 	return response.block()
 
@@ -410,6 +460,9 @@ def block(ctx, block_user_id):
 	"""
 	try:
 		ctx.cur.execute(block_user_query, (ctx.user_id, block_user_id))
+	except psycopg2.IntegrityError as intexc:
+		logging.warning('failed to block %d because id was not found in accounts table', block_user_id)
+		return response.block(error=strings.NOT_FOUND, code=404)
 	except Exception as exc:
 		logging.error('exception raised when inserting blocked users %d and %d, %s', ctx.user_id, block_user_id, exc)
 		return response.block(error=strings.SERVER_ERROR, code=500)
