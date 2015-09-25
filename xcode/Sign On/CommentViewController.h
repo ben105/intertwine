@@ -10,25 +10,31 @@
 
 @class EventObject;
 
-@interface CommentViewController : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate>
+@protocol CommentViewDelegate <NSObject>
+@optional
+- (void)shouldDismissCommentView;
+@end
+
+@interface CommentViewController : UIViewController <UITableViewDataSource, UITableViewDelegate>
+
+@property (nonatomic, weak) id<CommentViewDelegate> delegate;
 
 @property (nonatomic, strong) EventObject *event;
 
-@property (nonatomic, weak) IBOutlet UILabel *titleLabel;
-@property (nonatomic, weak) IBOutlet UITextView *descriptionTextView;
+@property (nonatomic, strong) UILabel *titleLabel;
+//@property (nonatomic, weak) UITextView *descriptionTextView;
 
-@property (nonatomic, strong) UIControl *dismissControlView;
-@property (nonatomic, weak) IBOutlet UITextField *commentTextField;
+@property (nonatomic, strong) UITextField *commentTextField;
 
-@property (nonatomic, weak) IBOutlet UICollectionView *attendeesCollectionView;
+//@property (nonatomic, weak) UICollectionView *attendeesCollectionView;
 
 // The data model for all the comments
 @property (nonatomic, strong) NSMutableArray *comments;
-@property (nonatomic, weak) IBOutlet UITableView *commentsTableView;
 
-- (IBAction)dismiss:(id)sender;
 
-- (IBAction) postComment ;
+- (void)postComment;
+
+//- (IBAction)markCompleted:(id)sender;
 
 @end
 

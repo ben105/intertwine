@@ -129,7 +129,7 @@ const NSString *server = @"http://ec2-54-188-199-29.us-west-2.compute.amazonaws.
 #pragma mark - Device Token
 
 + (void) updateDeviceToken:(NSData*)deviceToken {
-    NSLog(@"Updating device tokne: %@", deviceToken);
+    NSLog(@"Updating device token: %@", deviceToken);
     NSMutableURLRequest *request = [IntertwineManager getRequest:@"/api/v1/device_token"];
     [IntertwineManager attachCredentialsToRequest:request];
     [request setHTTPMethod:@"POST"];
@@ -290,7 +290,7 @@ const NSString *server = @"http://ec2-54-188-199-29.us-west-2.compute.amazonaws.
     if (!data)
         return nil;
     NSString *accountID = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-    [IntertwineManager setAccountID:accountID];
+    _accountID = accountID;
     return accountID;
 }
 
@@ -313,7 +313,7 @@ const NSString *server = @"http://ec2-54-188-199-29.us-west-2.compute.amazonaws.
     if (!data)
         return nil;
     NSString *tokenKey = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-    [IntertwineManager setTokenKey:tokenKey];
+    _tokenKey = tokenKey;
     return tokenKey;
 }
 

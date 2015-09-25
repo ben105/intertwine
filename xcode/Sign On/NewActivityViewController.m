@@ -42,7 +42,7 @@ const NSString *kCollectionIdentifier = @"colleciton_id";
 
 const CGFloat distanceCellsMoveOffscreen = 800.0;
 
-#define IntertwineColorBlue [UIColor colorWithRed:59.0/255.0 green:140.0/255.0 blue:212.0/255.0 alpha:1.0]
+#define IntertwineColorBlue [UIColor colorWithRed:20.0/255.0 green:81.0/255.0 blue:121.0/255.0 alpha:1.0]
 #define IntertwineColorOffWhite [UIColor colorWithRed:236.0/255.0 green:236.0/255.0 blue:236.0/255.0 alpha:1.0]
 #define IntertwineColorDarkGray [UIColor colorWithRed:151.0/255.0 green:151.0/255.0 blue:151.0/255.0 alpha:1.0]
 
@@ -57,6 +57,10 @@ const CGFloat distanceCellsMoveOffscreen = 800.0;
 #define LINE_SEPARATOR_FRAME CGRectMake(lineSeparatorInset, SCREEN_MIDDLE_Y, SCREEN_WIDTH - (2 * lineSeparatorInset), 1.5)
 
 @interface NewActivityViewController ()
+
+@property (nonatomic) BOOL firstTimeTouchedTitle;
+
+@property (nonatomic, strong) UIImageView *backgroundImage;
 
 @property (nonatomic, strong) UILabel *addFriendsLabel;
 
@@ -107,10 +111,11 @@ const CGFloat distanceCellsMoveOffscreen = 800.0;
 - (void)viewDidLoad {
     [super viewDidLoad];
     
+    self.firstTimeTouchedTitle = YES;
+    
 //    self.headerToolbar.hidden = YES;
     
-    self.view.backgroundColor = [UIColor whiteColor];
-    self.view.alpha = 0.95;
+    self.view.backgroundColor = [UIColor colorWithRed:23.0/255.0 green:60.0/255.0 blue:104.0/255.0 alpha:1.0];
     
     // Do any additional setup after loading the view.
     [self.invitedCollectionView registerClass:[EventCollectionViewCell class] forCellWithReuseIdentifier:(NSString*)kCollectionIdentifier];
@@ -123,6 +128,7 @@ const CGFloat distanceCellsMoveOffscreen = 800.0;
     gesture.direction = UISwipeGestureRecognizerDirectionDown;
     [self.view addGestureRecognizer:gesture];
     
+    [self.view addSubview:self.backgroundImage];
     [self.view addSubview:self.headerToolbar];
     [self.view addSubview:self.titleField];
     [self.view addSubview:self.footerToolbar];
@@ -136,7 +142,7 @@ const CGFloat distanceCellsMoveOffscreen = 800.0;
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_keyboardWillShow:) name:UIKeyboardWillShowNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_keyboardWillHide:) name:UIKeyboardWillHideNotification object:nil];
 
-    [self.titleField performSelector:@selector(becomeFirstResponder) withObject:nil afterDelay:0.5];
+//    [self.titleField performSelector:@selector(becomeFirstResponder) withObject:nil afterDelay:0.5];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -396,7 +402,7 @@ const CGFloat distanceCellsMoveOffscreen = 800.0;
 
 - (void)_create {
     NSString *title = self.titleField.text;
-    if ([title isEqualToString:@""] || !title) {
+    if ([title isEqualToString:@""] || !title || self.firstTimeTouchedTitle) {
         UIAlertView *alert = [[UIAlertView alloc] initWithTitle:nil
                                                         message:@"Enter a title for the event."
                                                        delegate:nil
@@ -428,6 +434,11 @@ const CGFloat distanceCellsMoveOffscreen = 800.0;
 
 - (void) _titleEditMode:(BOOL)isEditing animationSpeed:(double)duration{
     
+    if (self.firstTimeTouchedTitle) {
+        self.titleField.text = @"";
+        self.firstTimeTouchedTitle = NO;
+    }
+    
     CGRect frame = self.headerToolbar.frame;
     UIColor *titleColor = [UIColor whiteColor];
     
@@ -436,7 +447,7 @@ const CGFloat distanceCellsMoveOffscreen = 800.0;
             return;
         }
         frame.origin.y -= frame.size.height;
-        titleColor = [UIColor blackColor];
+//        titleColor = [UIColor blackColor];
     } else {
         if (frame.origin.y == 0) {
             return;
@@ -496,7 +507,7 @@ const CGFloat distanceCellsMoveOffscreen = 800.0;
         _titleField.backgroundColor = [UIColor clearColor];
         _titleField.textColor = [UIColor whiteColor];
         _titleField.font = [UIFont fontWithName:@"HelveticaNeue" size:titleFontSize];
-        _titleField.text = @"Example Activity";
+        _titleField.placeholder = @"no title";
         _titleField.textAlignment = NSTextAlignmentCenter;
         _titleField.returnKeyType = UIReturnKeyDone;
         [_titleField addTarget:self action:@selector(_didEditTitle) forControlEvents:UIControlEventEditingDidEndOnExit];
@@ -521,7 +532,11 @@ const CGFloat distanceCellsMoveOffscreen = 800.0;
         [_doneButton setTitle:@"Done" forState:UIControlStateNormal];
         [_doneButton setTitleColor:IntertwineColorBlue forState:UIControlStateNormal];
         [_doneButton addTarget:self action:@selector(_create) forControlEvents:UIControlEventTouchUpInside];
-        _doneButton.frame = FOOTER_TOOLBAR_FRAME;
+        _doneButton.frame = CGRectMake(0, 0, 80, 80);
+        _doneButton.center = CGPointMake(CGRectGetMidX(self.view.frame), CGRectGetMaxY(self.uninvitedCollectionView.frame) + 70);
+        
+        _doneButton.layer.cornerRadius = CGRectGetWidth(_doneButton.frame) / 2.0;
+        _doneButton.layer.borderColor = [[UIColor blackColor] CGColor];
 //        _doneButton.font = [UIFont fontWithName:@"HelveticaNeue-Light" size:22.0];
     }
     return _doneButton;
@@ -608,6 +623,15 @@ const CGFloat distanceCellsMoveOffscreen = 800.0;
         _addFriendsLabel.font = [UIFont systemFontOfSize:20.0];
     }
     return _addFriendsLabel;
+}
+
+- (UIImageView*)backgroundImage {
+    if (!_backgroundImage) {
+        _backgroundImage = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"BackgroundImage.png"]];
+        _backgroundImage.frame = [[UIScreen mainScreen] bounds];
+        _backgroundImage.alpha = 0.25;
+    }
+    return _backgroundImage;
 }
 
 @end

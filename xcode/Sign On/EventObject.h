@@ -17,6 +17,9 @@
 @property (nonatomic, strong) NSDate *updatedTime;
 @property (nonatomic, strong) Friend *creator;
 @property (nonatomic, strong) NSArray *attendees;
+@property BOOL isComplete;
 
+@property NSUInteger numberOfComments;
+@property NSUInteger numberOfLikes;
 
 @end

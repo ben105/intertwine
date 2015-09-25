@@ -16,6 +16,8 @@
 @property (nonatomic, copy) NSString *accountID;
 @property (nonatomic, strong) FBProfilePictureView *friendProfilePicture;
 
+- (void)isFaded:(BOOL)faded;
+
 @end
 
 extern const CGFloat friendsCellHeight;

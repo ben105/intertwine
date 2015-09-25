@@ -228,6 +228,7 @@ NSString *newsfeedStoryboardID = @"Newsfeed";
     self.signInEmailAddressField.text = @"";
     self.signInPasswordField.text = @"";
     [super viewDidAppear:animated];
+//    [self _presentHome];
 }
 
 #pragma mark - Memory Warning
@@ -248,10 +249,6 @@ NSString *newsfeedStoryboardID = @"Newsfeed";
             NSLog(@"Error: %@", error);
         }
         else {
-            NSString *userImageURL = [NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=square", [FBuser objectID]];
-            NSData *data = [NSData dataWithContentsOfURL:[NSURL URLWithString:userImageURL]];
-            UIImage *facebookImage = [UIImage imageWithData:data];
-            
             /* Create two dynamic banner view controllers. */
 //            ITActivityViewController *activityViewController = [[ITActivityViewController alloc] init];
 //            ITDynamicBannerViewController *yourViewController =
@@ -263,7 +260,7 @@ NSString *newsfeedStoryboardID = @"Newsfeed";
 //            [self presentViewController:vc animated:YES completion:nil];
             
             ActivityViewController *activityVC = [ActivityViewController new];
-            [self presentViewController:activityVC animated:YES completion:nil];
+            [self presentViewController:activityVC animated:NO completion:nil];
             
 //            /* Present the views. */
 //            NavigationViewController *navigationVC = [NavigationViewController new];
@@ -326,7 +323,12 @@ NSString *newsfeedStoryboardID = @"Newsfeed";
         CGRect screenBounds = [[UIScreen mainScreen] bounds];
         
         _shieldView = [[UIView alloc] initWithFrame:screenBounds];
-        _shieldView.backgroundColor = [UIColor colorWithRed:95.0/255.0 green:132.0/255.0 blue:205.0/255.0 alpha:1.0];
+        _shieldView.backgroundColor = [UIColor colorWithRed:23.0/255.0 green:60.0/255.0 blue:104.0/255.0 alpha:1.0];
+        
+        UIImageView *backgroundImage = [[UIImageView alloc] initWithFrame:screenBounds];
+        backgroundImage.image = [UIImage imageNamed:@"BackgroundImage.png"];
+        backgroundImage.alpha = 0.25;
+        [_shieldView addSubview:backgroundImage];
         
         NSString *fontName = @"MarkerFelt-Thin";
         CGFloat titleFontSize = 30.0;

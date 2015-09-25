@@ -8,8 +8,9 @@
 
 #import <UIKit/UIKit.h>
 #import "FriendsViewController.h"
+#import "FriendsTableViewCell.h"
 
-@interface PendingRequestTableViewCell : UITableViewCell
+@interface PendingRequestTableViewCell : FriendsTableViewCell
 
 @property (nonatomic, copy) NSString *name;
 @property (nonatomic, copy) NSString *accountID;
@@ -19,6 +20,6 @@
 - (void) accept;
 - (void) decline;
 
-- (id) initWithReuseIdentifier:reuseIdentifier;
+- (id) initWithReuseIdentifier:(NSString*)reuseIdentifier;
 
 @end

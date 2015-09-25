@@ -36,8 +36,8 @@ const CGFloat buttonWidth = 70.0;
     
     CGFloat height = self.contentView.frame.size.height;
     
-    CGRect acceptButtonFrame = CGRectMake([[UIScreen mainScreen] bounds].size.width - buttonWidth - 10.0, 5, buttonWidth, height);
-    CGRect declineButtonFrame = CGRectMake([[UIScreen mainScreen] bounds].size.width - buttonWidth*2 - 15.0, 5, buttonWidth, height);
+    CGRect acceptButtonFrame = CGRectMake(CGRectGetWidth(self.contentView.frame) - buttonWidth - 10.0, 5, buttonWidth, height);
+    CGRect declineButtonFrame = CGRectMake(CGRectGetWidth(self.contentView.frame) - buttonWidth*2 - 15.0, 5, buttonWidth, height);
     UIButton *acceptButton  = [[UIButton alloc] initWithFrame:acceptButtonFrame];
     UIButton *declineButton = [[UIButton alloc] initWithFrame:declineButtonFrame];
     
@@ -45,10 +45,10 @@ const CGFloat buttonWidth = 70.0;
     [declineButton addTarget:self action:@selector(decline) forControlEvents:UIControlEventTouchUpInside];
     
     [acceptButton setTitle:@"Accept" forState:UIControlStateNormal];
-    [acceptButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+    [acceptButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
     
     [declineButton setTitle:@"Decline" forState:UIControlStateNormal];
-    [declineButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+    [declineButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
     
     [self.contentView addSubview:acceptButton];
     [self.contentView addSubview:declineButton];
@@ -77,6 +77,8 @@ const CGFloat buttonWidth = 70.0;
 - (id) initWithReuseIdentifier:reuseIdentifier {
     self = [super initWithStyle:UITableViewCellStyleDefault reuseIdentifier:reuseIdentifier];
     if (self) {
+        self.contentView.backgroundColor = [UIColor clearColor];
+        self.friendLabel.alpha = 0;
         [self _addButtons];
     }
     return self;
