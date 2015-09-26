@@ -12,12 +12,13 @@ from intertwine.accounts import accounts
 
 cur = None
 
-class FalseSecurityContext(object):
-	def __init__(self, cur):
-		self.cur = cur
-		self.user_id = None
-		self.first = ''
-		self.last = ''
+class FalseRequest(object):
+	def __init__(self, user_id=None, first='', last=''):
+		self.headers = { 'user_id':user_id, 'first':first, 'last':last }
+
+def FalseSecurityContext(cur, user_id=None, first='', last=''):
+	request = FalseRequest(user_id, first, last)
+	return context.SecurityContext(request, cur)
 
 class TestComments(unittest.TestCase):
 
