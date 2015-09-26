@@ -1,11 +1,11 @@
-DROP TABLE comments;
-DROP TABLE event_attendees;
-DROP TABLE device_tokens;
-DROP TABLE events;
-DROP TABLE friend_requests;
-DROP TABLE blocked_accounts;
-DROP TABLE friends;
-DROP TABLE accounts;
+DROP TABLE IF EXISTS comments;
+DROP TABLE IF EXISTS event_attendees;
+DROP TABLE IF EXISTS device_tokens;
+DROP TABLE IF EXISTS events;
+DROP TABLE IF EXISTS friend_requests;
+DROP TABLE IF EXISTS blocked_accounts;
+DROP TABLE IF EXISTS friends;
+DROP TABLE IF EXISTS accounts;
 
 CREATE TABLE accounts (
 id serial PRIMARY KEY,

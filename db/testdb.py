@@ -49,7 +49,6 @@ def start(db_name='testdb'):
 		cur.execute('CREATE DATABASE {};'.format(db_name,))
 
 	# Drop the previous connection and reconnect with the new database.
-	# (DUH!!)
 	conn.close()
 	cur.close()
 	conn = psycopg2.connect('dbname={} host=intertwine.cntms98hv39g.us-west-2.rds.amazonaws.com user=intertwine password=intertwine'.format(db_name))
