@@ -1,7 +1,10 @@
 import psycopg2
+import logging
+
 from intertwine import push
 from intertwine import response
 from intertwine import strings
+
 
 def comment_count(ctx, event_id):
 	"""Get the number of comments, given an event ID.
@@ -13,6 +16,12 @@ def comment_count(ctx, event_id):
 	Returns:
 	  The number of comments in the given event.
 	"""
+	if not ctx.user_id:
+		logging.error('invalid user ID when trying to retrieve comment count')
+		return 0
+	if not event_id:
+		logging.error('invalid event ID when user %d tried retrieving comment count')
+		return 0
 	query = 'SELECT count(*) FROM comments WHERE events_id=%s;'
 	try:
 		ctx.cur.execute(query, (event_id,))
@@ -33,6 +42,12 @@ def get_comments(ctx, event_id):
 	  An Intertwine response block, with a dictionary
 	  of comments in the payload.
 	"""	
+	if not ctx.user_id:
+		logging.error('invalid user ID when trying to retrieve comments')
+		return response.block(error=strings.VALUE_ERROR, code=500)
+	if not event_id:
+		logging.error('invalid event ID when user %d tried retrieving comments')
+		return response.block(error=strings.VALUE_ERROR, code=500)
 	query = """
 	SELECT
 		c.id,
@@ -47,7 +62,8 @@ def get_comments(ctx, event_id):
 		accounts as a
 	WHERE
 		a.id = c.accounts_id and
-		events_id=%s;
+		events_id=%s
+	ORDER BY c.created_time ASC;
 	"""
 	try:
 		ctx.cur.execute(query, (event_id,))
@@ -59,7 +75,7 @@ def get_comments(ctx, event_id):
 	for row in rows:
 		comment = {}
 		user = {}
-		user["id"] = str(row[1])
+		user["id"] = row[1]
 		user["first"] = row[2]
 		user["last"] = row[3]
 		user["email"] = row[4]
@@ -100,12 +116,30 @@ def notify_attendees(ctx, event_id, title, comment):
 		logging.error('exception raised notifying attendees for event %d', event_id)
 		return
 	rows = ctx.cur.fetchall()
-	if len(rows) == 0:
+
+	query = """
+	SELECT
+		comments.accounts_id
+	FROM
+		events, comments
+	WHERE
+		events.id = %s and (events.id = comments.events_id);
+	"""
+	try:
+		ctx.cur.execute(query, (event_id,))
+	except Exception as exc:
+		logging.error('exception raised notifying attendees for event %d', event_id)
+		return
+			
+	rows.extend(ctx.cur.fetchall())
+	account_ids = set([row[0] for row in rows])
+	account_ids.discard(ctx.user_id)
+
+	if len(account_ids) == 0:
 		return False
-	for row in rows:
-		account_id = row[0]
+	for account_id in account_ids:
 		msg = "{} posted a comment on {}: {}".format(poster_name, title, comment)
-		push.push_notification(ctx.cur, account_id, msg)
+		push.push_notification(ctx, account_id, msg, {'event_id':event_id, 'action':push.SHOW_EVENT_COMMENTS})
 	return True
 
 def comment(ctx, event_id, title, comment):
@@ -120,9 +154,31 @@ def comment(ctx, event_id, title, comment):
 	Returns:
 	  Intertwine response block.
 	"""
+	if not ctx.user_id:
+		logging.error('invalid user ID when trying to post comment')
+		return response.block(error=strings.VALUE_ERROR, code=500)
+	if not ctx.first:
+		logging.error('missing first name for user %d when trying to post comment', ctx.user_id)
+		return response.block(error=strings.VALUE_ERROR, code=500)
+	if not ctx.last:
+		logging.error('missing last name for  user %d when trying to post comment', ctx.user_id)
+		return response.block(error=strings.VALUE_ERROR, code=500)
+
+	if not event_id:
+		logging.error('user %d cannot post comment to an invalid event ID', ctx.user_id)
+		return response.block(error=strings.VALUE_ERROR, code=500)
+	if not comment:
+		logging.error('user %d cannot post invalid comment to event %d', ctx.user_id, event_id)
+		return response.block(error=strings.VALUE_ERROR, code=500)
+	if not title:
+		logging.error('missing title when user %d tried posting comment to event %d: %s', ctx.user_id, event_id, comment)
+		return response.block(error=strings.VALUE_ERROR, code=500)
 	query = 'INSERT INTO comments (accounts_id, events_id, comment) VALUES (%s, %s, %s) RETURNING id;'
 	try:
 		ctx.cur.execute(query, (ctx.user_id, event_id, comment))
+	except psycopg2.IntegrityError as exc:
+		logging.error('integrity error raised when trying to insert comment "%s" for event %d', comment, ctx.user_id)
+		return response.block(error=strings.NOT_FOUND, code=404)
 	except Exception as exc:
 		logging.error('exception raised trying to insert comment "%s" for event %d', comment, ctx.user_id)
 		return response.block(error=strings.SERVER_ERROR, code=500)

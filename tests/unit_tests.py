@@ -8,41 +8,35 @@ test_dir = os.path.dirname(os.path.realpath(__file__))
 
 TEST_DB = 'test__database'
 
-def distribute_cur(cur):
+def get_modules(cur):
 	# All unit tests that should be tested.
 	# First let's look at all files in the directory.
 	tests = os.listdir(test_dir)
 	tests.remove(__file__)
-	tests = map(lambda x: x.strip('.py'), tests)
-	print tests
-	unittest_modules = [
-		intertwine.accounts_tests,
-		intertwine.activity_tests,
-		intertwine.events_tests,
-		intertwine.friends_tests,
-		intertwine.registration_tests,
-		intertwine.search_tests
-	]
+	unittest_modules = map(lambda x: x.rstrip('.py'), tests)
 	for module in unittest_modules:
 		if getattr(module, 'cur', None) is not None:
 			module.cur = cur
+	return unittest_modules
+	
 
-def suite():
-    """Gather all the unit tests from the other modules.
-    Build one suite, and run it altogether.
-    """
-    test_suite = unittest.TestSuite()
-    # test_suite.addTest(unittest.makeSuite(ConfigTestCase))
-    return test_suite
+def suite(modules):
+	"""Gather all the unit tests from the other modules.
+	Build one suite, and run it altogether.
+	"""
+	test_suite = unittest.TestSuite()
+	for module in modules:
+ 		test_suite.addTests(module)
+ 	return test_suite
 
 
 
 if __name__ == '__main__':
 
 	cur = intertwine.testdb.start(TEST_DB)
-	distribute_cur(cur)
+	modules = get_modules(cur)
 
 	runner = unittest.TextTestRunner()
-	runner.run(suite())
+	runner.run(suite(modules))
 
-	intertwine.testdb.stop(TEST_DB)
+	intertwine.testdb.stop(cur, TEST_DB)

@@ -323,8 +323,7 @@ class TestFriendRequests(unittest.TestCase):
 	def test_get_friends_bad_user_id(self):
 		fcontext = FalseSecurityContext(cur, '1231313131', 'Ben', 'Rooke')
 		resp = friends.get_friends(fcontext)
-		self.assertFalse(resp['success'])
-		self.assertEqual(resp['error'], strings.VALUE_ERROR)
+		self.assertEqual(len(resp['payload']), 0)
 
 	def test_get_friends_no_friends(self):
 		resp = friends.get_friends(self.ctx)

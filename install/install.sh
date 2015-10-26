@@ -27,7 +27,7 @@ done
 
 # Certificates will be placed here.
 mkdir -p /opt/intertwine/certs 2> /dev/null
-cp ${cur_dir}/../newck.pem /opt/intertwine/certs/
+cp ${cur_dir}/../newck4.pem /opt/intertwine/certs/
 
 # Logs will be placed here.
 mkdir -p /var/log/intertwine 2> /dev/null

@@ -5,7 +5,7 @@ import psycopg2
 
 def add(ctx, token):
 	if not token:
-		logging.error('no device token to extract for user %d\n%s', ctx.user_id, str(exc))
+		logging.error('no device token to extract for user %d', ctx.user_id)
 		return response.block()
 	try:
 		ctx.cur.execute("INSERT INTO device_tokens (accounts_id, token) VALUES (%s, %s);", (ctx.user_id, psycopg2.Binary(token)))
@@ -20,5 +20,7 @@ def get_token(cur, user_id):
 	except Exception as exc:
 		logging.error('exception raised trying to select device token for user %d\n%s', user_id, str(exc))
 		return None
-	row = cur.fetchone()
-	return row[0]
+	rows = cur.fetchall()
+	if rows is None:
+		return None
+	return [row[0] for row in rows]

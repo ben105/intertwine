@@ -1,3 +1,4 @@
+import logging
 import unittest
 
 import intertwine.testdb
@@ -6,6 +7,7 @@ from intertwine.activity import comments
 from intertwine.friends import friends
 from intertwine.accounts import accounts
 from intertwine import strings
+from intertwine import context
 
 cur = None
 
@@ -26,29 +28,34 @@ class TestEvents(unittest.TestCase):
 		self.ctx.user_id = resp['payload']['user_id']
 
 		facebook_friends = {'Rae Jonathans':'456', 'Ben Rooke':'123', 'Ashley Sellers':'789'}
+		facebook_friends = {'Rae Jonathans':'456', 'Ashley Sellers':'789'}
 		self.friend_ids = []
+		self.friends_dict = {}
 		for k, v in facebook_friends.iteritems():
 			name_components = k.split()
 			first = name_components[0]; last = name_components[1]
 			resp = accounts.sign_in_facebook(self.ctx, v, first, last)
 			friend_id = resp['payload']['user_id']
 			self.friend_ids.append(friend_id)
+			self.friends_dict[friend_id] = {'first':first, 'last':last, 'facebook_id':v}
 
 	def tearDown(self):
 		cur.execute('DELETE FROM accounts;')
 		cur.execute('DELETE FROM friends;')
 		cur.execute('DELETE FROM friend_requests;')
 		cur.execute('DELETE FROM events;')
-
+		cur.connection.commit()
 	
 	#def create(cur, user_id, first, last, title, description, attendees):
 	def test_create_bad_user_id(self):
 		friend_id = self.friend_ids[0]
 		# Include testing for user IDs that don't exist.
-		resp = events.create(self.ctx, 'Flames Brunch', '', [friend_id])
+		fctx = FalseSecurityContext(cur, 55555, 'Ben', 'Rooke')
+		resp = events.create(fctx, 'Flames Brunch', '', [friend_id])
 		self.assertFalse(resp['success'])
 		self.assertEqual(resp['error'], strings.VALUE_ERROR)
-		resp = events.create(cur, 555, 'Ben', 'Rooke', 'Flames Brunch', '', [friend_id])
+		fctx = FalseSecurityContext(cur, None, 'Ben', 'Rooke')
+		resp = events.create(fctx, 'Flames Brunch', '', [friend_id])
 		self.assertFalse(resp['success'])
 		self.assertEqual(resp['error'], strings.VALUE_ERROR)
 
@@ -84,7 +91,7 @@ class TestEvents(unittest.TestCase):
 		creator = row[2]
 		self.assertEqual(title, 'Flames Brunch')
 		self.assertEqual(description, 'It\'s a great restaurant around the corner!')
-		self.assertEqual(creator, self.user_id)
+		self.assertEqual(creator, self.ctx.user_id)
 
 	def test_create_duplicate(self):
 		friend_id = self.friend_ids[0]
@@ -108,26 +115,22 @@ class TestEvents(unittest.TestCase):
 		self.assertFalse(resp['success'])
 		self.assertEqual(resp['error'], strings.VALUE_ERROR)
 		resp = events.get_attendees(self.ctx, 555)
-		self.assertFalse(resp['success'])
-		self.assertEqual(resp['error'], strings.VALUE_ERROR)
+		self.assertEqual(len(resp['payload']), 0)
 
 	def test_get_attendees(self):
-		resp = events.create(self.ctx, 'Flames Brunch', 'It\'s a great restaurant around the corner!', friend_ids)
+		resp = events.create(self.ctx, 'Flames Brunch', 'It\'s a great restaurant around the corner!', self.friend_ids)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
 		self.assertIsNotNone(resp['payload'])
 		event_id = resp['payload']['event_id']
 		resp = events.get_attendees(self.ctx, event_id)
-		attendees = resp['payload']
-		self.assertTrue(set(attendees) == set(friend_ids.append(self.user_id)))
+		attendees = [i['id'] for i in resp['payload']]
+		all_ids = self.friend_ids.append(self.ctx.user_id)
+		self.assertTrue(set(attendees) == set(self.friend_ids))
 
 		
 	#def get_events(cur, user_id):
 	def test_get_events_bad_user_id(self):
-		fctx = FalseSecurityContext(cur, 555555, 'Ben', 'Rooke')
-		resp = events.get_events(fctx)
-		self.assertFalse(resp['success'])
-		self.assertEqual(resp['error'], strings.VALUE_ERROR)
 		fctx = FalseSecurityContext(cur, None, 'Ben', 'Rooke')
 		resp = events.get_events(fctx)
 		self.assertFalse(resp['success'])
@@ -152,7 +155,11 @@ class TestEvents(unittest.TestCase):
 
 	def test_get_events_as_an_attendee(self):
 		friend_id = self.friend_ids[0]
-		resp = events.create(self.ctx, 'Flames Brunch', 'It\'s a great restaurant around the corner!', [self.user_id])
+		first = self.friends_dict[friend_id]['first']
+		last = self.friends_dict[friend_id]['last']
+		facebook_id = self.friends_dict[friend_id]['facebook_id']
+		fctx = FalseSecurityContext(cur, friend_id, first, last)
+		resp = events.create(fctx, 'Flames Brunch', 'It\'s a great restaurant around the corner!', [self.ctx.user_id])
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
 		self.assertIsNotNone(resp['payload'])
@@ -166,11 +173,12 @@ class TestEvents(unittest.TestCase):
 		self.assertEqual(event['title'], 'Flames Brunch')
 		self.assertEqual(event['description'], 'It\'s a great restaurant around the corner!')
 		self.assertEqual(event['creator']['id'], friend_id)
-		self.assertEqual(event['creator']['first'], 'Rae')
-		self.assertEqual(event['creator']['last'], 'Jonathans')
+		self.assertEqual(event['creator']['first'], first)
+		self.assertEqual(event['creator']['last'], last)
 		self.assertIsNone(event['creator']['email'])
-		self.assertEqual(event['creator']['facebook_id'], 456)
-		self.assertTrue(set(event['attendees']) == set([self.user_id, friend_id]))
+		self.assertEqual(event['creator']['facebook_id'], facebook_id)
+		attendees = [i['id'] for i in event['attendees']]
+		self.assertTrue(set(attendees) == set([self.ctx.user_id, friend_id]))
 
 	def test_get_events_created(self):
 		friend_id = self.friend_ids[0]
@@ -187,12 +195,13 @@ class TestEvents(unittest.TestCase):
 		self.assertEqual(event['id'], event_id)
 		self.assertEqual(event['title'], 'Flames Brunch')
 		self.assertEqual(event['description'], 'It\'s a great restaurant around the corner!')
-		self.assertEqual(event['creator']['id'], friend_id)
+		self.assertEqual(event['creator']['id'], self.ctx.user_id)
 		self.assertEqual(event['creator']['first'], 'Ben')
 		self.assertEqual(event['creator']['last'], 'Rooke')
 		self.assertIsNone(event['creator']['facebook_id'])
 		self.assertEqual(event['creator']['email'], 'ben_rooke@icloud.com')
-		self.assertTrue(set(event['attendees']) == set([self.user_id, friend_id]))
+		attendees = [i['id'] for i in event['attendees']]
+		self.assertTrue(set(attendees) == set([self.ctx.user_id, friend_id]))
 
 		# Test right comment count too.
 		# def comment(cur, user_id, first, last, event_id, title, comment):
@@ -210,13 +219,14 @@ class TestEvents(unittest.TestCase):
 		self.assertEqual(event['id'], event_id)
 		self.assertEqual(event['title'], 'Flames Brunch')
 		self.assertEqual(event['description'], 'It\'s a great restaurant around the corner!')
-		self.assertEqual(event['creator']['id'], friend_id)
+		self.assertEqual(event['creator']['id'], self.ctx.user_id)
 		self.assertEqual(event['creator']['first'], 'Ben')
 		self.assertEqual(event['creator']['last'], 'Rooke')
 		self.assertIsNone(event['creator']['facebook_id'])
 		self.assertEqual(event['creator']['email'], 'ben_rooke@icloud.com')
 		self.assertEqual(2, event['comment_count'])
-		self.assertTrue(set(event['attendees']) == set([self.user_id, friend_id]))
+		attendees = [i['id'] for i in event['attendees']]
+		self.assertTrue(set(attendees) == set([self.ctx.user_id, friend_id]))
 
 		
 	#def delete(cur, event_id):
@@ -226,7 +236,7 @@ class TestEvents(unittest.TestCase):
 		self.assertEqual(resp['error'], strings.VALUE_ERROR)
 		resp = events.delete(self.ctx, 567890)
 		self.assertFalse(resp['success'])
-		self.assertEqual(resp['error'], strings.VALUE_ERROR)
+		self.assertEqual(resp['error'], strings.NOT_FOUND)
 
 	def test_delete_event(self):
 		friend_id = self.friend_ids[0]
@@ -239,7 +249,7 @@ class TestEvents(unittest.TestCase):
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
 		self.assertEqual(1, len(resp['payload']))
-		resp = events.delete_event(self.ctx, event_id)
+		resp = events.delete(self.ctx, event_id)
 		self.assertTrue(resp['success'])
 		self.assertIsNone(resp['error'])
 		resp = events.get_events(self.ctx)
@@ -251,9 +261,93 @@ class TestEvents(unittest.TestCase):
 		row = cur.fetchone()
 		count = int(row[0])
 		self.assertEqual(0, count)
-		
+	
+
+	#def complete(ctx, event_id, title)
+	def test_complete_bad_user_id(self):
+		fctx = FalseSecurityContext(cur, None, 'Ben', 'Rooke')
+		resp = events.complete(fctx, 1, 'Baseball')
+		self.assertFalse(resp['success'])
+		self.assertEqual(resp['error'], strings.VALUE_ERROR)
+
+	def test_complete_bad_event_id(self):
+		resp = events.complete(self.ctx, 567890, 'nonexistent')
+		self.assertFalse(resp['success'])
+		self.assertEqual(resp['error'], strings.NOT_FOUND)
+
+	def test_complete_success(self):
+		friend_id = self.friend_ids[0]
+		resp = events.create(self.ctx, 'Baseball', 'Play in park', [friend_id])
+		self.assertTrue(resp['success'])
+		self.assertIsNone(resp['error'])
+		event_id = resp['payload']['event_id']
+		resp = events.complete(self.ctx, event_id, 'Baseball')
+		self.assertTrue(resp['success'])
+		self.assertIsNone(resp['error'])
+
+	def test_completing_multiple_times(self):
+		friend_id = self.friend_ids[0]
+		resp = events.create(self.ctx, 'Baseball', 'Play in park', [friend_id])
+		self.assertTrue(resp['success'])
+		self.assertIsNone(resp['error'])
+		event_id = resp['payload']['event_id']
+		resp = events.complete(self.ctx, event_id, 'Baseball')
+		self.assertTrue(resp['success'])
+		self.assertIsNone(resp['error'])
+		resp = events.complete(self.ctx, event_id, 'Baseball')
+		self.assertFalse(resp['success'])
+		self.assertEqual(resp['error'], strings.NOT_FOUND)
+	
+
+
+	# Testing Profile Page guaged functions.
+	def test_profile_page(self):
+		friend_id = self.friend_ids[0]
+		first = self.friends_dict[friend_id]['first']
+		last = self.friends_dict[friend_id]['last']
+		friend_id2 = self.friend_ids[1]
+		first2 = self.friends_dict[friend_id2]['first']
+		last2 = self.friends_dict[friend_id2]['last']
+
+		# Create the contexts.
+		fctx = FalseSecurityContext(cur, friend_id, first, last)
+		fctx2 = FalseSecurityContext(cur, friend_id2, first2, last2)
+
+		# Create the events among all three of us.
+		resp = events.create(self.ctx, 'Date', 'Night out in the town', [friend_id2])
+		self.assertTrue(resp['success'])
+		self.assertIsNone(resp['error'])
+		resp = events.create(fctx, 'Chill', 'Watch Netflix and chill', [friend_id2])
+		self.assertTrue(resp['success'])
+		self.assertIsNone(resp['error'])
+		resp = events.create(fctx, 'Groom', 'Teach me to groom Bear', [self.ctx.user_id])
+		self.assertTrue(resp['success'])
+		self.assertIsNone(resp['error'])
+
+		# Retrieve the profile page events.
+		# First, get the paired events.
+		resp = events.get_events_with_user(self.ctx, friend_id2)
+		self.assertTrue(resp['success'])
+		self.assertIsNone(resp['error'])
+		self.assertEqual(len(resp['payload']), 1)
+		event = resp['payload'][0]
+		self.assertEqual(event['title'], 'Date')
+		self.assertEqual(event['description'], 'Night out in the town')
+		self.assertEqual(event['creator']['id'], self.ctx.user_id)
+
+		# Second, get the events for the user.
+		resp = events.get_events_for_user(self.ctx, friend_id2)
+		self.assertTrue(resp['success'])
+		self.assertIsNone(resp['error'])
+		self.assertEqual(len(resp['payload']), 2)
+		all_events = resp['payload']
+		event_titles = [event['title'] for event in all_events]
+		self.assertEqual(set(['Chill', 'Date']), set(event_titles))
+
 
 if __name__ == '__main__':
+	logging.disable(logging.CRITICAL)
+
 	cur = intertwine.testdb.start()
 	
 	try:

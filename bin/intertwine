@@ -11,6 +11,7 @@ from intertwine.friends import friends
 from intertwine.accounts import register
 from intertwine.accounts import search
 from intertwine.accounts import accounts
+from intertwine.accounts import notifications
 from intertwine.activity import events
 from intertwine.activity import comments
 from intertwine.activity import activity
@@ -95,6 +96,19 @@ def event_api():
 
 	return json.dumps(resp)
 
+@app.route('/api/v1/edit_event', methods=['POST'])
+def edit_event():
+	ctx = create_context(request)
+	body = json.loads(request.data)
+	event_id = body.get('event_id')
+	title = body.get('title')
+	new_title = body.get('new_title')
+	date = body.get('date')
+	invited = body.get('invited')
+	uninvited = body.get('uninvited')
+	resp = events.edit(ctx, event_id, title, new_title, date, invited, uninvited)
+	return json.dumps(resp)
+
 @app.route('/api/v1/event_complete', methods=['POST'])
 def event_complete():
 	ctx = create_context(request)
@@ -103,6 +117,17 @@ def event_complete():
 	title = body.get('title')
 	resp = events.complete(ctx, event_id, title)
 	return json.dumps(resp)
+
+
+@app.route('/api/v1/users_events', methods=['POST'])
+def users_events():
+	pass
+
+@app.route('/api/v1/shared_events', methods=['POST'])
+def shared_events():
+	pass
+
+
 	
 ####### Device Token ########
 
@@ -208,7 +233,7 @@ def friend_accept():
 	ctx = create_context(request)
 	friend_id = request.form.get('friend_id')
 	data = friends.accept_request(ctx, friend_id)
-	# push.push_notification(cur, friend_id, "%d has accepted your friend request." % str(user_id))
+	push.push_notification(ctx, friend_id, "%d has accepted your friend request." % str(user_id))
 	return json.dumps(data)
 
 @app.route('/api/v1/facebook_friends', methods=['POST'])
@@ -217,6 +242,16 @@ def facebook_friends():
 	facebook_friends = json.loads(request.data)
 	data = friends.fb_friends(ctx, facebook_friends)
 	return json.dumps(data)
+
+
+######## Notifications ###########
+
+@app.route('/api/v1/notifications', methods=['GET', 'UPDATE'])
+def notifications_list():
+	ctx = create_context(request)
+	notifs = notifications.notifications(ctx)
+	return json.dumps(notifs)
+
 
 
 if __name__ == "__main__":

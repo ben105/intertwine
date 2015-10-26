@@ -19,6 +19,8 @@ def get_activity(ctx):
 	  the payload.
 	"""
 	user_id = ctx.user_id
+	if user_id is None:
+		return response.block(error=strings.VALUE_ERROR, code=500)
 	# Build the query
 	logging.debug('fetching activities for user %d', user_id)
 	query = """
@@ -36,7 +38,7 @@ def get_activity(ctx):
 	INNER JOIN 	friends
 	ON 		friends.friend_accounts_id = event_attendees.attendee_accounts_id
 	WHERE
-		accounts_id = %s
+		accounts_id = %s and completed=false
 	ORDER BY
 		updated_time DESC;
 	"""
