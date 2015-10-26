@@ -8,14 +8,27 @@
 
 #import <UIKit/UIKit.h>
 
+typedef enum {
+    ActivityViewCreateMode,
+    ActivityViewEditMode,
+    ActivityViewEditModeIsEditing
+} ActivityViewMode;
+
+
+@class EventObject;
+
+
 @protocol ActivityCreationDelegate <NSObject>
 @required
 - (void) closeEventCreation;
 @end
 
-@interface NewActivityViewController : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate>
+@interface NewActivityViewController : UIViewController <UICollectionViewDataSource, UICollectionViewDelegate, UITextFieldDelegate>
 
 @property (nonatomic, assign) id<ActivityCreationDelegate> delegate;
+@property (nonatomic) ActivityViewMode viewMode;
+@property (nonatomic) BOOL editEventIsCompleted;
+@property (nonatomic, strong) EventObject *event;
 
 @property (nonatomic, strong) UICollectionView *invitedCollectionView;
 @property (nonatomic, strong) UICollectionView *uninvitedCollectionView;
@@ -27,6 +40,7 @@
  * when the user is typing for the text field. */
 @property (nonatomic, strong) UIView *headerToolbar;
 @property (nonatomic, strong) UITextField *titleField;
+@property (nonatomic, copy) NSString *eventTitle;
 
 /* The friends array keeps track of the list of your friends. */
 @property (nonatomic, strong) NSArray *friends;

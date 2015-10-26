@@ -8,13 +8,13 @@
 
 #import <UIKit/UIKit.h>
 
-@class FBProfilePictureView;
+@class FriendProfileView;
 
 @interface FriendsTableViewCell : UITableViewCell
 
 @property (nonatomic, strong) UILabel *friendLabel;
 @property (nonatomic, copy) NSString *accountID;
-@property (nonatomic, strong) FBProfilePictureView *friendProfilePicture;
+@property (nonatomic, strong) FriendProfileView *friendProfilePicture;
 
 - (void)isFaded:(BOOL)faded;
 

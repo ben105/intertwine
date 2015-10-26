@@ -7,7 +7,7 @@
 //
 
 #import "CommentViewController.h"
-#import "EventCollectionViewCell.h"
+#import "FriendProfileView.h"
 #import "EventObject.h"
 #import "CommentTableViewCell.h"
 #import "IntertwineManager+Events.h"
@@ -62,8 +62,8 @@ const NSString *kCommentCollectionIdentifier = @"commentvc_attendee";
 @property (nonatomic, strong) UIControl *dismissControlView;
 
 @property (nonatomic, strong) UIView *splashScreen;
-@property (nonatomic, strong) UILabel *commentCountLabel;
 @property (nonatomic, strong) UITableView *commentsTableView;
+@property (nonatomic, strong) UILabel *commentCountLabel;
 
 @property (nonatomic, strong) UIView *commentBottomBox;
 @property (nonatomic, strong) UIButton *postButton;
@@ -76,6 +76,8 @@ const NSString *kCommentCollectionIdentifier = @"commentvc_attendee";
 - (void)_loadComments;
 
 - (void)_dismiss;
+
+- (void)_hideCellProfilePic:(CommentTableViewCell*)cell ifSameCommentator:(NSIndexPath*)indexPath;
 @end
 
 @implementation CommentViewController
@@ -94,14 +96,20 @@ const NSString *kCommentCollectionIdentifier = @"commentvc_attendee";
     [self _registerForKeyboardNotifications];
 }
 
+- (void) _setCommentCountLabel {
+    NSString *labelSuffix = @"comments";
+    if (self.event.numberOfComments == 1) {
+        labelSuffix = @"comment";
+    }
+    self.commentCountLabel.text = [NSString stringWithFormat:@"%lu %@", self.event.numberOfComments, labelSuffix];
+}
+
 - (void) viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
-    NSLog(@"Event title: %@", self.event.eventTitle);
 
     self.titleLabel.text = self.event.eventTitle;
-    NSLog(@"Title label text: %@", self.titleLabel.text);
-    NSLog(@"Title label frame = %@", NSStringFromCGRect(self.titleLabel.frame));
-    self.commentCountLabel.text = @"0 comments";
+    
+    [self _setCommentCountLabel];
     [self _loadComments];
 }
 
@@ -118,9 +126,28 @@ const NSString *kCommentCollectionIdentifier = @"commentvc_attendee";
     BOOL success = [self _checkCommentLimit];
     if (!success)
         return;
+    
+    // Add this comment to the table view manually.
+    Friend *me = [[Friend alloc] init];
+    me.accountID = [IntertwineManager getAccountID];
+    me.facebookID = [IntertwineManager facebookID];
+    NSString *name = [IntertwineManager facebookName];
+    NSArray *nameComponents = [name componentsSeparatedByString:@" "];
+    me.first = [nameComponents firstObject];
+    if ([nameComponents count] > 1) {
+        me.last = [nameComponents lastObject];
+    }
+    me.emailAddress = nil;
+    CommentObject *comment = [[CommentObject alloc] initWithUser:me comment:self.commentTextField.text];
+    [self.comments addObject:comment];
+    NSUInteger index = [self.comments count] - 1;
+    [self.commentsTableView insertRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:index inSection:0]] withRowAnimation:UITableViewRowAnimationBottom];
+    
     [IntertwineManager addComment:self.commentTextField.text forEvent:self.titleLabel.text eventNumber:self.event.eventID withResponse:nil];
     [self performSelector:@selector(_loadComments) withObject:nil afterDelay:1.0];
     self.commentTextField.text = @"";
+    self.event.numberOfComments += 1;
+    [self _setCommentCountLabel];
 }
 
 - (BOOL)_checkCommentLimit {
@@ -155,17 +182,15 @@ const NSString *kCommentCollectionIdentifier = @"commentvc_attendee";
              */
             NSMutableDictionary *commentatorJSON = [commentJSON objectForKey:@"user"];
             Friend *commentator = [[Friend alloc] init];
-            commentator.accountID = [commentatorJSON objectForKey:@"id"];
+            commentator.accountID = [[commentatorJSON objectForKey:@"id"] stringValue];
             commentator.first = [commentatorJSON objectForKey:@"first"];
             commentator.last = [commentatorJSON objectForKey:@"last"];
             commentator.emailAddress = [commentatorJSON objectForKey:@"email"];
             commentator.facebookID = [commentatorJSON objectForKey:@"facebook_id"];
 
             /* Initiate the actual comment. */
-            CommentObject *comment = [[CommentObject alloc] init];
-            comment.comment = [commentJSON objectForKey:@"comment"];
+            CommentObject *comment = [[CommentObject alloc] initWithUser:commentator comment:[commentJSON objectForKey:@"comment"]];
             comment.eventID = [commentJSON objectForKey:@"event_id"];
-            comment.commentator = commentator;
             
             [self.comments addObject:comment];
         }
@@ -202,7 +227,8 @@ const NSString *kCommentCollectionIdentifier = @"commentvc_attendee";
 - (void)_keyboardWasShown:(NSNotification*)aNotification
 {
     NSDictionary* info = [aNotification userInfo];
-    CGSize kbSize = [[info objectForKey:UIKeyboardFrameBeginUserInfoKey] CGRectValue].size;
+
+    CGSize kbSize = [[info objectForKey:UIKeyboardFrameEndUserInfoKey] CGRectValue].size;
     
     NSNumber *animationDurationNumber = [info objectForKey:UIKeyboardAnimationDurationUserInfoKey];
     double animationDuration = [animationDurationNumber doubleValue];
@@ -274,6 +300,19 @@ const NSString *kCommentCollectionIdentifier = @"commentvc_attendee";
 }
 
 
+- (void)_hideCellProfilePic:(CommentTableViewCell*)cell ifSameCommentator:(NSIndexPath*)indexPath {
+    NSUInteger row = [indexPath row];
+    if (row == 0) {
+        return;
+    }
+    Friend *currentCommentator = [(CommentObject*)[self.comments objectAtIndex:indexPath.row] commentator];
+    Friend *previousCommentator = [(CommentObject*)[self.comments objectAtIndex:indexPath.row - 1] commentator];
+    
+    if ([currentCommentator.accountID isEqualToString:previousCommentator.accountID]) {
+        [cell hideProfilePicture];
+    }
+}
+
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     Friend *user = [(CommentObject*)[self.comments objectAtIndex:indexPath.row] commentator];
     BOOL isSelf = [user.accountID isEqualToString:[IntertwineManager getAccountID]];
@@ -292,8 +331,14 @@ const NSString *kCommentCollectionIdentifier = @"commentvc_attendee";
     cell.nameLabel.text = name;
     cell.commentLabel.text = comment;
     
-    [cell resizeCell];
+    if (isSelf) {
+        cell.commentLabel.textColor = [UIColor whiteColor];
+    } else {
+        cell.commentLabel.textColor = [UIColor blackColor];
+    }
     
+    [cell resizeCell];
+    [self _hideCellProfilePic:cell ifSameCommentator:indexPath];
     return cell;
 }
 
@@ -350,6 +395,7 @@ const NSString *kCommentCollectionIdentifier = @"commentvc_attendee";
         _commentsTableView.backgroundColor = [UIColor clearColor];
         _commentsTableView.delegate = self;
         _commentsTableView.dataSource = self;
+        _commentsTableView.allowsSelection = NO;
     }
     return _commentsTableView;
 }

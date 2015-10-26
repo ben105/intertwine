@@ -9,26 +9,38 @@
 #import "ButtonBarView.h"
 #import "UILabel+DynamicHeight.h"
 
-const CGFloat buttonImageWidth = 25.0;
+const CGFloat buttonImageWidth = 32.0;
+const CGFloat buttonBorderWidth = buttonImageWidth * 3.0/2.0;
+
+
 const CGFloat detailLabelWidth = 100.0;
+const CGFloat detailLabelHeight = 20.0;
+
 const CGFloat spaceBetween = 10.0;
 const CGFloat intertwineButtonWidth = buttonImageWidth + detailLabelWidth + spaceBetween;
 
+
+@interface IntertwineButton ()
+@property (nonatomic, strong) UIImage *image;
+@end
 
 @implementation IntertwineButton
 
 @synthesize imageView = _imageView;
 
 -(instancetype)initWithDetail:(NSString *)detail andImage:(UIImage *)image {
-    self = [super initWithFrame:CGRectMake(0, 0, intertwineButtonWidth, buttonImageWidth)];
+    self = [super initWithFrame:CGRectMake(0, 0, buttonBorderWidth, buttonBorderWidth)];
     if (self) {
+        self.image = image;
         self.detailLabel.text = detail;
         self.imageView.image = image;
+        self.clipsToBounds = NO;
         
-        CGSize trueLabelSize = [self.detailLabel sizeOfMultiLineLabel];
-        CGRect buttonFrame = self.frame;
-        buttonFrame.size.width = trueLabelSize.width + spaceBetween + buttonImageWidth;
-        self.frame = buttonFrame;
+        self.backgroundColor = [UIColor clearColor];
+//        self.layer.borderColor = [[UIColor colorWithRed:20.0/255.0 green:81.0/255.0 blue:121.0/255.0 alpha:1.0] CGColor];
+//        self.layer.borderWidth = 1.0;
+//        self.layer.cornerRadius = CGRectGetWidth(self.frame) / 2.0;
+        
         
         [self addSubview:self.detailLabel];
         [self addSubview:self.imageView];
@@ -39,15 +51,18 @@ const CGFloat intertwineButtonWidth = buttonImageWidth + detailLabelWidth + spac
 -(UIImageView*)imageView {
     if (!_imageView) {
         _imageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, buttonImageWidth, buttonImageWidth)];
+        _imageView.contentMode = UIViewContentModeScaleAspectFit;
+        _imageView.center = CGPointMake(CGRectGetMidX(self.frame), CGRectGetMidY(self.frame));
     }
     return _imageView;
 }
 
 -(UILabel*)detailLabel {
     if (!_detailLabel) {
-        _detailLabel = [[UILabel alloc] initWithFrame:CGRectMake(buttonImageWidth + spaceBetween, 0, detailLabelWidth, buttonImageWidth)];
-        _detailLabel.font = [UIFont fontWithName:@"HelveticaNeue" size:13];
-        _detailLabel.textColor = [UIColor colorWithRed:8.0/255.0 green:41.0/255.0 blue:64.0/255.0 alpha:1.0];
+        _detailLabel = [[UILabel alloc] initWithFrame:CGRectMake(buttonBorderWidth + 4, CGRectGetMidY(self.imageView.frame), detailLabelWidth, detailLabelHeight)];
+        _detailLabel.font = [UIFont fontWithName:@"HelveticaNeue-Light" size:14];
+//        _detailLabel.textColor = [UIColor colorWithRed:20.0/255.0 green:81.0/255.0 blue:121.0/255.0 alpha:1.0];
+        _detailLabel.textColor = [UIColor whiteColor];
         _detailLabel.backgroundColor = [UIColor clearColor];
     }
     return _detailLabel;
@@ -69,7 +84,13 @@ const CGFloat intertwineButtonWidth = buttonImageWidth + detailLabelWidth + spac
 
 - (void)setButtons:(NSArray *)buttons {
     
-    [_buttons makeObjectsPerformSelector:@selector(removeFromSuperview)];
+    for (UIButton *button in _buttons) {
+        if ((NSNull*)button == [NSNull null]) {
+            continue;
+        }
+        [button removeFromSuperview];
+    }
+//    [_buttons makeObjectsPerformSelector:@selector(removeFromSuperview)];
     _buttons = buttons;
     
     /* Let's place these buttons along the button view. */
@@ -78,6 +99,9 @@ const CGFloat intertwineButtonWidth = buttonImageWidth + detailLabelWidth + spac
     CGFloat y = CGRectGetHeight(self.frame) / 2.0;
     for (int i=0; i<[buttons count]; i++) {
         UIButton *button = [self.buttons objectAtIndex:i];
+        if ((NSNull*)button == [NSNull null]) {
+            continue;
+        }
         CGFloat x = (spacing * 0.5) + ((float)i*spacing);
         button.center = CGPointMake(x, y);
         /* And finally, place it in the view. */

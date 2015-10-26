@@ -13,6 +13,13 @@ typedef enum {
     kAccountTypeEmail
 } AccountType;
 
+typedef enum {
+    kShowEventComments,  // Jump to the activity, and open the comments.
+    kShowEvent,          // Jump to the activity, and open the activity.
+    kJumpTo,             // Jump to the activity.
+} NotificationAction;
+
+
 @interface IntertwineManager : NSObject
 
 + (NSData*)loadJSON:(id)object;

@@ -9,6 +9,8 @@
 #import <UIKit/UIKit.h>
 #import <FacebookSDK/FacebookSDK.h>
 
+@class ActivityViewController;
+
 
 @protocol SignInDelegate <NSObject>
 @required
@@ -16,6 +18,8 @@
 @end
 
 @interface ViewController : UIViewController <SignInDelegate, FBLoginViewDelegate>
+
+@property (nonatomic, strong) ActivityViewController *activityViewController;
 
 /*
  * Logging into Facebook

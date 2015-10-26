@@ -17,24 +17,30 @@
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
-                            <view contentMode="scaleToFill" fixedFrame="YES" placeholderIntrinsicWidth="294" placeholderIntrinsicHeight="241" translatesAutoresizingMaskIntoConstraints="NO" id="0k0-Lt-HTU">
-                                <rect key="frame" x="0.0" y="-4" width="375" height="50"/>
+                            <view contentMode="scaleToFill" placeholderIntrinsicWidth="294" placeholderIntrinsicHeight="241" translatesAutoresizingMaskIntoConstraints="NO" id="0k0-Lt-HTU">
+                                <rect key="frame" x="0.0" y="570" width="375" height="97"/>
                                 <subviews>
-                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Intertwine" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="M2b-gL-yt5">
-                                        <rect key="frame" x="16" y="7" width="343" height="36"/>
-                                        <fontDescription key="fontDescription" name="MarkerFelt-Thin" family="Marker Felt" pointSize="30"/>
-                                        <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
-                                        <nil key="highlightedColor"/>
-                                    </label>
+                                    <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="ehn-Pe-RLA" customClass="FBLoginView">
+                                        <rect key="frame" x="20" y="20" width="335" height="56"/>
+                                        <color key="backgroundColor" white="1" alpha="0.0" colorSpace="calibratedWhite"/>
+                                    </view>
                                 </subviews>
-                                <color key="backgroundColor" red="0.37254901959999998" green="0.51764705879999995" blue="0.80392156859999997" alpha="1" colorSpace="calibratedRGB"/>
-                            </view>
-                            <view contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ehn-Pe-RLA" customClass="FBLoginView">
-                                <rect key="frame" x="0.0" y="590" width="375" height="76"/>
-                                <color key="backgroundColor" white="1" alpha="0.0" colorSpace="calibratedWhite"/>
+                                <color key="backgroundColor" red="0.90196079015731812" green="0.90196079015731812" blue="0.90196079015731812" alpha="1" colorSpace="calibratedRGB"/>
+                                <constraints>
+                                    <constraint firstItem="ehn-Pe-RLA" firstAttribute="top" secondItem="0k0-Lt-HTU" secondAttribute="top" constant="20" id="5TI-0K-Azj"/>
+                                    <constraint firstAttribute="height" constant="97" id="7ie-1P-cWT"/>
+                                    <constraint firstAttribute="trailing" secondItem="ehn-Pe-RLA" secondAttribute="trailing" constant="20" id="Zd6-n2-wMl"/>
+                                    <constraint firstAttribute="bottom" secondItem="ehn-Pe-RLA" secondAttribute="bottom" constant="21" id="pbM-4q-uCk"/>
+                                    <constraint firstItem="ehn-Pe-RLA" firstAttribute="leading" secondItem="0k0-Lt-HTU" secondAttribute="leading" constant="20" id="rE5-c1-ntv"/>
+                                </constraints>
                             </view>
                         </subviews>
                         <color key="backgroundColor" red="0.99491177759446825" green="0.98989891283469433" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                        <constraints>
+                            <constraint firstItem="2fi-mo-0CV" firstAttribute="top" secondItem="0k0-Lt-HTU" secondAttribute="bottom" id="Dp6-82-g4r"/>
+                            <constraint firstAttribute="trailing" secondItem="0k0-Lt-HTU" secondAttribute="trailing" id="YKg-VY-UAd"/>
+                            <constraint firstItem="0k0-Lt-HTU" firstAttribute="leading" secondItem="kh9-bI-dsS" secondAttribute="leading" id="g2y-Sb-qBu"/>
+                        </constraints>
                     </view>
                     <simulatedScreenMetrics key="simulatedDestinationMetrics" type="retina47"/>
                     <connections>

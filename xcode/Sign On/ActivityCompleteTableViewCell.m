@@ -42,8 +42,7 @@ const CGFloat activityCompleteCellSpacer = 5.0;
         self.backgroundColor = [UIColor clearColor];
         self.contentView.layer.shadowColor = [[UIColor blackColor] CGColor];
         self.contentView.layer.shadowOffset = CGSizeMake(0, -2);
-        
-        
+                
         CGRect contentFrame = self.contentView.frame;
         contentFrame.origin.y = 0;
         contentFrame.size.height = activityCompleteCellHeight;
@@ -98,10 +97,13 @@ const CGFloat activityCompleteCellSpacer = 5.0;
         static float inset = 15.0;
         _detailBox = [[UIView alloc] initWithFrame:CGRectMake(inset, CGRectGetMidY(self.star.frame), CGRectGetWidth(self.contentView.frame) - (inset*2.0), completedDetailBoxHeight)];
         _detailBox.layer.cornerRadius = 5.0;
-        _detailBox.backgroundColor = [UIColor colorWithRed:233.0/255.0 green:196.0/255.0 blue:92.0/255.0 alpha:1.0];
-        _detailBox.layer.shadowColor = [[UIColor blackColor] CGColor];
-        _detailBox.layer.shadowOffset = CGSizeMake(0, -2);
-        _detailBox.layer.shadowOpacity = 0.7;
+//        _detailBox.backgroundColor = [UIColor colorWithRed:233.0/255.0 green:196.0/255.0 blue:92.0/255.0 alpha:1.0];
+        _detailBox.backgroundColor = [UIColor whiteColor];
+        _detailBox.layer.borderWidth = 1.0;
+        _detailBox.layer.borderColor = [[UIColor blackColor] CGColor];
+//        _detailBox.layer.shadowColor = [[UIColor blackColor] CGColor];
+//        _detailBox.layer.shadowOffset = CGSizeMake(0, -2);
+//        _detailBox.layer.shadowOpacity = 0.7;
         
         [_detailBox addSubview:self.titleLabel];
         [_detailBox addSubview:self.attendeesLabel];

@@ -13,4 +13,6 @@
 
 + (void) getActivityFeedWithResponse:(void (^)(id json, NSError *error, NSURLResponse *response))responseBlock;
 
++ (void) getNotificationsWithResponse:(void (^)(id json, NSError *error, NSURLResponse *response))responseBlock;
+
 @end

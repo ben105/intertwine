@@ -8,6 +8,7 @@
 
 #import "FriendsTableViewCell.h"
 #import <FacebookSDK/FacebookSDK.h>
+#import "FriendProfileView.h"
 
 const CGFloat profilePictureWidth = 46.0;
 const CGFloat friendNameFontSize = 14.0;
@@ -60,7 +61,6 @@ const CGFloat friendsCellHeight = 60.0;
 
 - (void)setAccountID:(NSString *)accountID {
     _accountID = accountID;
-    self.friendProfilePicture.profileID = accountID;
 }
 
 - (UILabel*)friendLabel {
@@ -74,13 +74,10 @@ const CGFloat friendsCellHeight = 60.0;
     return _friendLabel;
 }
 
-- (FBProfilePictureView*)friendProfilePicture {
+- (FriendProfileView*)friendProfilePicture {
     if (!_friendProfilePicture) {
-        _friendProfilePicture = [[FBProfilePictureView alloc] initWithFrame:CGRectMake(0, 0, profilePictureWidth, profilePictureWidth)];
+        _friendProfilePicture = [[FriendProfileView alloc] initWithFrame:CGRectMake(0, 0, profilePictureWidth, profilePictureWidth)];
         _friendProfilePicture.center = PROFILE_PIC_CENTER;
-        _friendProfilePicture.layer.borderColor = [[UIColor whiteColor] CGColor];
-        _friendProfilePicture.layer.borderWidth = 1.0;
-        _friendProfilePicture.layer.cornerRadius = profilePictureWidth/2.0;
 //        _friendProfilePicture.profileID = 0;
     }
     return _friendProfilePicture;

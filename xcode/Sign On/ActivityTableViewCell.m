@@ -18,24 +18,26 @@
 #import "UILabel+DynamicHeight.h"
 
 
-#define DETAIL_COLOR [UIColor colorWithRed:1 green:1 blue:1 alpha:0.85]
+#define DETAIL_COLOR [UIColor colorWithRed:195.0/255.0 green:195.0/255.0 blue:195.0/255.0 alpha:0.24]
 #define DETAIL_COLOR_COMPLETE [UIColor colorWithRed:1 green:223.0/255.0 blue:58.0/255.0 alpha:0.7]
 #define ACTION_COLOR [UIColor colorWithRed:1 green:1 blue:1 alpha:0.5]
 #define ACTION_COLOR_COMPLETE [UIColor colorWithRed:1 green:177.0/255.0 blue:2.0/255.0 alpha:0.49]
 
-#define TITLE_COLOR [UIColor colorWithRed:8.0/255.0 green:41.0/255.0 blue:64.0/255.0 alpha:1.0]
+//#define TITLE_COLOR [UIColor colorWithRed:20.0/255.0 green:81.0/255.0 blue:121.0/255.0 alpha:1.0]
+#define TITLE_COLOR [UIColor whiteColor]
 
 
 const NSUInteger attendeesPerRow = 3.0;
 const CGFloat activityCellEdgeSpace = 30.0;
-#define ATTENDEE_SPACER ((CGRectGetWidth([[UIScreen mainScreen] bounds]) - 2.0*activityCellEdgeSpace - attendeesPerRow * attendeeBubbleWidth)/2.0)
+#define ATTENDEE_SPACER ((CGRectGetWidth(self.detailBox.frame) - 2.0*activityCellEdgeSpace - attendeesPerRow * attendeeBubbleWidth)/2.0)
 
 const CGFloat inset = 10.0;
 const CGFloat detailBoxHeight = 84.0;
-const CGFloat buttonBoxHeight = 60.0;
+const CGFloat buttonBoxHeight = 75.0;
 const CGFloat activityCellHeight = inset*2.0 + detailBoxHeight;
 
-const CGFloat attendeeBubbleWidth = 78.0;
+const CGFloat attendeeBubbleWidth = 88.0;
+//const CGFloat attendeeBubbleWidth = 98.0;
 const CGFloat attendeeLabelSpace = 15.0;
 const CGFloat activityCellSpacer = 5.0;
 /* We want to figure out the distance from the right side of the screen
@@ -47,9 +49,9 @@ const CGFloat activityCellSpacer = 5.0;
  
  So that gives us 4 activityCellSpacers, 3 full attendee bubble widths, and a partial one. */
 
-#define TITLE_SPACE ([[UIScreen mainScreen] bounds].size.width - (inset * 2.0))
+#define TITLE_SPACE ([[UIScreen mainScreen] bounds].size.width - 20 - (inset * 2.0))
 
-const CGFloat titleHeight = 48.0;
+const CGFloat titleHeight = 25.0;
 const CGFloat activityCellTitleFontSize = 22.0;
 
 
@@ -111,7 +113,8 @@ UILabel *measuringLabel;
         self.nameLabel.text = name;
         self.nameLabel.textAlignment = NSTextAlignmentCenter;
         self.nameLabel.backgroundColor = [UIColor clearColor];
-        self.nameLabel.textColor = [UIColor colorWithRed:8.0/255.0 green:41.0/255.0 blue:64.0/255.0 alpha:1];
+//        self.nameLabel.textColor = [UIColor colorWithRed:8.0/255.0 green:41.0/255.0 blue:64.0/255.0 alpha:1];
+        self.nameLabel.textColor = [UIColor whiteColor];
         self.nameLabel.font = [UIFont fontWithName:@"HelveticaNeue-Light" size:13];
         [self checkFit];
         
@@ -153,9 +156,10 @@ UILabel *measuringLabel;
     self = [super initWithStyle:UITableViewCellStyleDefault reuseIdentifier:reuseIdentifier];
     if (self) {
         self.backgroundColor = [UIColor clearColor];
-        self.contentView.layer.shadowColor = [[UIColor blackColor] CGColor];
-        self.contentView.layer.shadowOffset = CGSizeMake(0, -2);
+//        self.contentView.layer.shadowColor = [[UIColor blackColor] CGColor];
+//        self.contentView.layer.shadowOffset = CGSizeMake(0, -2);
         
+//        self.selectionStyle = UITableViewCellSelectionStyleNone;
         
         CGRect contentFrame = self.contentView.frame;
         contentFrame.origin.y = 0;
@@ -163,12 +167,12 @@ UILabel *measuringLabel;
         contentFrame.size.width = [[UIScreen mainScreen] bounds].size.width;
         self.contentView.frame = contentFrame;
         self.contentView.backgroundColor = [UIColor clearColor];
-        self.contentView.layer.shadowColor = [[UIColor blackColor] CGColor];
-        self.contentView.layer.shadowOffset = CGSizeMake(0, -2);
+//        self.contentView.layer.shadowColor = [[UIColor blackColor] CGColor];
+//        self.contentView.layer.shadowOffset = CGSizeMake(0, -2);
         
         [self.contentView addSubview:self.detailBox];
 
-        [self.detailBox addSubview:self.buttonBox];
+        [self.contentView addSubview:self.buttonBox];
         [self.detailBox addSubview:self.titleLabel];
         [self.detailBox addSubview:self.attendeePallet];
     }
@@ -218,7 +222,7 @@ UILabel *measuringLabel;
         NSUInteger column = i % attendeesPerRow;
         NSUInteger row = i / attendeesPerRow;
         x = activityCellEdgeSpace + column*(attendeeBubbleWidth + ATTENDEE_SPACER);
-        y = inset + row*([AttendeeView attendeeViewHeight] + inset);
+        y = inset + row*([AttendeeView attendeeViewHeight] + inset*2.0);
     }
     
     AttendeeView *attendeeView = [[AttendeeView alloc] initWithName:attendee.fullName andProfileID:attendee.facebookID];
@@ -249,25 +253,23 @@ UILabel *measuringLabel;
     
     /* Determine the attendee pallet height. */
     NSUInteger lastAttendee = [self.attendees count] - 1;
-    CGFloat palletHeight = inset + (lastAttendee/attendeesPerRow) * ([AttendeeView attendeeViewHeight] + (inset));
+    CGFloat palletHeight = inset + (lastAttendee/attendeesPerRow) * ([AttendeeView attendeeViewHeight] + (inset*2.0));
     palletHeight += [AttendeeView attendeeViewHeight];
     
     CGRect palletFrame = self.attendeePallet.frame;
-    palletFrame.origin.y = CGRectGetMaxY(titleLabelFrame);
+    palletFrame.origin.y = CGRectGetMaxY(titleLabelFrame) + inset;
     palletFrame.size.height = palletHeight;
     self.attendeePallet.frame = palletFrame;
     
     
-    self.detailBox.frame = CGRectMake(0, inset, CGRectGetWidth(self.contentView.frame), newHeight + palletHeight + buttonBoxHeight + activityCellSpacer);
+    self.detailBox.frame = CGRectMake(-1, inset, CGRectGetWidth(self.contentView.frame) + 2 , newHeight + inset + palletHeight + inset + buttonBoxHeight + activityCellSpacer);
     
-    CGRect frame = self.buttonBox.frame;
-    frame.origin.y = CGRectGetMaxY(palletFrame);
-    self.buttonBox.frame = frame;
+    self.buttonBox.center =  CGPointMake(CGRectGetMidX(self.detailBox.frame), CGRectGetMaxY(self.detailBox.frame) - buttonBoxHeight/2.0);
 
     if ([self.event.creator.accountID isEqualToString:[IntertwineManager getAccountID]]) {
-        self.buttonBox.buttons = @[self.likeButton, self.commentButton, self.completedButton];
+        self.buttonBox.buttons = @[self.completedButton, self.likeButton, self.commentButton];
     } else {
-        self.buttonBox.buttons = @[self.likeButton, self.commentButton];
+        self.buttonBox.buttons = @[[NSNull null], self.likeButton, self.commentButton, [NSNull null]];
     }
 
     
@@ -302,7 +304,7 @@ UILabel *measuringLabel;
     CGFloat palletHeight = inset + ((count-1)/attendeesPerRow) * ([AttendeeView attendeeViewHeight] + (inset));
     palletHeight += [AttendeeView attendeeViewHeight];
     
-    return size.height + palletHeight + buttonBoxHeight +(activityCellSpacer) + 15.0;
+    return size.height + inset + palletHeight + inset + buttonBoxHeight +(activityCellSpacer) + 45.0;
 }
 
 
@@ -348,8 +350,8 @@ UILabel *measuringLabel;
 
 - (UILabel*)titleLabel {
     if (!_titleLabel) {
-        _titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(inset, 0, TITLE_SPACE, titleHeight)];
-        _titleLabel.font = [UIFont fontWithName:@"HelveticaNeue" size:activityCellTitleFontSize];
+        _titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(inset, inset, TITLE_SPACE, titleHeight)];
+        _titleLabel.font = [UIFont fontWithName:@"HelveticaNeue-Light" size:activityCellTitleFontSize];
         _titleLabel.backgroundColor = [UIColor clearColor];
         _titleLabel.textColor = TITLE_COLOR;
         _titleLabel.textAlignment = NSTextAlignmentCenter;
@@ -392,7 +394,7 @@ UILabel *measuringLabel;
 
 - (UIView*) attendeePallet {
     if (!_attendeePallet) {
-        _attendeePallet = [[UIView alloc] initWithFrame:CGRectMake(0, 0, CGRectGetWidth(self.contentView.frame), 0)];
+        _attendeePallet = [[UIView alloc] initWithFrame:CGRectMake(0, 0, CGRectGetWidth(self.detailBox.frame), 0)];
         _attendeePallet.backgroundColor = [UIColor clearColor];
     }
     return _attendeePallet;
@@ -402,16 +404,19 @@ UILabel *measuringLabel;
 - (UIView*)detailBox {
     if (!_detailBox) {
         _detailBox = [[UIView alloc] initWithFrame:CGRectMake(0, inset, CGRectGetWidth(self.contentView.frame), detailBoxHeight)];
-        _detailBox.layer.shadowColor = [[UIColor blackColor] CGColor];
-        _detailBox.layer.shadowOpacity = 0.7;
-        _detailBox.layer.shadowOffset = CGSizeMake(0, -3);
+        _detailBox.layer.borderColor = [DETAIL_COLOR CGColor];
+//        _detailBox.layer.borderWidth = 1.0;
+//        _detailBox.layer.cornerRadius = 4.0;
+//        _detailBox.layer.shadowColor = [[UIColor blackColor] CGColor];
+//        _detailBox.layer.shadowOpacity = 0.7;
+//        _detailBox.layer.shadowOffset = CGSizeMake(0, -3);
     }
     return _detailBox;
 }
 
 - (ButtonBarView*)buttonBox {
     if (!_buttonBox) {
-        _buttonBox = [[ButtonBarView alloc] initWithFrame:CGRectMake(0, 0, [[UIScreen mainScreen] bounds].size.width, buttonBoxHeight) buttonArray:@[self.likeButton, self.commentButton]];
+        _buttonBox = [[ButtonBarView alloc] initWithFrame:CGRectMake(0, 0, CGRectGetWidth(self.detailBox.frame), buttonBoxHeight) buttonArray:@[self.likeButton, self.commentButton]];
         _buttonBox.backgroundColor = [UIColor clearColor];
     }
     return _buttonBox;
@@ -420,7 +425,7 @@ UILabel *measuringLabel;
 - (IntertwineButton*)commentButton {
     if (!_commentButton) {
         
-        _commentButton = [[IntertwineButton alloc] initWithDetail:@"0 comments" andImage:[UIImage imageNamed:@"CommentIcon.png"]];
+        _commentButton = [[IntertwineButton alloc] initWithDetail:@"0" andImage:[UIImage imageNamed:@"CommentIcon.png"]];
         [_commentButton addTarget:self action:@selector(_showComments) forControlEvents:UIControlEventTouchUpInside];
     }
     return _commentButton;
@@ -428,7 +433,7 @@ UILabel *measuringLabel;
 
 - (IntertwineButton*)likeButton {
     if (!_likeButton) {
-        _likeButton = [[IntertwineButton alloc] initWithDetail:@"0 likes" andImage:[UIImage imageNamed:@"LikeIcon.png"]];
+        _likeButton = [[IntertwineButton alloc] initWithDetail:@"0" andImage:[UIImage imageNamed:@"LikeIcon.png"]];
     }
     return _likeButton;
 }
@@ -436,7 +441,7 @@ UILabel *measuringLabel;
 
 - (IntertwineButton*)completedButton {
     if (!_completedButton) {
-        _completedButton = [[IntertwineButton alloc] initWithDetail:@"completed" andImage:[UIImage imageNamed:@"CompletedIcon.png"]];
+        _completedButton = [[IntertwineButton alloc] initWithDetail:@"" andImage:[UIImage imageNamed:@"CompletedIcon.png"]];
         [_completedButton addTarget:self action:@selector(_markComplete) forControlEvents:UIControlEventTouchUpInside];
     }
     return _completedButton;

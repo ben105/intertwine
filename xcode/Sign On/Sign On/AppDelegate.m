@@ -9,6 +9,7 @@
 #import "AppDelegate.h"
 #import "IntertwineManager.h"
 #import "IntertwineManager+Friends.h"
+#import "ActivityViewController.h"
 #import <FacebookSDK/FacebookSDK.h>
 
 
@@ -41,16 +42,24 @@
     // Override point for customization after application launch.
     [FBLoginView class];
     
-#ifdef __IPHONE_8_0
-    //Right, that is the point
+    NSDictionary *remoteNotif = [launchOptions objectForKey: UIApplicationLaunchOptionsRemoteNotificationKey];
+    
+    //Accept push notification when app is not open
+    if (remoteNotif) {
+        NSLog(@"Remote notification info: %@", remoteNotif);
+        [self presentNotificationBanner:remoteNotif inForeground:NO];
+        return YES;
+    }
+    
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
+    //This code will work in iOS 8.0 xcode 6.0 or later
+    
     UIUserNotificationSettings *settings = [UIUserNotificationSettings settingsForTypes:(UIUserNotificationTypeBadge
                                                                                          |UIUserNotificationTypeSound
                                                                                          |UIUserNotificationTypeAlert) categories:nil];
     [[UIApplication sharedApplication] registerUserNotificationSettings:settings];
     
     NSLog(@"Is registered: %d", [[UIApplication sharedApplication] isRegisteredForRemoteNotifications]);
-    
-//    [[UIApplication sharedApplication] unregisterForRemoteNotifications];
     
 #else
     //register to receive notifications
@@ -84,6 +93,28 @@
 }
 
 
+
+#pragma mark - Receiving Push Notifications
+
+- (void)presentNotificationBanner:(NSDictionary * _Nonnull)userInfo inForeground:(BOOL)inForeground{
+    [(ActivityViewController*)[(id)self.window.rootViewController activityViewController] presentRemoteNotification:(NSDictionary * _Nonnull)userInfo inForeground:inForeground];
+}
+
+- (void)application:(UIApplication * _Nonnull)application didReceiveRemoteNotification:(NSDictionary * _Nonnull)userInfo {
+    UIApplicationState state = [application applicationState];
+    // user tapped notification while app was in background
+    if (state == UIApplicationStateInactive || state == UIApplicationStateBackground) {
+        // go to screen relevant to Notification content
+        [self presentNotificationBanner:userInfo inForeground:NO];
+    } else {
+        // App is in UIApplicationStateActive (running in foreground)
+        // perhaps show an UIAlertView
+        [self presentNotificationBanner:userInfo inForeground:YES];
+    }
+}
+
+
+
 #pragma mark - Remote Notifications (Push Notifications)
 
 
@@ -98,7 +129,8 @@
     NSLog(@"Failed to get token, error: %@", error);
 }
 
-#ifdef __IPHONE_8_0
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000
+// Only COMPILE this if compiled against BaseSDK iOS8.0 or greater
 - (void)application:(UIApplication *)application didRegisterUserNotificationSettings:(UIUserNotificationSettings *)notificationSettings
 {
     //register to receive notifications

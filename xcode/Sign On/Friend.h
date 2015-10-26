@@ -17,5 +17,6 @@
 @property (nonatomic, copy) NSString *accountID;
 
 - (NSString*) fullName;
+- (NSDictionary*) dictionary;
 
 @end

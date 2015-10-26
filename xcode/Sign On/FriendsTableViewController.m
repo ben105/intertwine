@@ -10,6 +10,7 @@
 #import "FriendsTableViewCell.h"
 #import <FacebookSDK/FacebookSDK.h>
 #import "IntertwineManager+Friends.h"
+#import "FriendProfileView.h"
 
 
 const CGFloat sectionHeaderHeight = 34.0;
@@ -103,17 +104,14 @@ const NSString *friendSuggestionsHeader = @"Friend Suggestions";
     NSArray *cells = [self.friendsTableView visibleCells];
     NSUInteger index = 0;
     for (FriendsTableViewCell *cell in cells) {
-        FBProfilePictureView *profilePicture = cell.friendProfilePicture;
+        FriendProfileView *profilePicture = cell.friendProfilePicture;
         
         CGRect destFrame = [cell.contentView convertRect:profilePicture.frame toView:self.view];
         CGRect animatableFrame = destFrame;
         animatableFrame.origin.y += [[UIScreen mainScreen] bounds].size.height; // At least the screen height is safe.
         
         /* Create a new animatable profile picture. Add it to the view. */
-        FBProfilePictureView *animatableProfilePic = [[FBProfilePictureView alloc] initWithFrame:animatableFrame];
-        animatableProfilePic.layer.cornerRadius = CGRectGetWidth(profilePicture.frame) / 2.0;
-        animatableProfilePic.layer.borderColor = [[UIColor whiteColor] CGColor];
-        animatableProfilePic.layer.borderWidth = 1;
+        FriendProfileView *animatableProfilePic = [[FriendProfileView alloc] initWithFrame:animatableFrame];
         animatableProfilePic.profileID = profilePicture.profileID;
         [self.view addSubview:animatableProfilePic];
         

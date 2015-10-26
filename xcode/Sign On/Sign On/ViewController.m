@@ -13,7 +13,6 @@
 #import "AppDelegate.h"
 #import "IntertwineManager.h"
 #import "ActivityViewController.h"
-#import "EventViewController.h"
 #import "FriendsViewController.h"
 #import "ITMultipleBannersViewController.h"
 #import "ITDynamicBannerViewController.h"
@@ -26,6 +25,8 @@ NSString *newsfeedStoryboardID = @"Newsfeed";
 
 @interface ViewController ()
 
+
+@property (nonatomic, strong) id<FBGraphUser> handledUser;
 
 /* Present Home:
  * Called after the user has logged in, either via email
@@ -148,6 +149,13 @@ NSString *newsfeedStoryboardID = @"Newsfeed";
 // This method will be called when the user information has been fetched
 - (void)loginViewFetchedUserInfo:(FBLoginView *)loginView
                             user:(id<FBGraphUser>)user {
+    
+    if (self.handledUser == nil) {
+        self.handledUser = user;
+    } else if (self.handledUser == user) {
+        return;
+    }
+    
     [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(_animateShieldViewDown) object:nil];
     NSString *facebookID = user.objectID;
     NSString *username = user.name;
@@ -212,6 +220,8 @@ NSString *newsfeedStoryboardID = @"Newsfeed";
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+
+    self.handledUser = nil;
     
     [self.view addSubview:self.shieldView];
     
@@ -259,8 +269,9 @@ NSString *newsfeedStoryboardID = @"Newsfeed";
 //                                                   initWithBannerViewControllers:@[activityViewController, yourViewController]];
 //            [self presentViewController:vc animated:YES completion:nil];
             
-            ActivityViewController *activityVC = [ActivityViewController new];
-            [self presentViewController:activityVC animated:NO completion:nil];
+//            _activityViewController = [ActivityViewController new];
+            [self presentViewController:self.activityViewController animated:NO completion:nil];
+
             
 //            /* Present the views. */
 //            NavigationViewController *navigationVC = [NavigationViewController new];
@@ -318,19 +329,22 @@ NSString *newsfeedStoryboardID = @"Newsfeed";
 
 #pragma mark - UI Elements
 
+-(ActivityViewController*)activityViewController {
+    if (!_activityViewController) {
+        _activityViewController = [ActivityViewController new];
+    }
+    return _activityViewController;
+}
+
 - (UIView*) shieldView {
     if (!_shieldView) {
         CGRect screenBounds = [[UIScreen mainScreen] bounds];
         
         _shieldView = [[UIView alloc] initWithFrame:screenBounds];
-        _shieldView.backgroundColor = [UIColor colorWithRed:23.0/255.0 green:60.0/255.0 blue:104.0/255.0 alpha:1.0];
+        _shieldView.backgroundColor = [UIColor whiteColor];
+    
         
-        UIImageView *backgroundImage = [[UIImageView alloc] initWithFrame:screenBounds];
-        backgroundImage.image = [UIImage imageNamed:@"BackgroundImage.png"];
-        backgroundImage.alpha = 0.25;
-        [_shieldView addSubview:backgroundImage];
-        
-        NSString *fontName = @"MarkerFelt-Thin";
+        NSString *fontName = @"HelveticaNeue-Light";
         CGFloat titleFontSize = 30.0;
         
         CGFloat subtitleFontSize = 18.0;
@@ -345,21 +359,21 @@ NSString *newsfeedStoryboardID = @"Newsfeed";
         UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(inset, middleOfScreen - textHeight, textWidth, textHeight)];
         titleLabel.font = [UIFont fontWithName:fontName size:titleFontSize];
         titleLabel.text = @"Intertwine";
-        titleLabel.textColor = [UIColor whiteColor];
+        titleLabel.textColor = [UIColor blackColor];
         titleLabel.backgroundColor = [UIColor clearColor];
         titleLabel.textAlignment = NSTextAlignmentCenter;
         
         UILabel *subtitleLabel = [[UILabel alloc] initWithFrame:CGRectMake(inset, CGRectGetMaxY(titleLabel.frame), textWidth, textHeight)];
         subtitleLabel.font = [UIFont fontWithName:fontName size:subtitleFontSize];
         subtitleLabel.text = @"Ben Rooke";
-        subtitleLabel.textColor = [UIColor whiteColor];
+        subtitleLabel.textColor = [UIColor blackColor];
         subtitleLabel.backgroundColor = [UIColor clearColor];
         subtitleLabel.textAlignment = NSTextAlignmentCenter;
         
         UILabel *versionLabel = [[UILabel alloc] initWithFrame:CGRectMake(inset, CGRectGetMaxY(subtitleLabel.frame) + textHeight, textWidth, textHeight)];
         versionLabel.font = [UIFont fontWithName:fontName size:subtitleFontSize];
-        versionLabel.text = @"pre-alpha v3.0";
-        versionLabel.textColor = [UIColor whiteColor];
+        versionLabel.text = @"Intertwine v0.2 (Alpha)";
+        versionLabel.textColor = [UIColor blackColor];
         versionLabel.backgroundColor = [UIColor clearColor];
         versionLabel.textAlignment = NSTextAlignmentCenter;
         

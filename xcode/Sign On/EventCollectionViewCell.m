@@ -7,6 +7,7 @@
 //
 
 #import "EventCollectionViewCell.h"
+#import "FriendProfileView.h"
 #import <FacebookSDK/FacebookSDK.h>
 #import <QuartzCore/QuartzCore.h>
 
@@ -46,10 +47,10 @@ const CGFloat extraSpace = 15.0;
         CGRect profileFrame = CGRectMake(extraSpace, 0, bubbleWidth, bubbleWidth);
         CGRect labelFrame = CGRectMake(extraSpace, bubbleWidth, bubbleWidth, labelHeight);
         
-        self.profilePicture = [[FBProfilePictureView alloc] initWithFrame:profileFrame];
-        self.profilePicture.layer.borderColor = [[UIColor blackColor] CGColor];
-        self.profilePicture.layer.borderWidth = 1.0;
-        self.profilePicture.layer.cornerRadius = CGRectGetWidth(profileFrame)/2.0;
+        self.profilePicture = [[FriendProfileView alloc] initWithFrame:profileFrame];
+//        self.profilePicture.layer.borderColor = [[UIColor blackColor] CGColor];
+//        self.profilePicture.layer.borderWidth = 1.0;
+//        self.profilePicture.layer.cornerRadius = CGRectGetWidth(profileFrame)/2.0;
         
         self.nameLabel = [[UILabel alloc] initWithFrame:labelFrame];
         self.nameLabel.backgroundColor = [UIColor clearColor];

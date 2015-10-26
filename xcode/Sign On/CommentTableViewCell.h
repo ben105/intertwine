@@ -8,11 +8,11 @@
 
 #import <UIKit/UIKit.h>
 
-@class FBProfilePictureView;
+@class FriendProfileView;
 
 @interface CommentTableViewCell : UITableViewCell
 
-@property (nonatomic, strong) FBProfilePictureView *profilePicture;
+@property (nonatomic, strong) FriendProfileView *profilePicture;
 @property (nonatomic, strong) UIView *commentBubble;
 @property (nonatomic, strong) UILabel *commentLabel;
 @property (nonatomic, strong) UILabel *nameLabel;

@@ -7,9 +7,8 @@
 //
 
 #import "ITDynamicBannerViewController.h"
-#import "EventTableViewCell.h"
 
-@interface ITActivityViewController : ITDynamicBannerViewController <EventTableViewCellDelegate>
+@interface ITActivityViewController : ITDynamicBannerViewController
 
 /* This array will hold EventObject instances that represent instances
  * of an event from the databse. */

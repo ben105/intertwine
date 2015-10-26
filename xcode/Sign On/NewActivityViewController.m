@@ -8,8 +8,10 @@
 
 #import "NewActivityViewController.h"
 #import "Friend.h"
+#import "FriendProfileView.h"
 #import "EventCollectionViewCell.h"
-#import "IntertwineManager+Events.h""
+#import "IntertwineManager+Events.h"
+#import "EventObject.h"
 #import <FacebookSDK/FacebookSDK.h>
 
 
@@ -29,7 +31,7 @@
 const CGFloat collectionCellInteritemSpacing = 15.0;
 const CGFloat collectionCellLineSpacing = 0.0;
 
-const CGFloat headerToolbarHeight = 60.0;
+const CGFloat headerToolbarHeight = 45.0;
 const CGFloat footerToolbarHeight = 55.0;
 const CGFloat titleFontSize = 24.0;
 
@@ -37,6 +39,7 @@ const CGFloat invitedLabelHeight = 28.0;
 const CGFloat invitedLabelFontSize = 16.0;
 
 const CGFloat lineSeparatorInset = 24.0;
+const CGFloat spaceFromLineSeparator = 20.0;
 
 const NSString *kCollectionIdentifier = @"colleciton_id";
 
@@ -46,21 +49,31 @@ const CGFloat distanceCellsMoveOffscreen = 800.0;
 #define IntertwineColorOffWhite [UIColor colorWithRed:236.0/255.0 green:236.0/255.0 blue:236.0/255.0 alpha:1.0]
 #define IntertwineColorDarkGray [UIColor colorWithRed:151.0/255.0 green:151.0/255.0 blue:151.0/255.0 alpha:1.0]
 
-#define SCREEN_WIDTH CGRectGetWidth([[UIScreen mainScreen] bounds])
-#define SCREEN_HEIGHT CGRectGetHeight([[UIScreen mainScreen] bounds])
-#define SCREEN_MIDDLE_Y CGRectGetMidY([[UIScreen mainScreen] bounds])
-#define SCREEN_MIDDLE_X CGRectGetMidX([[UIScreen mainScreen] bounds])
+#define SCREEN_WIDTH CGRectGetWidth([self.view bounds])
+#define SCREEN_HEIGHT CGRectGetHeight([self.view bounds])
+#define SCREEN_MIDDLE_Y CGRectGetMidY([self.view bounds])
+#define SCREEN_MIDDLE_X CGRectGetMidX([self.view bounds])
 
-#define HEADER_TOOLBAR_FRAME CGRectMake(0, 0, SCREEN_WIDTH, headerToolbarHeight)
+#define HEADER_TOOLBAR_FRAME CGRectMake(20, CGRectGetMaxY(self.cancelButton.frame) + 10, SCREEN_WIDTH - 40, headerToolbarHeight)
 #define FOOTER_TOOLBAR_FRAME CGRectMake(-2, SCREEN_HEIGHT - footerToolbarHeight, SCREEN_WIDTH + 4.0, footerToolbarHeight)
 
 #define LINE_SEPARATOR_FRAME CGRectMake(lineSeparatorInset, SCREEN_MIDDLE_Y, SCREEN_WIDTH - (2 * lineSeparatorInset), 1.5)
 
 @interface NewActivityViewController ()
 
-@property (nonatomic) BOOL firstTimeTouchedTitle;
+/* These are the values that should be remembered at the beginning of
+ * editing an event, and will be compared to with the new values. */
+@property (nonatomic, strong) NSString *originalTitle;
+@property (nonatomic, strong) NSArray *originalInvited;
+@property (nonatomic, strong) NSArray *originalUninvited;
 
-@property (nonatomic, strong) UIImageView *backgroundImage;
+
+- (void)_alterViewForEditMode;
+
+@property (nonatomic) BOOL firstTimeTouchedTitle;
+@property (nonatomic, strong) UIView *titleFieldBorder;
+
+//@property (nonatomic, strong) UIImageView *backgroundImage;
 
 @property (nonatomic, strong) UILabel *addFriendsLabel;
 
@@ -80,6 +93,8 @@ const CGFloat distanceCellsMoveOffscreen = 800.0;
 
 @property (nonatomic, strong) UIView *footerToolbar;
 @property (nonatomic, strong) UIButton *doneButton;
+@property (nonatomic, strong) UIButton *cancelButton;
+@property (nonatomic, strong) UIButton *editPencilButton;
 
 /* We want to keep track of the keyboard notifications, because it looks better
  * to show and hide the top toolbar with the same speed as the keyboard. */
@@ -103,9 +118,71 @@ const CGFloat distanceCellsMoveOffscreen = 800.0;
 
 @implementation NewActivityViewController
 
+- (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        self.viewMode = ActivityViewCreateMode;
+        self.editEventIsCompleted = NO;
+    }
+    return self;
+}
+
+
+#pragma mark - Editing
+
+- (void)_startEditing {
+    self.viewMode = ActivityViewEditModeIsEditing;
+    [self _alterViewForEditMode];
+
+}
+
+#pragma mark - Alter for Edit Mode
+
+- (void)_alterViewForEditMode {
+    switch (self.viewMode) {
+        case ActivityViewEditModeIsEditing:
+        case ActivityViewCreateMode:
+            self.titleFieldBorder.hidden = NO;
+            self.invitedLabel.hidden = NO;
+            self.uninvitedCollectionView.hidden = NO;
+            self.lineSeparator.hidden = NO;
+            self.doneButton.hidden = NO;
+            self.editPencilButton.hidden = YES;
+            break;
+        case ActivityViewEditMode:
+            if (self.editEventIsCompleted) {
+                self.editPencilButton.hidden = YES;
+            } else {
+                self.editPencilButton.hidden = NO;
+            }
+            self.titleFieldBorder.hidden = YES;
+            self.invitedLabel.hidden = YES;
+            self.uninvitedCollectionView.hidden = YES;
+            self.lineSeparator.hidden = YES;
+            self.doneButton.hidden = YES;
+            
+            break;
+        default:
+            break;
+    }
+}
+
 - (void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
-//    self.headerToolbar.hidden = NO;
+}
+
+- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
+    if ([self.invitedFriends count] == 0) {
+        self.addFriendsLabel.hidden = NO;
+    } else {
+        self.addFriendsLabel.hidden = YES;
+    }
+    [self _alterViewForEditMode];
+    
+    self.originalTitle = self.eventTitle;
+    self.originalInvited = [self.invitedFriends copy];
+    self.originalUninvited = [self.uninvitedFriends copy];
 }
 
 - (void)viewDidLoad {
@@ -115,29 +192,42 @@ const CGFloat distanceCellsMoveOffscreen = 800.0;
     
 //    self.headerToolbar.hidden = YES;
     
-    self.view.backgroundColor = [UIColor colorWithRed:23.0/255.0 green:60.0/255.0 blue:104.0/255.0 alpha:1.0];
+    self.view.backgroundColor = [UIColor whiteColor];
+//    self.view.backgroundColor = [UIColor colorWithRed:23.0/255.0 green:60.0/255.0 blue:104.0/255.0 alpha:1.0];
     
     // Do any additional setup after loading the view.
     [self.invitedCollectionView registerClass:[EventCollectionViewCell class] forCellWithReuseIdentifier:(NSString*)kCollectionIdentifier];
     [self.uninvitedCollectionView registerClass:[EventCollectionViewCell class] forCellWithReuseIdentifier:(NSString*)kCollectionIdentifier];
     
-    self.uninvitedFriends = [[NSMutableArray alloc] initWithArray:self.friends];
-    self.invitedFriends = [[NSMutableArray alloc] init];
+    if (self.uninvitedFriends == nil) {
+        self.uninvitedFriends = [[NSMutableArray alloc] initWithArray:self.friends];
+    }
+    if (self.invitedFriends == nil) {
+        self.invitedFriends = [[NSMutableArray alloc] init];
+    }
+
+    if (self.eventTitle) {
+        self.titleField.text = self.eventTitle;
+        self.firstTimeTouchedTitle = NO;
+    }
     
     UISwipeGestureRecognizer *gesture = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(_done)];
     gesture.direction = UISwipeGestureRecognizerDirectionDown;
     [self.view addGestureRecognizer:gesture];
     
-    [self.view addSubview:self.backgroundImage];
-    [self.view addSubview:self.headerToolbar];
+//    [self.view addSubview:self.backgroundImage];
+//    [self.view addSubview:self.headerToolbar];
     [self.view addSubview:self.titleField];
+    [self.view addSubview:self.titleFieldBorder];
     [self.view addSubview:self.footerToolbar];
     [self.view addSubview:self.doneButton];
+    [self.view addSubview:self.cancelButton];
     [self.view addSubview:self.invitedCollectionView];
     [self.view addSubview:self.uninvitedCollectionView];
     [self.view addSubview:self.invitedLabel];
     [self.view addSubview:self.lineSeparator];
     [self.view addSubview:self.addFriendsLabel];
+    [self.view addSubview:self.editPencilButton];
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_keyboardWillShow:) name:UIKeyboardWillShowNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_keyboardWillHide:) name:UIKeyboardWillHideNotification object:nil];
@@ -150,6 +240,27 @@ const CGFloat distanceCellsMoveOffscreen = 800.0;
     // Dispose of any resources that can be recreated.
 }
 
+
+
+#pragma mark - Setting invited and uninvited friends
+
+- (NSMutableArray*) _sortArray:(NSMutableArray*)unsortedArray {
+    NSString *sortAttribute = @"first";
+    NSSortDescriptor *sort = [NSSortDescriptor sortDescriptorWithKey:sortAttribute ascending:YES selector:@selector(caseInsensitiveCompare:)];
+    NSArray* sortedArray = [unsortedArray sortedArrayUsingDescriptors:@[sort]];
+    NSMutableArray *sortedMutableArray = [[NSMutableArray alloc] initWithArray:sortedArray];
+    return sortedMutableArray;
+}
+
+- (void) setUninvitedFriends:(NSMutableArray *)uninvitedFriends {
+    NSMutableArray *sortedUninvited = [self _sortArray:uninvitedFriends];
+    _uninvitedFriends = sortedUninvited;
+}
+
+- (void) setInvitedFriends:(NSMutableArray *)invitedFriends {
+    NSMutableArray *sortedInvited = [self _sortArray:invitedFriends];
+    _invitedFriends = sortedInvited;
+}
 
 
 
@@ -221,13 +332,20 @@ const CGFloat distanceCellsMoveOffscreen = 800.0;
 # pragma mark - UICollectionView Delegate
 
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath {
+    // If we are in edit mode, but not editing, we want to just return.
+    if (self.viewMode == ActivityViewEditMode) {
+        return;
+    }
+    
     if (collectionView == self.invitedCollectionView) {
         Friend *friend = [self.invitedFriends objectAtIndex:indexPath.row];
         [self.uninvitedFriends addObject:friend];
         [self.invitedFriends removeObjectAtIndex:indexPath.row];
         
-        NSUInteger size = [self.uninvitedCollectionView numberOfItemsInSection:0];
-        [self.uninvitedCollectionView insertItemsAtIndexPaths:@[[NSIndexPath indexPathForItem:size inSection:0]]];
+        self.uninvitedFriends = self.uninvitedFriends; // Quickly sort it.
+        NSUInteger index = [self.uninvitedFriends indexOfObject:friend];
+        
+        [self.uninvitedCollectionView insertItemsAtIndexPaths:@[[NSIndexPath indexPathForItem:index inSection:0]]];
         [self.invitedCollectionView deleteItemsAtIndexPaths:@[indexPath]];
         
     } else if (collectionView == self.uninvitedCollectionView) {
@@ -235,17 +353,12 @@ const CGFloat distanceCellsMoveOffscreen = 800.0;
         [self.invitedFriends addObject:friend];
         [self.uninvitedFriends removeObjectAtIndex:indexPath.row];
         
-        NSUInteger size = [self.invitedCollectionView numberOfItemsInSection:0];
-        [self.invitedCollectionView insertItemsAtIndexPaths:@[[NSIndexPath indexPathForItem:size inSection:0]]];
+        self.invitedFriends = self.invitedFriends; // Quickly sort it.
+        NSUInteger index = [self.invitedFriends indexOfObject:friend];
+        
+        [self.invitedCollectionView insertItemsAtIndexPaths:@[[NSIndexPath indexPathForItem:index inSection:0]]];
         [self.uninvitedCollectionView deleteItemsAtIndexPaths:@[indexPath]];
     }
-    
-    /*
-     * No matter which collection view cell item was selected,
-     * both collection views need to refresh.
-     */
-//    [self.invitedCollectionView reloadData];
-//    [self.uninvitedCollectionView reloadData];
     
     if ([self.invitedCollectionView numberOfItemsInSection:0] == 0) {
         self.addFriendsLabel.hidden = NO;
@@ -420,13 +533,46 @@ const CGFloat distanceCellsMoveOffscreen = 800.0;
         [alert show];
         return;
     }
-    [IntertwineManager createEvent:title withFriends:self.invitedFriends withResponse:^(id json, NSError *error, NSURLResponse *response) {
-        if (error) {
-            NSLog(@"An error has occurred trying to create an event!\n%@", error);
-            return;
+    if (self.viewMode == ActivityViewCreateMode) {
+        [IntertwineManager createEvent:title withFriends:self.invitedFriends withResponse:^(id json, NSError *error, NSURLResponse *response) {
+            if (error) {
+                NSLog(@"An error has occurred trying to create an event!\n%@", error);
+                return;
+            }
+            [self.delegate closeEventCreation];
+        }];
+    } else {
+        NSString *newTitle = nil;
+        if (![title isEqualToString:self.originalTitle]) {
+            newTitle = title;
         }
-        [self.delegate closeEventCreation];
-    }];
+        
+        NSSet *originalInvited = [NSSet setWithArray:self.originalInvited];
+        NSMutableSet *invited = [NSMutableSet setWithArray:self.invitedFriends];
+        NSSet *originalUninvited = [NSSet setWithArray:self.originalUninvited];
+        NSMutableSet *uninvited = [NSMutableSet setWithArray:self.uninvitedFriends];
+        
+        [invited minusSet:originalInvited];
+        NSMutableArray *editInvited = [NSMutableArray new];
+        for (Friend *friend in invited){
+            [editInvited addObject:[friend dictionary]];
+        }
+        
+        [uninvited minusSet:originalUninvited];
+        NSMutableArray *editUninvited = [NSMutableArray new];
+        for (Friend *friend in uninvited) {
+            [editUninvited addObject:[friend dictionary]];
+        }
+        
+        [IntertwineManager editEvent:self.event.eventID withTitle:title newTitle:newTitle invited:editInvited uninvited:editUninvited withResponse:^(id json, NSError *error, NSURLResponse *response) {
+            if (error) {
+                NSLog(@"An error has occurred trying to create an event!\n%@", error);
+                return;
+            }
+            [self.delegate closeEventCreation];
+        }];
+    }
+    
     [self _done];
 }
 
@@ -440,7 +586,7 @@ const CGFloat distanceCellsMoveOffscreen = 800.0;
     }
     
     CGRect frame = self.headerToolbar.frame;
-    UIColor *titleColor = [UIColor whiteColor];
+//    UIColor *titleColor = [UIColor whiteColor];
     
     if (isEditing) {
         if (frame.origin.y < 0) {
@@ -458,12 +604,22 @@ const CGFloat distanceCellsMoveOffscreen = 800.0;
     /* Animate the blue background off or on screen. */
     [UIView animateWithDuration:duration animations:^{
         self.headerToolbar.frame = frame;
-        self.titleField.textColor = titleColor;
+//        self.titleField.textColor = titleColor;
     }];
 }
 
 - (void) _didEditTitle {
     [self.titleField resignFirstResponder];
+}
+
+
+#pragma mark - Text Field Notifiations
+
+- (BOOL)textFieldShouldBeginEditing:(UITextField *)textField {
+    if (self.viewMode == ActivityViewEditMode) {
+        return NO;
+    }
+    return YES;
 }
 
 
@@ -501,15 +657,30 @@ const CGFloat distanceCellsMoveOffscreen = 800.0;
     return _headerToolbar;
 }
 
+- (UIView*)titleFieldBorder {
+    if (!_titleFieldBorder) {
+        _titleFieldBorder = [[UIView alloc] initWithFrame:self.titleField.frame];
+        _titleFieldBorder.layer.borderColor = [[UIColor blackColor] CGColor];
+        _titleFieldBorder.layer.borderWidth = 1.0;
+        _titleFieldBorder.layer.cornerRadius = 5.0;
+        _titleFieldBorder.userInteractionEnabled = NO;
+        _titleFieldBorder.backgroundColor = [UIColor clearColor];
+        
+    }
+    return _titleFieldBorder;
+}
+
 - (UITextField*) titleField {
     if (!_titleField) {
         _titleField = [[UITextField alloc] initWithFrame:HEADER_TOOLBAR_FRAME];
         _titleField.backgroundColor = [UIColor clearColor];
-        _titleField.textColor = [UIColor whiteColor];
-        _titleField.font = [UIFont fontWithName:@"HelveticaNeue" size:titleFontSize];
+        _titleField.textColor = [UIColor blackColor];
+        _titleField.font = [UIFont fontWithName:@"HelveticaNeue-Light" size:titleFontSize];
         _titleField.placeholder = @"no title";
         _titleField.textAlignment = NSTextAlignmentCenter;
         _titleField.returnKeyType = UIReturnKeyDone;
+        _titleField.delegate = self;
+        
         [_titleField addTarget:self action:@selector(_didEditTitle) forControlEvents:UIControlEventEditingDidEndOnExit];
         [_titleField addTarget:self action:@selector(_hideCollectionViews) forControlEvents:UIControlEventEditingDidBegin];
     }
@@ -519,27 +690,62 @@ const CGFloat distanceCellsMoveOffscreen = 800.0;
 - (UIView*) footerToolbar {
     if (!_footerToolbar) {
         _footerToolbar = [[UIView alloc] initWithFrame:FOOTER_TOOLBAR_FRAME];
-        _footerToolbar.backgroundColor = IntertwineColorOffWhite;
-        _footerToolbar.layer.borderColor = [IntertwineColorDarkGray CGColor];
-        _footerToolbar.layer.borderWidth = 1.0;
+        _footerToolbar.backgroundColor = [UIColor colorWithRed:20.0/255.0 green:81.0/255.0 blue:121.0/255.0 alpha:1.0];
+//        _footerToolbar.layer.borderColor = [IntertwineColorDarkGray CGColor];
+//        _footerToolbar.layer.borderWidth = 1.0;
     }
     return _footerToolbar;
+}
+
+- (UIButton*)editPencilButton {
+    if (!_editPencilButton) {
+        _editPencilButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        [_editPencilButton setBackgroundImage:[UIImage imageNamed:@"editPencil.png"] forState:UIControlStateNormal];
+        
+        [_editPencilButton addTarget:self action:@selector(_startEditing) forControlEvents:UIControlEventTouchUpInside];
+        
+        CGFloat buttonHeight = 60.0;
+        
+        _editPencilButton.frame = CGRectMake(0, 0, buttonHeight, buttonHeight);
+        _editPencilButton.center = CGPointMake(CGRectGetMidX(self.view.frame), CGRectGetMidY(self.uninvitedCollectionView.frame));
+        
+        _editPencilButton.layer.cornerRadius = CGRectGetWidth(_editPencilButton.frame) / 2.0;
+        _editPencilButton.layer.borderColor = [[UIColor blackColor] CGColor];
+        _editPencilButton.layer.borderWidth = 1.0;
+    }
+    return _editPencilButton;
 }
 
 - (UIButton*)doneButton {
     if (!_doneButton) {
         _doneButton = [UIButton buttonWithType:UIButtonTypeCustom];
-        [_doneButton setTitle:@"Done" forState:UIControlStateNormal];
-        [_doneButton setTitleColor:IntertwineColorBlue forState:UIControlStateNormal];
+        [_doneButton setBackgroundImage:[UIImage imageNamed:@"CompleteIcon.png"] forState:UIControlStateNormal];
+        
         [_doneButton addTarget:self action:@selector(_create) forControlEvents:UIControlEventTouchUpInside];
-        _doneButton.frame = CGRectMake(0, 0, 80, 80);
-        _doneButton.center = CGPointMake(CGRectGetMidX(self.view.frame), CGRectGetMaxY(self.uninvitedCollectionView.frame) + 70);
+        
+        CGFloat buttonHeight = 60.0;
+        
+        _doneButton.frame = CGRectMake(0, 0, buttonHeight, buttonHeight);
+        _doneButton.center = CGPointMake(CGRectGetMidX(self.view.frame), CGRectGetMinY(FOOTER_TOOLBAR_FRAME));
         
         _doneButton.layer.cornerRadius = CGRectGetWidth(_doneButton.frame) / 2.0;
         _doneButton.layer.borderColor = [[UIColor blackColor] CGColor];
 //        _doneButton.font = [UIFont fontWithName:@"HelveticaNeue-Light" size:22.0];
     }
     return _doneButton;
+}
+
+- (UIButton*)cancelButton {
+    if (!_cancelButton) {
+        _cancelButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        _cancelButton.frame = CGRectMake(10, 35, 60, 20);
+        [_cancelButton setTitle:@"cancel" forState:UIControlStateNormal];
+        _cancelButton.titleLabel.font = [UIFont fontWithName:@"HelveticaNeue-Light" size:14];
+        [_cancelButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+//        [_cancelButton setBackgroundImage:[UIImage imageNamed:@"CompleteIcon.png"] forState:UIControlStateNormal];
+        [_cancelButton addTarget:self action:@selector(_done) forControlEvents:UIControlEventTouchUpInside];
+    }
+    return _cancelButton;
 }
 
 - (UICollectionViewFlowLayout*) uninvitedCollectionViewLayout {
@@ -568,7 +774,7 @@ const CGFloat distanceCellsMoveOffscreen = 800.0;
 - (UICollectionView*) invitedCollectionView {
     if (!_invitedCollectionView) {
         CGFloat width = CGRectGetWidth([[UIScreen mainScreen] bounds]);
-        _invitedCollectionView = [[UICollectionView alloc] initWithFrame:CGRectMake(0, 100, width, 200) collectionViewLayout:self.invitedCollectionViewLayout]; //TODO: Change the height.
+        _invitedCollectionView = [[UICollectionView alloc] initWithFrame:CGRectMake(0, CGRectGetMinY(LINE_SEPARATOR_FRAME) - [EventCollectionViewCell cellHeight] - spaceFromLineSeparator, width, [EventCollectionViewCell cellHeight]) collectionViewLayout:self.invitedCollectionViewLayout]; //TODO: Change the height.
         _invitedCollectionView.delegate = self;
         _invitedCollectionView.dataSource = self;
         _invitedCollectionView.backgroundColor = [UIColor clearColor];
@@ -580,7 +786,7 @@ const CGFloat distanceCellsMoveOffscreen = 800.0;
 - (UICollectionView*) uninvitedCollectionView {
     if (!_uninvitedCollectionView) {
         CGFloat width = CGRectGetWidth([[UIScreen mainScreen] bounds]);
-        _uninvitedCollectionView = [[UICollectionView alloc] initWithFrame:CGRectMake(0, 370, width, 200) collectionViewLayout:self.uninvitedCollectionViewLayout]; //TODO: Change the height.
+        _uninvitedCollectionView = [[UICollectionView alloc] initWithFrame:CGRectMake(0, CGRectGetMaxY(LINE_SEPARATOR_FRAME) + spaceFromLineSeparator, width, [EventCollectionViewCell cellHeight]) collectionViewLayout:self.uninvitedCollectionViewLayout]; //TODO: Change the height.
         _uninvitedCollectionView.delegate = self;
         _uninvitedCollectionView.dataSource = self;
         _uninvitedCollectionView.backgroundColor = [UIColor clearColor];
@@ -591,7 +797,7 @@ const CGFloat distanceCellsMoveOffscreen = 800.0;
 
 - (UILabel*) invitedLabel {
     if (!_invitedLabel) {
-        _invitedLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, headerToolbarHeight, SCREEN_WIDTH, invitedLabelHeight)];
+        _invitedLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, CGRectGetMaxY(HEADER_TOOLBAR_FRAME), SCREEN_WIDTH, invitedLabelHeight)];
         _invitedLabel.font = [UIFont fontWithName:@"HelveticaNeue-Light" size:invitedLabelFontSize];
         _invitedLabel.text = @"Invited";
         _invitedLabel.textColor = IntertwineColorDarkGray;
@@ -619,19 +825,18 @@ const CGFloat distanceCellsMoveOffscreen = 800.0;
         _addFriendsLabel.numberOfLines = 2;
         _addFriendsLabel.textAlignment = NSTextAlignmentCenter;
         _addFriendsLabel.backgroundColor = [UIColor clearColor];
-        _addFriendsLabel.hidden = YES;
-        _addFriendsLabel.font = [UIFont systemFontOfSize:20.0];
+        _addFriendsLabel.font = [UIFont fontWithName:@"HelveticaNeue-Light" size:18];
     }
     return _addFriendsLabel;
 }
 
-- (UIImageView*)backgroundImage {
-    if (!_backgroundImage) {
-        _backgroundImage = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"BackgroundImage.png"]];
-        _backgroundImage.frame = [[UIScreen mainScreen] bounds];
-        _backgroundImage.alpha = 0.25;
-    }
-    return _backgroundImage;
-}
+//- (UIImageView*)backgroundImage {
+//    if (!_backgroundImage) {
+//        _backgroundImage = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"BackgroundImage.png"]];
+//        _backgroundImage.frame = [[UIScreen mainScreen] bounds];
+//        _backgroundImage.alpha = 0.25;
+//    }
+//    return _backgroundImage;
+//}
 
 @end

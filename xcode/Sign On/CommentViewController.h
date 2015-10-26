@@ -22,6 +22,7 @@
 @property (nonatomic, strong) EventObject *event;
 
 @property (nonatomic, strong) UILabel *titleLabel;
+
 //@property (nonatomic, weak) UITextView *descriptionTextView;
 
 @property (nonatomic, strong) UITextField *commentTextField;

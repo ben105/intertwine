@@ -10,28 +10,40 @@
 #import "ActivityCompleteTableViewCell.h"
 #import "EventObject.h"
 #import "Friend.h"
+#import "FriendProfileView.h"
 #import "FriendsViewController.h"
 #import "CommentViewController.h"
 #import "ButtonBarView.h"
+#import "NotificationBanner.h"
+#import "ActivityAlertView.h"
+#import "NotificationMenuViewController.h"
+#import "IntertwineNotification.h"
 
 #import "IntertwineManager+Activity.h"
 #import "IntertwineManager+Friends.h"
 #import "IntertwineManager+Events.h"
 
+#import <AudioToolbox/AudioToolbox.h>
 
-#define BACKGROUND_COLOR [UIColor colorWithRed:168.0/255.0 green:195.0/255.0 blue:214.0/255.0 alpha:1]
+#define BACKGROUND_COLOR [UIColor colorWithRed:21.0/255.0 green:52.0/255.0 blue:88.0/255.0 alpha:1]
 
 
 const CGFloat headerHeight = 58.0;
 const CGFloat footerHeight = 50.0;
-const CGFloat y_toolBarItems = 27.0;
+const CGFloat y_toolBarItems = 23.0;
 #define y_footer CGRectGetHeight([[UIScreen mainScreen] bounds]) - footerHeight
 
 const CGFloat slideSideBarsAnimationSpeed = 0.3;
 
 @interface ActivityViewController ()
 
+@property (nonatomic) SystemSoundID notificationSound;
+- (void)_loadNotificationsMenu;
+
+@property (nonatomic) BOOL viewInForeground;
+
 @property (nonatomic, strong) CommentViewController *commentView;
+- (void) _presentCommentViewForEvent:(EventObject*)event;
 
 @property (nonatomic, strong) NewActivityViewController *createActivityVC;
 @property (nonatomic, strong) UIImageView *backgroundImage;
@@ -40,12 +52,18 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
 @property (nonatomic, strong) UILabel *titleLabel;
 @property (nonatomic, strong) UIButton *gearButton;
 
+@property (nonatomic, strong) UIButton *notificationsButton;
+@property (nonatomic, strong) NSMutableArray *savedNotifications;
+@property (nonatomic, strong) NotificationMenuViewController *notificationMenuViewController;
+- (void) _presentNotificationsViewController;
+
 @property (nonatomic, strong) UIControl *blackSheet;
 - (void) _clearSubViewControllers;
 
 @property (nonatomic, strong) UIButton *newActivityButton;
 - (void) _newActivity;
 - (void) _loadActivities;
+- (void)_markActivityComplete:(EventObject*)event forCell:(ActivityTableViewCell*)cell;
 
 @property (nonatomic, strong) NSArray *friends;
 @property (nonatomic, strong) UIButton *friendsButton;
@@ -61,10 +79,9 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
 
 @implementation ActivityViewController
 
-- (UIStatusBarStyle)preferredStatusBarStyle
-{
-    return UIStatusBarStyleLightContent;
-}
+
+
+#pragma mark - View Stuff
 
 - (void) _clearSubViewControllers {
     [UIView animateWithDuration:slideSideBarsAnimationSpeed animations:^{
@@ -76,7 +93,6 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
     } completion:^(BOOL finished) {
         [self.friendsVC.view removeFromSuperview];
         self.friendsVC = nil;
-        self.createActivityVC = nil;
         [self _load];
     }];
 }
@@ -85,6 +101,18 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    
+    NSString *path  = [[NSBundle mainBundle] pathForResource:@"Submarine" ofType:@"aiff"];
+    if ([[NSFileManager defaultManager] fileExistsAtPath:path])
+    {
+        NSURL *pathURL = [NSURL fileURLWithPath:path];
+        AudioServicesCreateSystemSoundID((__bridge CFURLRef) pathURL, &_notificationSound);
+    }
+    else
+    {
+        NSLog(@"Error, sound file not found: %@", path);
+    }
+    
     
     [IntertwineManager updateDeviceToken:[IntertwineManager getDeviceToken]];
     
@@ -105,24 +133,28 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
     [self.view addSubview:self.activityTableView];
     
     [self.view addSubview:self.titleLabel];
-    self.titleLabel.text = @"Activities";
+    self.titleLabel.text = @"Intertwine";
     
     [self.view addSubview:self.gearButton];
+    [self.view addSubview:self.notificationsButton];
     [self.view addSubview:self.friendsButton];
     [self.view addSubview:self.blackSheet];
 }
 
 - (void)viewWillDisappear:(BOOL)animated {
+    self.viewInForeground = NO;
     [[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationDidBecomeActiveNotification object:nil];
 }
 
 - (void) _load {
     [self _loadActivities];
     [self _loadFriends];
+    [self _loadNotificationsMenu];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
+    self.viewInForeground = YES;
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(_load)
                                                  name:UIApplicationDidBecomeActiveNotification
@@ -135,23 +167,189 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
     // Dispose of any resources that can be recreated.
 }
 
+#pragma mark - Notification Menu
+
+- (void)_loadNotificationsMenu {
+    [IntertwineManager getNotificationsWithResponse:^(id json, NSError *error, NSURLResponse *response) {
+        if (error) {
+            NSLog(@"Error while trying to get notifications for menu: %@", error);
+            return;
+        }
+        [self.savedNotifications removeAllObjects];
+        for (NSDictionary *notificationDict in json) {
+            IntertwineNotification *notification = [[IntertwineNotification alloc] initWithID:[notificationDict objectForKey:@"id"]
+                                                                                      message:[notificationDict objectForKey:@"message"]
+                                                                                      payload:[notificationDict objectForKey:@"payload"]
+                                                                                     sentTime:[notificationDict objectForKey:@"sent_time"]];
+            [self.savedNotifications addObject:notification];
+        }
+    }];
+}
+
+- (void) _presentNotificationsViewController {
+    self.notificationMenuViewController.notifications = self.savedNotifications;
+    self.notificationMenuViewController.delegate = self;
+    self.notificationMenuViewController.view.alpha = 0;
+
+    CGRect frame = self.notificationMenuViewController.view.frame;
+    frame.origin.y = frame.size.height;
+    self.notificationMenuViewController.view.frame = frame;
+    
+    [self.view addSubview:self.notificationMenuViewController.view];
+    [UIView animateWithDuration:0.5 animations:^{
+        CGRect frame = self.notificationMenuViewController.view.frame;
+        frame.origin.y = 0;
+        self.notificationMenuViewController.view.frame = frame;
+        self.notificationMenuViewController.view.alpha = 1;
+    }];
+}
+
+#pragma mark - Notifications Received
+
+- (NSInteger)_findEventWithEventID:(NSNumber*)eventID {
+    NSUInteger eventInteger = [eventID unsignedIntegerValue];
+    // Iterate through the event cell data to find the same event ID.
+    EventObject *foundEvent = nil;
+    int i=0;
+    for (;i<[self.events count]; i++) {
+        EventObject *currentEvent = [self.events objectAtIndex:i];
+        if ([[currentEvent eventID] unsignedIntegerValue] == eventInteger) {
+            foundEvent = currentEvent;
+            break;
+        }
+    }
+    if (foundEvent == nil) {
+//        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Not Found" message:@"The event can't be found." delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil];
+//        [alert show];
+        return -1;
+    }
+    return i;
+}
+
+- (void) _jumpToEvent:(NSInteger)index {
+    [self.activityTableView scrollToRowAtIndexPath:[NSIndexPath indexPathForRow:index inSection:0] atScrollPosition:UITableViewScrollPositionMiddle animated:YES];
+}
+
+
+- (void) _performAction:(NotificationAction)action forEvent:(NSNumber*)eventID{
+    
+    // First find the event, so we can easily jump to it or present comments.
+    NSInteger indexOfEvent = [self _findEventWithEventID:(NSNumber*)eventID];
+    if (indexOfEvent == -1) {
+        return;
+    }
+    EventObject *event = [self.events objectAtIndex:indexOfEvent];
+    
+    switch (action) {
+        case kJumpTo:
+            [self _jumpToEvent:indexOfEvent];
+            break;
+        case kShowEvent:
+            // Alpha version of the app, nothing happens...
+            break;
+        case kShowEventComments:
+            {
+                [self _jumpToEvent:indexOfEvent];
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                    [self _presentCommentViewForEvent:event];
+                });
+            }
+            break;
+        default:
+            break;
+    }
+}
+
+-(void)_extractUserInfoAndPerformAction:(NSDictionary*)userInfo {
+    NSNumber *actionNumber = [userInfo objectForKey:@"action"];
+    if ((NSNull*)actionNumber != [NSNull null]) {
+        NotificationAction action = [actionNumber integerValue];
+        NSNumber *eventNumber = [userInfo objectForKey:@"event_id"];
+        if ((NSNull*)eventNumber == [NSNull null]) {
+            return;
+        }
+        [self _performAction:action forEvent:eventNumber];
+    }
+}
+
+-(void)didTouchNotificationBanner:(NSDictionary*)notifInfo {
+    [self _extractUserInfoAndPerformAction:notifInfo];
+}
+
+- (void)_presentBanner:(NSDictionary * _Nonnull)userInfo {
+    AudioServicesPlaySystemSound(kSystemSoundID_Vibrate);
+    
+    NSString *msg = [[userInfo objectForKey:@"aps"] objectForKey:@"alert"];
+    
+    NotificationBanner *banner = [[NotificationBanner alloc] initWithFrame:CGRectMake(0, -defaultBannerHeight, CGRectGetWidth(self.view.frame), defaultBannerHeight)
+                                                                andMessage:msg
+                                                                 profileID:[userInfo objectForKey:@"notifier_id"]
+                                                                 notifInfo:userInfo];
+    banner.delegate = self;
+    
+    [self.view addSubview:banner];
+    
+    [UIView animateWithDuration:1.0 animations:^{
+        CGRect frame = banner.frame;
+        frame.origin.y += frame.size.height;
+        banner.frame = frame;
+    } completion:^(BOOL finished) {
+        [self performSelector:@selector(_dismissBanner:) withObject:banner afterDelay:3.0];
+    }];
+}
+
+- (void)_dismissBanner:(NotificationBanner*)banner {
+    [UIView animateWithDuration:1.0 animations:^{
+        CGRect frame = banner.frame;
+        frame.origin.y = 0 - frame.size.height;
+        banner.frame = frame;
+    }];
+}
+
+- (void) presentRemoteNotification:(NSDictionary * _Nonnull)userInfo inForeground:(BOOL)inForeground{
+    if (inForeground) {
+        AudioServicesPlaySystemSound(self.notificationSound);
+        [self _presentBanner:userInfo];
+    } else {
+        [self _extractUserInfoAndPerformAction:userInfo];
+    }
+}
+
+#pragma mark - Notification Menu Delegate
+
+- (void)shouldDismissNotificationMenu {
+    [self _loadActivities];
+    [UIView animateWithDuration:0.5
+                     animations:^{
+                         CGRect frame = self.notificationMenuViewController.view.frame;
+                         frame.origin.y = frame.size.height;
+                         self.notificationMenuViewController.view.frame = frame;
+//                         self.notificationMenuViewController.view.alpha = 0;
+                     } completion:^(BOOL finished) {
+                         [self.notificationMenuViewController.view removeFromSuperview];
+                         self.notificationMenuViewController = nil;
+                     }];
+}
+
+- (void)selectedNotificationMenuInfo:(NSDictionary*)notifInfo {
+    [self _extractUserInfoAndPerformAction:notifInfo];
+}
+
 #pragma mark - Comment View Delegate
 
 - (void)shouldDismissCommentView {
+    [self _loadActivities];
     [UIView animateWithDuration:0.5
                      animations:^{
                          self.commentView.view.alpha = 0;
                      } completion:^(BOOL finished) {
-                         self.commentView.event = nil;
                          [self.commentView.view removeFromSuperview];
+                         self.commentView = nil;
                      }];
 }
 
-#pragma mark - Activity Cell Delegate 
-
-- (void)didSelectCommentButton:(EventObject*)event forCell:(ActivityTableViewCell*)cell {
+- (void) _presentCommentViewForEvent:(EventObject*)event {
     self.commentView.event = event;
-    self.commentView.titleLabel.text = event.eventTitle;
     self.commentView.view.alpha = 0;
     [self.view addSubview:self.commentView.view];
     [UIView animateWithDuration:0.5 animations:^{
@@ -159,11 +357,9 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
     }];
 }
 
-- (void)didSelectLikeButton:(EventObject*)event forCell:(ActivityTableViewCell*)cell {
-    
-}
+#pragma mark - Completion of Activity
 
-- (void)didSelectCompleteButton:(EventObject*)event forCell:(ActivityTableViewCell*)cell {
+- (void)_markActivityComplete:(EventObject*)event forCell:(ActivityTableViewCell*)cell{
     [IntertwineManager completeEvent:event.eventID withTitle:event.eventTitle withResponse:^(id json, NSError *error, NSURLResponse *response) {
         if (error) {
             NSLog(@"Error occured when trying to mark an event complete!\n%@", error);
@@ -183,6 +379,27 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
     }];
 }
 
+#pragma mark - Activity Cell Delegate 
+
+- (void)didSelectCommentButton:(EventObject*)event forCell:(ActivityTableViewCell*)cell {
+    [self _presentCommentViewForEvent:event];
+}
+
+- (void)didSelectLikeButton:(EventObject*)event forCell:(ActivityTableViewCell*)cell {
+    
+}
+
+- (void)didSelectCompleteButton:(EventObject*)event forCell:(ActivityTableViewCell*)cell {
+    ActivityAlertView *alertView = [[ActivityAlertView alloc] initWithTitle:@"Complete Event"
+                                                        message:@"Are you sure you want to mark this event as complete?"
+                                                       delegate:self
+                                              cancelButtonTitle:@"No"
+                                              otherButtonTitles:@"Yes", nil];
+    alertView.event = event;
+    alertView.contextCell = cell;
+    [alertView show];
+}
+
 
 
 
@@ -190,6 +407,7 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
 #pragma mark - New Activity
 
 - (void) _newActivity {
+    self.createActivityVC.viewMode = ActivityViewCreateMode;
     [self presentViewController:self.createActivityVC animated:YES completion:nil];
 }
 
@@ -275,7 +493,7 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
             event.creator = [[Friend alloc] init];
             event.creator.first = [creatorDictionary objectForKey:@"first"];
             event.creator.last = [creatorDictionary objectForKey:@"last"];
-            event.creator.accountID = [creatorDictionary objectForKey:@"id"];
+            event.creator.accountID = [[creatorDictionary objectForKey:@"id"] stringValue];
             event.creator.facebookID = [creatorDictionary objectForKey:@"facebook_id"];
             event.creator.emailAddress = [creatorDictionary objectForKey:@"email"];
             
@@ -288,7 +506,7 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
                 attendee.last = [attendeesDictionary objectForKey:@"last"];
                 attendee.emailAddress = [attendeesDictionary objectForKey:@"email"];
                 attendee.facebookID = [attendeesDictionary objectForKey:@"facebook_id"];
-                attendee.accountID = [attendeesDictionary objectForKey:@"id"];
+                attendee.accountID = [[attendeesDictionary objectForKey:@"id"] stringValue];
                 [attendees addObject:attendee];
             }
             event.attendees = attendees;
@@ -304,6 +522,19 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
 }
 
 
+
+
+
+#pragma mark - Alert View Delegate
+
+- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex {
+    if (buttonIndex == 1) {
+        [self _markActivityComplete:[(ActivityAlertView*)alertView event] forCell:[(ActivityAlertView*)alertView contextCell]];
+    }
+}
+
+
+
 #pragma mark - Table View Delegate
 
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -312,12 +543,33 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
-    [tableView deselectRowAtIndexPath:indexPath animated:NO];
-    UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
-    CommentViewController *commentVC = [storyboard instantiateViewControllerWithIdentifier:@"Comment"];
     EventObject *event = [self.events objectAtIndex:indexPath.row];
-    commentVC.event = event;
-    [self presentViewController:commentVC animated:YES completion:nil];
+    
+    // TODO: See if there's a way to just assign the event, and not the individual attributes.
+    self.createActivityVC.eventTitle = event.eventTitle;
+    self.createActivityVC.viewMode = ActivityViewEditMode;
+    self.createActivityVC.editEventIsCompleted = event.isComplete;
+    self.createActivityVC.event = event;
+    
+    NSMutableArray *uninvitedFriends = [self.friends mutableCopy];
+    NSMutableArray *invitedFriends = [NSMutableArray new];
+    
+    for (Friend *attendee in event.attendees) {
+        if ([attendee.accountID isEqualToString:[IntertwineManager getAccountID]]) {
+            continue;
+        }
+        for (Friend *friend in self.friends) {
+            if ([friend.accountID isEqualToString:attendee.accountID]) {
+                [invitedFriends addObject:friend];
+                [uninvitedFriends removeObject:friend];
+                break;
+            }
+        }
+    }
+    
+    self.createActivityVC.uninvitedFriends = uninvitedFriends;
+    self.createActivityVC.invitedFriends = invitedFriends;
+    [self presentViewController:self.createActivityVC animated:YES completion:nil];
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -349,11 +601,7 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
     EventObject *event = [self.events objectAtIndex:indexPath.row];
     cell.event = event;
     
-    NSString *commentSuffix = @"comments";
-    if (event.numberOfComments == 1) {
-        commentSuffix = @"comment";
-    }
-    cell.commentButton.detailLabel.text = [NSString stringWithFormat:@"%lu %@", (unsigned long)event.numberOfComments, commentSuffix];
+    cell.commentButton.detailLabel.text = [NSString stringWithFormat:@"%lu", (unsigned long)event.numberOfComments];
     cell.delegate = self;
     
     [cell setAttendees:[event attendees]];
@@ -392,6 +640,17 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
     return cell;
 }
 
+
+
+
+- (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath {
+    
+    if (editingStyle == UITableViewCellEditingStyleDelete) {
+        // Delete the row from the data source
+        NSLog(@"Deleting");
+    }
+}
+
 #pragma mark - Lazy Loading
 
 - (UITableView*)activityTableView {
@@ -407,7 +666,7 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
         _activityTableView.delegate = self;
         _activityTableView.dataSource = self;
         _activityTableView.separatorStyle = UITableViewCellSeparatorStyleNone;
-        _activityTableView.allowsSelection = NO;
+//        _activityTableView.allowsSelection = NO;
     }
     return _activityTableView;
 }
@@ -416,7 +675,7 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
     if (!_backgroundImage) {
         _backgroundImage = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"BackgroundImage.png"]];
         _backgroundImage.frame = [[UIScreen mainScreen] bounds];
-        _backgroundImage.alpha = 0.25;
+        _backgroundImage.alpha = 0.20;
     }
     return _backgroundImage;
 }
@@ -424,7 +683,10 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
 - (UIView*)header {
     if (!_header) {
         _header = [[UIView alloc] initWithFrame:CGRectMake(0, 0, CGRectGetWidth(self.view.frame), headerHeight)];
+//        _header.backgroundColor = [UIColor colorWithRed:20.0/255.0 green:81.0/255.0 blue:121.0/255.0 alpha:1.0];
         _header.backgroundColor = [UIColor colorWithRed:20.0/255.0 green:81.0/255.0 blue:121.0/255.0 alpha:1.0];
+//        _header.layer.borderWidth = 1.0;
+//        _header.layer.borderColor = [[UIColor colorWithRed:151.0/255.0 green:151.0/255.0 blue:151.0/255.0 alpha:1] CGColor];
     }
     return _header;
 }
@@ -443,6 +705,7 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
     if (!_titleLabel) {
         _titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, y_toolBarItems, CGRectGetWidth(self.view.frame), 24)];
         _titleLabel.backgroundColor = [UIColor clearColor];
+//        _titleLabel.textColor = [UIColor colorWithRed:20.0/255.0 green:77.0/255.0 blue:111.0/255.0 alpha:1];
         _titleLabel.textColor = [UIColor whiteColor];
         _titleLabel.textAlignment = NSTextAlignmentCenter;
         _titleLabel.font = [UIFont fontWithName:@"HelveticaNeue-Light" size:22];
@@ -459,14 +722,24 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
     return _gearButton;
 }
 
+- (UIButton*)notificationsButton {
+    if (!_notificationsButton) {
+        _notificationsButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        [_notificationsButton setImage:[UIImage imageNamed:@"notifications_icon.png"] forState:UIControlStateNormal];
+        _notificationsButton.frame = CGRectMake(CGRectGetMaxX(self.gearButton.frame) + 20, y_toolBarItems, 26.0, 26.0);
+        [_notificationsButton addTarget:self action:@selector(_presentNotificationsViewController) forControlEvents:UIControlEventTouchUpInside];
+    }
+    return _notificationsButton;
+}
+
 - (UIButton*)friendsButton {
     if (!_friendsButton) {
         _friendsButton = [UIButton buttonWithType:UIButtonTypeCustom];
-        [_friendsButton setBackgroundImage:[UIImage imageNamed:@"friends.png"] forState:UIControlStateNormal];
+        [_friendsButton setImage:[UIImage imageNamed:@"friends.png"] forState:UIControlStateNormal];
         [_friendsButton addTarget:self action:@selector(_presentFriendsViewController) forControlEvents:UIControlEventTouchUpInside];
         
         CGFloat screenWidth = CGRectGetWidth([[UIScreen mainScreen] bounds]);
-        _friendsButton.frame = CGRectMake(screenWidth - 36.0, y_toolBarItems, 26.0, 26.0);
+        _friendsButton.frame = CGRectMake(screenWidth - 56.0, y_toolBarItems, 46.0, 26.0);
     }
     return _friendsButton;
 }
@@ -503,6 +776,13 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
     return _friendsVC;
 }
 
+- (NotificationMenuViewController*) notificationMenuViewController {
+    if (!_notificationMenuViewController) {
+        _notificationMenuViewController = [NotificationMenuViewController new];
+    }
+    return _notificationMenuViewController;
+}
+
 - (UIView*)blackSheet {
     if (!_blackSheet) {
         CGRect frame = self.view.frame;
@@ -524,6 +804,13 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
         _commentView.view.alpha = 0;
     }
     return _commentView;
+}
+
+-(NSMutableArray*)savedNotifications {
+    if (!_savedNotifications) {
+        _savedNotifications = [NSMutableArray new];
+    }
+    return _savedNotifications;
 }
 
 @end

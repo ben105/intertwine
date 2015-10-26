@@ -19,7 +19,7 @@
 
 //@property (nonatomic, weak) id <FBGraphUser> user;
 //
-//@property (nonatomic, weak) IBOutlet FBProfilePictureView *profilePictureView;
+//@property (nonatomic, weak) IBOutlet FriendProfileView *profilePictureView;
 //@property (nonatomic, weak) IBOutlet UILabel *nameLabel;
 
 @property (nonatomic, strong) UITableView *searchResultsTableView;

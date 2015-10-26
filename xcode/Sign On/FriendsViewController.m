@@ -11,6 +11,7 @@
 #import "IntertwineManager+Friends.h"
 #import "SendRequestViewController.h"
 #import "PendingRequestTableViewCell.h"
+#import "FriendProfileView.h"
 
 #define viewWidth (0.7733333333 * CGRectGetWidth([[UIScreen mainScreen] bounds]))
 #define tableFrame CGRectMake(0, 58, viewWidth, CGRectGetHeight([[UIScreen mainScreen] bounds]))
@@ -380,7 +381,7 @@
     
     [cell setSelectionStyle:UITableViewCellSelectionStyleNone];
     
-    NSDictionary<FBGraphUser>* friend = [data objectAtIndex:indexPath.row];
+    NSDictionary* friend = [data objectAtIndex:indexPath.row];
     NSString *friendName = [NSString stringWithFormat:@"%@ %@", [friend objectForKey:@"first"], [friend objectForKey:@"last"]];
     if (data == [self.tableData objectAtIndex:1]) {
         [(PendingRequestTableViewCell*)cell setAccountID:[friend objectForKey:@"account_id"]];
@@ -388,7 +389,7 @@
         [(PendingRequestTableViewCell*)cell setDelegate:self];
     } else {
         [(FriendsTableViewCell*)cell friendLabel].text = friendName;
-        [(FriendsTableViewCell*)cell friendProfilePicture].profileID = [friend objectForKey:@"facebook_id"];
+        [[(FriendsTableViewCell*)cell friendProfilePicture] setProfileID:[friend objectForKey:@"facebook_id"]];
         [(FriendsTableViewCell*)cell setAccountID:[friend objectForKey:@"id"]];
     }
     return cell;

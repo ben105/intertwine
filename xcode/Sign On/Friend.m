@@ -14,4 +14,14 @@
     return [self.first stringByAppendingString:[NSString stringWithFormat:@" %@",self.last]];
 }
 
+-(NSDictionary*)dictionary {
+    return @{
+             @"first":self.first,
+             @"last":self.last,
+             @"email":self.emailAddress,
+             @"facebook_id":self.facebookID,
+             @"id":self.accountID
+             };
+}
+
 @end

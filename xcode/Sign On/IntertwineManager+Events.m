@@ -10,6 +10,7 @@
 #import "Friend.h"
 
 const NSString *eventsEndpoint = @"/api/v1/events";
+const NSString *eventEditEndpoint = @"/api/v1/edit_event";
 const NSString *commentsEndpoint = @"/api/v1/comment";
 const NSString *eventCompleteEndpoint = @"/api/v1/event_complete";
 
@@ -117,6 +118,50 @@ const NSString *eventCompleteEndpoint = @"/api/v1/event_complete";
 + (void) getEventsWithResponse:(void (^)(id json, NSError *error, NSURLResponse *response))responseBlock {
     NSMutableURLRequest *request = [IntertwineManager getRequest:(NSString*)eventsEndpoint];
     [request setHTTPMethod:@"GET"];
+    [IntertwineManager sendRequest:request response:responseBlock];
+}
+
+
++ (void) editEvent:(NSNumber*)eventID withTitle:(NSString*)title newTitle:(NSString*)newTitle invited:(NSArray*)invited uninvited:(NSArray*)uninvited withResponse:(void (^)(id json, NSError *error, NSURLResponse *response))responseBlock {
+    /*
+     * We need a dictionary that contains at LEAST the event ID, but optionally also
+     * the following items:
+     * - title
+     * - date
+     * - invited
+     * - uninvited
+     * - location
+     */
+    unsigned long int event_id = [eventID unsignedIntegerValue];
+    NSString *eventIDString = [NSString stringWithFormat:@"%lu", event_id];
+    NSMutableDictionary *body = [[NSMutableDictionary alloc] init];
+    [body setObject:eventIDString forKey:@"event_id"];
+    [body setObject:title forKey:@"title"];
+    if (newTitle) {
+        [body setObject:newTitle forKey:@"new_title"];
+    }
+    if ([invited count]) {
+        [body setObject:invited forKey:@"invited"];
+    }
+    if ([uninvited count]) {
+        [body setObject:uninvited forKey:@"uninvited"];
+    }
+    
+    
+    /*
+     * Convert the NSMutableDictionary into JSON data.
+     */
+    NSError *error = nil;
+    NSData *data = [NSJSONSerialization dataWithJSONObject:body options:0 error:&error];
+    if (error) {
+        NSLog(@"Error occured trying to serialize to JSON data, when completing an event.");
+        return;
+    }
+    
+    NSMutableURLRequest *request = [IntertwineManager getRequest:(NSString*)eventEditEndpoint];
+    [request setHTTPMethod:@"POST"];
+    [request setHTTPBody:data];
+    [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
     [IntertwineManager sendRequest:request response:responseBlock];
 }
 

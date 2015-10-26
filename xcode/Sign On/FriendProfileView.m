@@ -16,10 +16,10 @@
 @implementation FriendProfileView
 
 - (void)setProfileID:(NSString*)profileID {
-    
+    _profileID = profileID;
     UIImage *profileImage = [IntertwineManager profileImage:profileID];
     if (profileImage == nil) {
-        NSString *userImageURL = [NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=square", profileID];
+        NSString *userImageURL = [NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large", profileID];
         NSData *data = [NSData dataWithContentsOfURL:[NSURL URLWithString:userImageURL]];
         [IntertwineManager cachedImage:data forProfileID:profileID];
         profileImage = [UIImage imageWithData:data];
@@ -31,9 +31,9 @@
     self = [super initWithFrame:frame];
     if (self) {
         self.clipsToBounds = YES;
-        self.layer.borderColor = [[UIColor blackColor] CGColor];
+        self.layer.borderColor = [[UIColor whiteColor] CGColor];
         self.layer.cornerRadius = CGRectGetWidth(frame) / 2.0;
-        self.layer.borderWidth = .5;
+        self.layer.borderWidth = 1.0;
         [self addSubview:self.imageView];
     }
     return self;

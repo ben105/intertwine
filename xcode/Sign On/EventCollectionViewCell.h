@@ -8,11 +8,11 @@
 
 #import <UIKit/UIKit.h>
 
-@class FBProfilePictureView;
+@class FriendProfileView;
 
 @interface EventCollectionViewCell : UICollectionViewCell
 
-@property (nonatomic, strong) FBProfilePictureView *profilePicture;
+@property (nonatomic, strong) FriendProfileView *profilePicture;
 @property (nonatomic, strong) UILabel *nameLabel;
 
 /* Determines the width programatically based on the screen size. */

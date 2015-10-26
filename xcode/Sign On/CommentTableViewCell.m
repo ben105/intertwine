@@ -7,14 +7,17 @@
 //
 
 #import "CommentTableViewCell.h"
+#import "FriendProfileView.h"
 #import "UILabel+DynamicHeight.h"
 #import <FacebookSDK/FacebookSDK.h>
 
 const CGFloat commentCellInset = 5.0;
 const CGFloat bubbleMembrane = 10.0;
-const CGFloat cellHeight = 45.0;
-const CGFloat bubbleHeight = 34.0;
+//const CGFloat bubbleHeight = 34.0;
+const CGFloat bubbleHeight = 42.0;
+const CGFloat cellHeight = bubbleHeight + 1;
 const CGFloat spaceBetweenCells = 18.0;
+const CGFloat commentFontSize = 14.0;
 
 @interface CommentTableViewCell ()
 + (CGSize) _sizeOfMultiLineLabel:(UILabel*)label;
@@ -51,21 +54,26 @@ const CGFloat spaceBetweenCells = 18.0;
 }
 
 + (CGFloat) cellHeightForLabel:(UILabel*)label {
+    CGFloat width = [CommentTableViewCell commentWidth];
+    
+    UILabel *copyLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, width + (bubbleMembrane * 2.0), bubbleHeight)];
+    copyLabel.text = label.text;
+    copyLabel.font = [UIFont fontWithName:@"HelveticaNeue-Light" size:commentFontSize];
     /* Reset the cell comment label width, because if we're using a recycled cell,
      * then the following 'sizeOfMultiLineLabel' will fail. */
-    CGSize size = [CommentTableViewCell _sizeOfMultiLineLabel:label];
-    if (size.height < cellHeight) {
-        size.height = cellHeight;
-    }
-    return size.height + spaceBetweenCells + (bubbleMembrane * 2.0);
+    CGSize size = [CommentTableViewCell sizeForLabel:copyLabel];
+//    if (size.height < cellHeight) {
+//        size.height = cellHeight;
+//    }
+    return size.height + (bubbleMembrane * 2.0) + spaceBetweenCells;
 }
 
 + (CGSize) sizeForLabel:(UILabel*)label {
     /* Reset the cell comment label width, because if we're using a recycled cell,
      * then the following 'sizeOfMultiLineLabel' will fail. */
     CGSize size = [CommentTableViewCell _sizeOfMultiLineLabel:label];
-    if (size.height < bubbleHeight) {
-        size.height = bubbleHeight;
+    if (size.height < bubbleHeight - (bubbleMembrane*2.0)) {
+        size.height = bubbleHeight - (bubbleMembrane*2.0);
     }
     return size;
 }
@@ -142,13 +150,13 @@ const CGFloat spaceBetweenCells = 18.0;
 
 #pragma mark - Lazy Loading
 
-- (FBProfilePictureView*) profilePicture {
+- (FriendProfileView*) profilePicture {
     if (!_profilePicture) {
         if (self.isSelf) {
             CGFloat screenWidth = CGRectGetWidth([[UIScreen mainScreen] bounds]);
-            _profilePicture = [[FBProfilePictureView alloc] initWithFrame:CGRectMake(screenWidth -commentCellInset - bubbleHeight, 0, bubbleHeight, bubbleHeight)];
+            _profilePicture = [[FriendProfileView alloc] initWithFrame:CGRectMake(screenWidth -commentCellInset - bubbleHeight, 0, bubbleHeight, bubbleHeight)];
         } else {
-            _profilePicture = [[FBProfilePictureView alloc] initWithFrame:CGRectMake(commentCellInset, 0, bubbleHeight, bubbleHeight)];
+            _profilePicture = [[FriendProfileView alloc] initWithFrame:CGRectMake(commentCellInset, 0, bubbleHeight, bubbleHeight)];
         }
         _profilePicture.layer.cornerRadius = bubbleHeight/2.0;
         _profilePicture.layer.borderColor = [[UIColor blackColor] CGColor];
@@ -181,6 +189,7 @@ const CGFloat spaceBetweenCells = 18.0;
         _commentLabel = [[UILabel alloc] initWithFrame:CGRectMake(bubbleMembrane, bubbleMembrane, width, bubbleHeight)];
         _commentLabel.backgroundColor = [UIColor clearColor];
         _commentLabel.numberOfLines = 0;
+        [_commentLabel setFont:[UIFont fontWithName:@"HelveticaNeue-Light" size:commentFontSize]];
         if (self.isSelf) {
             _commentLabel.textColor = [UIColor whiteColor];
         }

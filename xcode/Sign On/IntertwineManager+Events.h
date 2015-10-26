@@ -16,6 +16,7 @@
 
 + (void) createEvent:(NSString*)title withFriends:(NSArray*)friends withResponse:(void (^)(id json, NSError *error, NSURLResponse *response))responseBlock;
 + (void) deleteEvent:(NSNumber*)eventID withResponse:(void (^)(id json, NSError *error, NSURLResponse *response))responseBlock;
++ (void) editEvent:(NSNumber*)eventID withTitle:(NSString*)title newTitle:(NSString*)newTitle invited:(NSArray*)invited uninvited:(NSArray*)uninvited withResponse:(void (^)(id json, NSError *error, NSURLResponse *response))responseBlock;
 + (void) getEventsWithResponse:(void (^)(id json, NSError *error, NSURLResponse *response))responseBlock;
 
 
