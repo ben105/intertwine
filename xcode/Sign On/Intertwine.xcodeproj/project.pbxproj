@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		63C69A541C362B01005A654C /* FriendsCollectionView.m in Sources */ = {isa = PBXBuildFile; fileRef = 63C69A4D1C362B01005A654C /* FriendsCollectionView.m */; };
+		63C69A551C362B01005A654C /* BlueFriendsCollectionView.m in Sources */ = {isa = PBXBuildFile; fileRef = 63C69A4F1C362B01005A654C /* BlueFriendsCollectionView.m */; };
+		63C69A561C362B01005A654C /* EventViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 63C69A511C362B01005A654C /* EventViewController.m */; };
+		63C69A571C362B01005A654C /* EventTitleView.m in Sources */ = {isa = PBXBuildFile; fileRef = 63C69A531C362B01005A654C /* EventTitleView.m */; };
 		B503CC641A2A2B35008F7B82 /* WebViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = B503CC631A2A2B35008F7B82 /* WebViewController.m */; };
 		B50903211B973E4B00D82FFC /* ActivityTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = B509031F1B973BFE00D82FFC /* ActivityTableViewCell.m */; };
 		B509BBC81A7DA642002ACE39 /* PendingRequestTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = B509BBC71A7DA642002ACE39 /* PendingRequestTableViewCell.m */; };
@@ -63,7 +67,6 @@
 		B59F2CA01BD828CA000265BA /* NotificationMenuViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = B59F2C9F1BD828CA000265BA /* NotificationMenuViewController.m */; };
 		B59F2CA31BD8290B000265BA /* IntertwineNotification.m in Sources */ = {isa = PBXBuildFile; fileRef = B59F2CA21BD8290B000265BA /* IntertwineNotification.m */; };
 		B59F2CA61BD82F1F000265BA /* NotificationTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = B59F2CA51BD82F1F000265BA /* NotificationTableViewCell.m */; };
-		B5A7C0B21B51C80200CF56D1 /* NewActivityViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = B5A7C0B11B51C80200CF56D1 /* NewActivityViewController.m */; };
 		B5B0045B1B59889000A6CBB4 /* NavigationView.m in Sources */ = {isa = PBXBuildFile; fileRef = B5B0045A1B59889000A6CBB4 /* NavigationView.m */; };
 		B5B0045E1B598BC600A6CBB4 /* NavigationViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = B5B0045D1B598BC600A6CBB4 /* NavigationViewController.m */; };
 		B5B004631B598F8C00A6CBB4 /* FriendsTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = B5B004601B598F8C00A6CBB4 /* FriendsTableViewController.m */; };
@@ -103,6 +106,14 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		63C69A4C1C362B01005A654C /* FriendsCollectionView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FriendsCollectionView.h; sourceTree = "<group>"; };
+		63C69A4D1C362B01005A654C /* FriendsCollectionView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FriendsCollectionView.m; sourceTree = "<group>"; };
+		63C69A4E1C362B01005A654C /* BlueFriendsCollectionView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BlueFriendsCollectionView.h; sourceTree = "<group>"; };
+		63C69A4F1C362B01005A654C /* BlueFriendsCollectionView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BlueFriendsCollectionView.m; sourceTree = "<group>"; };
+		63C69A501C362B01005A654C /* EventViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EventViewController.h; sourceTree = "<group>"; };
+		63C69A511C362B01005A654C /* EventViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EventViewController.m; sourceTree = "<group>"; };
+		63C69A521C362B01005A654C /* EventTitleView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EventTitleView.h; sourceTree = "<group>"; };
+		63C69A531C362B01005A654C /* EventTitleView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EventTitleView.m; sourceTree = "<group>"; };
 		B503CC621A2A2B35008F7B82 /* WebViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebViewController.h; sourceTree = "<group>"; };
 		B503CC631A2A2B35008F7B82 /* WebViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = WebViewController.m; sourceTree = "<group>"; };
 		B509031E1B973BFE00D82FFC /* ActivityTableViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ActivityTableViewCell.h; sourceTree = "<group>"; };
@@ -443,6 +454,14 @@
 				B56E434E1AD4BA5800D3B442 /* IntertwineManager+Activity.m */,
 				B567932D1AC1BECF00558E2D /* IntertwineManager+Events.h */,
 				B567932E1AC1BECF00558E2D /* IntertwineManager+Events.m */,
+				63C69A4C1C362B01005A654C /* FriendsCollectionView.h */,
+				63C69A4D1C362B01005A654C /* FriendsCollectionView.m */,
+				63C69A4E1C362B01005A654C /* BlueFriendsCollectionView.h */,
+				63C69A4F1C362B01005A654C /* BlueFriendsCollectionView.m */,
+				63C69A501C362B01005A654C /* EventViewController.h */,
+				63C69A511C362B01005A654C /* EventViewController.m */,
+				63C69A521C362B01005A654C /* EventTitleView.h */,
+				63C69A531C362B01005A654C /* EventTitleView.m */,
 			);
 			name = Activity;
 			sourceTree = "<group>";
@@ -681,14 +700,17 @@
 				B5EC650B1A6B88B0003F45F2 /* IntertwineManager.m in Sources */,
 				B5C55ACD1BC4244C008CB334 /* NotificationBanner.m in Sources */,
 				B572DDB51BD89E2100AC4481 /* EventObject.m in Sources */,
+				63C69A571C362B01005A654C /* EventTitleView.m in Sources */,
 				B59F2CA31BD8290B000265BA /* IntertwineNotification.m in Sources */,
 				B5C8F35D1AD9F93E0040E1C8 /* CommentViewController.m in Sources */,
 				B54D53F31B12BD690013504A /* ITMultipleBannersViewController.m in Sources */,
+				63C69A541C362B01005A654C /* FriendsCollectionView.m in Sources */,
+				63C69A561C362B01005A654C /* EventViewController.m in Sources */,
+				63C69A551C362B01005A654C /* BlueFriendsCollectionView.m in Sources */,
 				B531B01C1A27A3F20034CF3C /* ViewController.m in Sources */,
 				B509BBC81A7DA642002ACE39 /* PendingRequestTableViewCell.m in Sources */,
 				B54D53F11B12BD690013504A /* ITBannerTableView.m in Sources */,
 				B59F2CA01BD828CA000265BA /* NotificationMenuViewController.m in Sources */,
-				B5A7C0B21B51C80200CF56D1 /* NewActivityViewController.m in Sources */,
 				B5B004641B598F8C00A6CBB4 /* FriendsTableViewCell.m in Sources */,
 				B5E420021A8427600054F5CF /* SendRequestTableViewCell.m in Sources */,
 				B503CC641A2A2B35008F7B82 /* WebViewController.m in Sources */,

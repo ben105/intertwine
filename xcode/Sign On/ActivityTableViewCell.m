@@ -54,10 +54,11 @@ const CGFloat activityCellSpacer = 5.0;
 const CGFloat titleHeight = 25.0;
 const CGFloat activityCellTitleFontSize = 22.0;
 
-
 const CGFloat buttonIconWidth = 25.0;
 const CGFloat buttonIconInset = 30.0;
 
+
+const CGFloat coverPhotoHeight = 130.0;
 
 /* Global label object, for measuring height of cell. */
 UILabel *measuringLabel;
@@ -136,6 +137,7 @@ UILabel *measuringLabel;
 @property (nonatomic, strong) ButtonBarView *buttonBox;
 
 @property (nonatomic, strong) UIView *detailBox;
+@property (nonatomic, strong) UIImageView *coverPhoto;
 @property (nonatomic, strong) NSMutableArray *attendeeViews;
 @property (nonatomic, strong) UIView *attendeePallet;
 - (void)_clearAttendeeViews;
@@ -447,5 +449,10 @@ UILabel *measuringLabel;
     return _completedButton;
 }
 
+//- (UIImageView*)coverPhoto {
+//    if (!_coverPhoto) {
+//        _coverPhoto = [[UIImageView alloc] initWithFrame:<#(CGRect)#>];
+//    }
+//}
 
 @end

@@ -18,6 +18,7 @@
 #import "ActivityAlertView.h"
 #import "NotificationMenuViewController.h"
 #import "IntertwineNotification.h"
+#import "EventViewController.h"
 
 #import "IntertwineManager+Activity.h"
 #import "IntertwineManager+Friends.h"
@@ -45,7 +46,7 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
 @property (nonatomic, strong) CommentViewController *commentView;
 - (void) _presentCommentViewForEvent:(EventObject*)event;
 
-@property (nonatomic, strong) NewActivityViewController *createActivityVC;
+@property (nonatomic, strong) EventViewController *createActivityVC;
 @property (nonatomic, strong) UIImageView *backgroundImage;
 @property (nonatomic, strong) UIView *header;
 @property (nonatomic, strong) UIView *footer;
@@ -64,6 +65,7 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
 - (void) _newActivity;
 - (void) _loadActivities;
 - (void)_markActivityComplete:(EventObject*)event forCell:(ActivityTableViewCell*)cell;
+- (void)_presentEventViewController;
 
 @property (nonatomic, strong) NSArray *friends;
 @property (nonatomic, strong) UIButton *friendsButton;
@@ -379,6 +381,23 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
     }];
 }
 
+#pragma mark - Event View Controller Delegate
+
+- (void) eventViewControllerWillDismiss {
+    [self.createActivityVC.view removeFromSuperview];
+    self.createActivityVC = nil;
+    
+    [UIView animateWithDuration:0.2
+                     animations:^{
+                         self.activityTableView.alpha = 1;
+                         self.gearButton.alpha = 1;
+                         self.notificationsButton.alpha = 1;
+                         self.friendsButton.alpha = 1;
+                         self.header.alpha = 1;
+                         self.titleLabel.alpha = 1;
+                     }];
+}
+
 #pragma mark - Activity Cell Delegate 
 
 - (void)didSelectCommentButton:(EventObject*)event forCell:(ActivityTableViewCell*)cell {
@@ -406,16 +425,24 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
 
 #pragma mark - New Activity
 
-- (void) _newActivity {
-    self.createActivityVC.viewMode = ActivityViewCreateMode;
-    [self presentViewController:self.createActivityVC animated:YES completion:nil];
+- (void) _presentEventViewController {
+    [UIView animateWithDuration:0.3
+                     animations:^{
+                         self.activityTableView.alpha = 0;
+                         self.gearButton.alpha = 0;
+                         self.notificationsButton.alpha = 0;
+                         self.friendsButton.alpha = 0;
+                         self.header.alpha = 0;
+                         self.titleLabel.alpha = 0;
+                     }
+                     completion:^(BOOL finished) {
+                         [self.view addSubview:self.createActivityVC.view];
+                     }];
 }
 
-- (void) closeEventCreation {
-    [self.createActivityVC dismissViewControllerAnimated:YES completion:^{
-        self.createActivityVC = nil;
-        [self _loadActivities];
-    }];
+- (void) _newActivity {
+    self.createActivityVC.viewMode = ActivityViewCreateMode;
+    [self _presentEventViewController];
 }
 
 #pragma mark - Friends
@@ -543,16 +570,18 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    
     EventObject *event = [self.events objectAtIndex:indexPath.row];
     
     // TODO: See if there's a way to just assign the event, and not the individual attributes.
-    self.createActivityVC.eventTitle = event.eventTitle;
+    [self.createActivityVC setEventTitle:event.eventTitle];
     self.createActivityVC.viewMode = ActivityViewEditMode;
-    self.createActivityVC.editEventIsCompleted = event.isComplete;
+//    self.createActivityVC.editEventIsCompleted = event.isComplete;
     self.createActivityVC.event = event;
     
-    NSMutableArray *uninvitedFriends = [self.friends mutableCopy];
-    NSMutableArray *invitedFriends = [NSMutableArray new];
+//    NSMutableArray *uninvitedFriends = [self.friends mutableCopy];
+//    NSMutableArray *invitedFriends = [NSMutableArray new];
     
     for (Friend *attendee in event.attendees) {
         if ([attendee.accountID isEqualToString:[IntertwineManager getAccountID]]) {
@@ -560,16 +589,16 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
         }
         for (Friend *friend in self.friends) {
             if ([friend.accountID isEqualToString:attendee.accountID]) {
-                [invitedFriends addObject:friend];
-                [uninvitedFriends removeObject:friend];
+                [self.createActivityVC.invitedView addFriend:attendee];
+                [self.createActivityVC.uninvitedView setStatus:kInvited forFriend:attendee];
                 break;
             }
         }
     }
     
-    self.createActivityVC.uninvitedFriends = uninvitedFriends;
-    self.createActivityVC.invitedFriends = invitedFriends;
-    [self presentViewController:self.createActivityVC animated:YES completion:nil];
+//    self.createActivityVC.uninvitedFriends = uninvitedFriends;
+//    self.createActivityVC.invitedFriends = invitedFriends;
+    [self _presentEventViewController];
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -753,11 +782,11 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
     return _newActivityButton;
 }
 
-- (NewActivityViewController*)createActivityVC {
+- (EventViewController*)createActivityVC {
     if (!_createActivityVC) {
-        _createActivityVC = [NewActivityViewController new];
-        _createActivityVC.delegate = self;
+        _createActivityVC = [EventViewController new];
         _createActivityVC.friends = self.friends;
+        _createActivityVC.delegate = self;
     }
     return _createActivityVC;
 }
