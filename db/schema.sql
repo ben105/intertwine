@@ -1,3 +1,5 @@
+DROP TABLE IF EXISTS event_dates;
+DROP TABLE IF EXISTS semesters;
 DROP TABLE IF EXISTS comments;
 DROP TABLE IF EXISTS event_attendees;
 DROP TABLE IF EXISTS device_tokens;
@@ -87,6 +89,31 @@ device_token bytea,
 sent_time timestamp DEFAULT now(),
 seen_time timestamp,
 FOREIGN KEY (notifier_id) REFERENCES accounts(id) ON DELETE CASCADE
+);
+
+CREATE table semesters (
+id integer NOT NULL PRIMARY KEY,
+semester_name char(10) UNIQUE NOT NULL
+);
+INSERT INTO semesters VALUES (1, 'Morning');
+INSERT INTO semesters VALUES (2, 'Afternoon');
+INSERT INTO semesters VALUES (3, 'Evening');
+
+CREATE table event_dates (
+id serial NOT NULL PRIMARY KEY,
+accounts_id integer NOT NULL,
+events_id integer NOT NULL,
+semesters_id integer,
+start_date date NOT NULL,
+start_time time (0) without time zone,
+end_date date,
+end_time time (0) without time zone,
+all_day boolean NOT NULL,
+updated_time timestamp NOT NULL DEFAULT now(),
+created_time timestamp NOT NULL DEFAULT now(),
+FOREIGN KEY (accounts_id) REFERENCES accounts(id) ON DELETE CASCADE,
+FOREIGN KEY (semesters_id) REFERENCES semesters(id),
+FOREIGN KEY (events_id) REFERENCES events(id) ON DELETE CASCADE
 );
 
 CREATE OR REPLACE FUNCTION update_event() RETURNS TRIGGER AS $update_event$
