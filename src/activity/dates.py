@@ -6,6 +6,8 @@ import pytz
 class EventDate(object):
 	def __init__(self, json_body):
 		self.time = None	# Because there might not be a specific time set.
+		self.semester = None
+		self.all_day = False
 		try:
 			self.extract_date(json_body)
 		except pytz.exceptions.UnknownTimeZoneError as err:
@@ -24,8 +26,7 @@ class EventDate(object):
 		"""
 		now = datetime.now()
 		now = now.replace(tzinfo=pytz.timezone(timezone))
-		utcmoment = utcmoment_unaware.replace(tzinfo=pytz.utc)
-		return utcmoment.astimezone(pytz.timezone(tz))
+		return now.astimezone(pytz.timezone('UTC'))
 
 	def extract_date(self, json_body):
 		"""
@@ -44,7 +45,7 @@ class EventDate(object):
 			# Check for semester. And all day boolean.
 			self.semester = body.get('semester')
 			# Semester trumps all day.
-			if semester:
+			if self.semester:
 				self.all_day = False
 			else:
 				self.all_day = body['all_day']
@@ -55,13 +56,13 @@ class EventDate(object):
 
 		# Use the timezone coming in as an indicator of how to
 		# convert to UTC. I will be using UTC dates in my database.
-		utctime = self.convert_to_utc(timestamp, timezone)
+		utctime = self.convert_to_utc(timestamp, tz)
 
 		# Convert the timestamp back into a str.
 		utc_str = utctime.strftime('%Y-%m-%d %H:%M:%S')
 		date_tuple = utc_str.split(' ')
 
 		# We only want to set the time if there 
-		if not semester and not all_day:
+		if not self.semester and not self.all_day:
 			self.time = date_tuple[1]
 		self.date = date_tuple[0]

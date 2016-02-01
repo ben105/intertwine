@@ -11,7 +11,7 @@ class TestEvents(unittest.TestCase):
 		# Get the current time.
 		self.timestamp = datetime.utcnow()
 		date_str = self.timestamp.strftime('%Y-%m-%d %H:%M:%S')
-		date_tuple = date_str.split(' '))
+		date_tuple = date_str.split(' ')
 		self.json = {
 			'date': date_tuple[0],
 			'time': date_tuple[1],
@@ -22,36 +22,37 @@ class TestEvents(unittest.TestCase):
 
 	def test_with_no_time(self):
 		self.json['time'] = None
-		e = dates.EventDate(self.json)
+		e = dates.EventDate(json.dumps(self.json))
 		self.assertIsNone(e.time)
 		self.assertEqual(e.date, self.json['date'])
 
 	def test_with_time(self):
-		e = dates.EventDate(self.json)
+		e = dates.EventDate(json.dumps(self.json))
 		self.assertIsNotNone(e.time)
 		self.assertEqual(self.json['time'], e.time)
-		self.assertEqual(self.json['date'], e.time)
+		self.assertEqual(self.json['date'], e.date)
 		self.assertIsNone(e.semester)
-		self.assertIsFalse(e.all_day)
+		self.assertFalse(e.all_day)
 
 	def test_with_semesters(self):
+		self.json['time'] = None
 		self.json['semester'] = 'Morning'
-		e = dates.EventDate(self.json)
+		e = dates.EventDate(json.dumps(self.json))
 		self.assertEqual(e.semester, self.json['semester'])
-		self.assertIsFalse(e.all_day)
+		self.assertFalse(e.all_day)
 		self.assertIsNone(e.time)
 
 	def test_with_all_day(self):
 		self.json['all_day'] = True
 		self.json['time'] = None
-		e = dates.EventDate(self.json)
+		e = dates.EventDate(json.dumps(self.json))
 		self.assertTrue(e.all_day)
 		self.assertIsNone(e.time)
 
 	def test_different_timezone(self):
 		self.json['timezone'] = 'America/Los_Angeles'
-		e = date.EventDate(self.json)
-		self.assertIsNotEqual(e.time, self.json['time'])
+		e = dates.EventDate(json.dumps(self.json))
+		self.assertNotEqual(e.time, self.json['time'])
 
 
 if __name__ == '__main__':
