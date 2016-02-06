@@ -7,17 +7,24 @@ class EventDate(object):
 	def __init__(self, json_body):
 		self.time = None	# Because there might not be a specific time set.
 		self.semester = None
+		self.semester_id = None
 		self.all_day = False
 		try:
 			self.extract_date(json_body)
 		except pytz.exceptions.UnknownTimeZoneError as err:
-			pass
+			raise RuntimeError('unknown timezone in json  body {}'.format(json_body))
 		except ValueError as ve:
 			# Failed to parse the JSON.
-			pass
+			raise RuntimeError('could not parse the JSON body {}'.format(json_body))
 		except KeyError as ke:
 			# The JSON body didn't have exactly what I expected.
-			pass
+			raise RuntimeError('key error parsing JSON body {}'.format(json_body))
+		if self.semester == 'Morning':
+			self.semester_id = 1
+		elif self.semester == 'Afternoon':
+			self.semester_id = 2
+		elif self.semester == 'Evening':
+			self.semester_id = 3
 
 	def convert_to_utc(self, timestamp, timezone):
 		"""

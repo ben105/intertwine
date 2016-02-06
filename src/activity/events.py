@@ -1,4 +1,5 @@
 from intertwine.activity import comments
+from intertwine.activity import dates
 from intertwine.accounts import accounts
 from intertwine import response
 from intertwine import strings
@@ -10,8 +11,27 @@ import logging
 import psycopg2
 
 
+def insert_event_date(ctx, event_id, date):
+	if not date:
+		err_msg = 'failed trying to insert event date with None date'
+		logging.error(err_msg)
+		raise ValueError(err_msg)
+	query = """
+	INSERT INTO 
+		event_dates 
+	(accounts_id, events_id, semesters_id, start_date, start_time, all_day) 
+	VALUES
+		(1, 235, 2, '2016-01-31', '12:00:00', false);
+	"""
+	try:
+		ctx.cur.execute(query, (ctx.user_id, event_id, date.semester_id, date.date, date.time, date.all_day))
+	except Exception as exc:
+		logging.error('exception raise while trying to insert date for event id %s by user %s', event_id, user_id)
+		raise
+
+
 @util.single_transaction
-def create(ctx, title, description, attendees):
+def create(ctx, title, description, attendees, date=None):
 	"""Create an event.
 
 	Keyword arguments:
@@ -19,6 +39,7 @@ def create(ctx, title, description, attendees):
 	  title -- event title
 	  description -- description of the event
 	  attendees -- list of account IDs
+	  date -- the event date object
 
 	Returns:
 	  Intertwine response block, with the new event ID in
@@ -49,10 +70,27 @@ def create(ctx, title, description, attendees):
 		return response.block(error=strings.SERVER_ERROR, code=500)
 	event_id = ctx.cur.fetchone()[0]
 
+	# Attempt to set the event date, if one exists. 
+	if date:
+		# Insert the date into the database.
+		try:
+			insert_event_date(ctx, event_id, date)
+		except ValueError as ve:
+			logging.error('bad information passed to insert_event_date: %s', ve)
+			return response.block(error=strings.SERVER_ERROR, code=500)
+		except Exception as exc:
+			logging.error(exc)
+			return response.block(error=stings.SERVER_ERROR, code=500)
+
 	for user in attendees:
 		try:
 			notifInfo = {'event_id':event_id, 'action':push.JUMP_TO}
-			push.push_notification(ctx, user, "{} {} created a new event: {}".format(first, last, title), notifInfo)
+			if date:
+				# Because a date exists, we will need to update the push notification to
+				# display the time in the message.
+				push.push_notification(ctx, user, "{} {} created a new event: {} at {}".format(first, last, title), notifInfo, date)
+			else:	
+				push.push_notification(ctx, user, "{} {} created a new event: {}".format(first, last, title), notifInfo)
 		except Exception as exc:
 			logging.error('exception raised trying to send push notification while inserting attendee %d to activity %s\n%s', user, title, str(exc))
 	# Add the attendees to the event.	
@@ -64,7 +102,7 @@ def create(ctx, title, description, attendees):
 			logging.error('exception raised while inserting attendee %d to activity %s\n%s', user, title, str(exc))
 			return response.block(error=strings.SERVER_ERROR, code=500)
 			#return response.block(error=strings.SERVER_ERROR, code=500)
-	# TODO: Return success or error
+	
 	return response.block(payload={
 		'event_id': event_id
 	})
