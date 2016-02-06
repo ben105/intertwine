@@ -21,7 +21,7 @@ def insert_event_date(ctx, event_id, date):
 		event_dates 
 	(accounts_id, events_id, semesters_id, start_date, start_time, all_day) 
 	VALUES
-		(1, 235, 2, '2016-01-31', '12:00:00', false);
+		(%s, %s, %s, %s, %s, %s);
 	"""
 	try:
 		ctx.cur.execute(query, (ctx.user_id, event_id, date.semester_id, date.date, date.time, date.all_day))
@@ -92,7 +92,7 @@ def create(ctx, title, description, attendees, date=None):
 			else:	
 				push.push_notification(ctx, user, "{} {} created a new event: {}".format(first, last, title), notifInfo)
 		except Exception as exc:
-			logging.error('exception raised trying to send push notification while inserting attendee %d to activity %s\n%s', user, title, str(exc))
+			logging.error('exception raised trying to send push notification while inserting attendee %s to activity %s\n%s', user, title, str(exc))
 	# Add the attendees to the event.	
 	attendees.append(user_id)
 	for user in attendees:

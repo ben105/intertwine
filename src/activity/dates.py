@@ -31,9 +31,9 @@ class EventDate(object):
 		Raises:
 		  UnknownTimeZoneError: If the timezone provided is not valid.
 		"""
-		now = datetime.now()
-		now = now.replace(tzinfo=pytz.timezone(timezone))
-		return now.astimezone(pytz.timezone('UTC'))
+		tz_timestamp = pytz.timezone(timezone).localize(timestamp)
+		# timestamp = timestamp.replace(tzinfo=pytz.timezone(timezone))
+		return tz_timestamp.astimezone(pytz.timezone('UTC'))
 
 	def extract_date(self, json_body):
 		"""
