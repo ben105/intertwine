@@ -13,6 +13,9 @@
 #import <FacebookSDK/FacebookSDK.h>
 
 
+#import "IntertwineManager+Events.h"
+#import "Friend.h"
+
 @implementation AppDelegate
 
 
@@ -41,6 +44,22 @@
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // Override point for customization after application launch.
     [FBLoginView class];
+    
+    
+//    Friend *f = [Friend new];
+//    f.first = @"David";
+//    f.last = @"Matthew";
+//    f.accountID = @"18";
+//    EventDate *d = [EventDate new];
+//    d.semester = 0;
+//    d.date = @"2015-02-05";
+//    d.time = @"12:00:00";
+//    [IntertwineManager createEvent:@"Test Event" withFriends:@[f] withEventDate:d withResponse:^(id json, NSError *error, NSURLResponse *response) {
+//        if (error) {
+//            NSLog(@"Error: %@", error);
+//        }
+//    }];
+    
     
     NSDictionary *remoteNotif = [launchOptions objectForKey: UIApplicationLaunchOptionsRemoteNotificationKey];
     

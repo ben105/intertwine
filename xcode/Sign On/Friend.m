@@ -16,11 +16,11 @@
 
 -(NSDictionary*)dictionary {
     return @{
-             @"first":self.first,
-             @"last":self.last,
-             @"email":self.emailAddress,
-             @"facebook_id":self.facebookID,
-             @"id":self.accountID
+             @"first": self.first,
+             @"last": self.last,
+             @"email": self.emailAddress,
+             @"facebook_id": self.facebookID,
+             @"id": self.accountID
              };
 }
 

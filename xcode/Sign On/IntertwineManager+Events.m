@@ -14,6 +14,10 @@ const NSString *eventEditEndpoint = @"/api/v1/edit_event";
 const NSString *commentsEndpoint = @"/api/v1/comment";
 const NSString *eventCompleteEndpoint = @"/api/v1/event_complete";
 
+
+@implementation EventDate
+@end
+
 @implementation IntertwineManager (Events)
 
 #pragma mark - Comment Create/Read
@@ -56,14 +60,14 @@ const NSString *eventCompleteEndpoint = @"/api/v1/event_complete";
 
 # pragma mark - Event CRUD
 
-+ (void) createEvent:(NSString*)title withFriends:(NSArray*)friends withResponse:(void (^)(id json, NSError *error, NSURLResponse *response))responseBlock {
++ (void) createEvent:(NSString*)title withFriends:(NSArray *)friends withEventDate:(EventDate*)eventDate withResponse:(void (^)(id, NSError *, NSURLResponse *))responseBlock {
     /*
      * Turn the 'friends' array into a JSON list of
      * dictionaries.
-     * One dictionary with keys 'title' and 'friends', 
+     * One dictionary with keys 'title' and 'friends',
      * supplying both parameters as values.
      */
-    NSMutableArray *jsonFriends = [[NSMutableArray alloc] init];
+    NSMutableArray *jsonFriends = [NSMutableArray new];
     for (Friend *friend in friends) {
         NSString *accountID = friend.accountID;
         [jsonFriends addObject:accountID];
@@ -72,6 +76,24 @@ const NSString *eventCompleteEndpoint = @"/api/v1/event_complete";
      * Parent Dictionary to wrap it all.
      */
     NSMutableDictionary *body = [[NSMutableDictionary alloc] init];
+    NSMutableDictionary *date = nil;
+    
+    NSString *timezone = [[NSTimeZone systemTimeZone] name];
+    
+    if (eventDate) {
+        date = [NSMutableDictionary new];
+        [date setObject:timezone forKey:@"timezone"];
+        if (eventDate.date) {
+            [date setObject:eventDate.date forKey:@"date"];
+        }
+        if (eventDate.time) {
+            [date setObject:eventDate.time forKey:@"time"];
+        }
+        if (eventDate.semester) {
+            [date setObject:[NSNumber numberWithInt:eventDate.semester] forKey:@"semester"];
+        }
+    }
+    [body setObject:date forKey:@"date"];
     [body setObject:title forKey:@"title"];
     [body setObject:jsonFriends forKey:@"friends"];
     
@@ -88,6 +110,10 @@ const NSString *eventCompleteEndpoint = @"/api/v1/event_complete";
     [request setHTTPBody:data];
     [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
     [IntertwineManager sendRequest:request response:responseBlock];
+}
+
++ (void) createEvent:(NSString*)title withFriends:(NSArray*)friends withResponse:(void (^)(id json, NSError *error, NSURLResponse *response))responseBlock {
+    [IntertwineManager createEvent:title withFriends:friends withEventDate:nil withResponse:responseBlock];
 }
 
 + (void) deleteEvent:(NSNumber*)eventID withResponse:(void (^)(id json, NSError *error, NSURLResponse *response))responseBlock {
