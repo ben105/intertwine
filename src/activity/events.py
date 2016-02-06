@@ -158,6 +158,12 @@ def response_for_events(ctx, rows):
 		event["description"] = row[2]
 		event["creator"] = creator
 		event["updated_time"] = str(row[4]).split('.')[0]
+		event["date"] = {
+			"start_date": row[6],
+			"start_time": row[7],
+			"semester_id": row[8],
+			"all_day": row[9]
+		}
 
 		attendees = get_attendees(ctx, event["id"])
 		event["attendees"] = attendees['payload']
@@ -177,11 +183,17 @@ def get_events_with_user(ctx, user_id):
 		events.description, 
 		events.creator,
 		events.updated_time,
-		events.completed
+		events.completed,
+		event_dates.start_date,
+		event_dates.start_time,
+		event_dates.semesters_id,
+		event_dates.all_day
 	FROM 
 		accounts, 
-		events, 
-		event_attendees 
+		event_attendees,
+		events
+	LEFT OUTER JOIN event_dates
+	ON events.id = event_dates.events_id
 	WHERE 
 		accounts.id = event_attendees.attendee_accounts_id and 
 		event_attendees.events_id = events.id and 
@@ -189,26 +201,26 @@ def get_events_with_user(ctx, user_id):
 	ORDER BY
 		events.updated_time DESC;
 	"""
-	query = """
-	SELECT 
-		events.id, 
-		events.title, 
-		events.description, 
-		events.creator,
-		events.updated_time,
-		events.completed
-	FROM 
-		events 
-	WHERE
-		events.id in (SELECT DISTINCT events_id
-				FROM event_attendees
-				WHERE attendee_accounts_id=%s AND
-					events_id in (SELECT events_id
-							FROM event_attendees
-							WHERE attendee_accounts_id=%s))
-	ORDER BY
-		events.updated_time DESC;
-	"""
+	# query = """
+	# SELECT 
+	# 	events.id, 
+	# 	events.title, 
+	# 	events.description, 
+	# 	events.creator,
+	# 	events.updated_time,
+	# 	events.completed
+	# FROM 
+	# 	events 
+	# WHERE
+	# 	events.id in (SELECT DISTINCT events_id
+	# 			FROM event_attendees
+	# 			WHERE attendee_accounts_id=%s AND
+	# 				events_id in (SELECT events_id
+	# 						FROM event_attendees
+	# 						WHERE attendee_accounts_id=%s))
+	# ORDER BY
+	# 	events.updated_time DESC;
+	# """
 	try:
 		ctx.cur.execute(query, (ctx.user_id, user_id))
 	except Exception as exc:
@@ -229,11 +241,17 @@ def get_events_for_user(ctx, user_id):
 		events.description, 
 		events.creator,
 		events.updated_time,
-		events.completed
+		events.completed,
+		event_dates.start_date,
+		event_dates.start_time,
+		event_dates.semesters_id,
+		event_dates.all_day
 	FROM 
 		accounts, 
-		events, 
-		event_attendees 
+		event_attendees,
+		events
+	LEFT OUTER JOIN event_dates
+	ON events.id = event_dates.events_id
 	WHERE 
 		accounts.id = event_attendees.attendee_accounts_id and 
 		event_attendees.events_id = events.id and 
