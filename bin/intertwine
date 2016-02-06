@@ -15,6 +15,7 @@ from intertwine.accounts import notifications
 from intertwine.activity import events
 from intertwine.activity import comments
 from intertwine.activity import activity
+from intertwine.activity import dates
 from intertwine import context
 from intertwine import devices
 
@@ -83,10 +84,17 @@ def event_api():
 	# Or if the user is creating an activity.
 	elif request.method == "POST":
 		body = json.loads(request.data)
+		event_date = None
+		date = body.get('date')
+		if date:
+			try:
+				event_date = dates.EventDate(json.dumps(date))
+			except RuntimeError as err:
+				logging.error('runtime error encounted posting event date, %s', err)
 		title = body.get('title')
 		friends = body.get('friends')
 		desc = body.get('description')
-		resp = events.create(ctx, title, desc, friends)
+		resp = events.create(ctx, title, desc, friends, event_date)
 
 	# Or if the user is deleting an activity.
 	elif request.method == "DELETE":
