@@ -17,9 +17,18 @@
 @property (nonatomic, strong) NSDate *updatedTime;
 @property (nonatomic, strong) Friend *creator;
 @property (nonatomic, strong) NSArray *attendees;
+
+/* For dates. */
+@property (nonatomic, copy) NSString *semester;
+@property (nonatomic) BOOL isAllDay;
+@property (nonatomic, strong) NSDate *timestamp;
+
+/* Completeness */
 @property BOOL isComplete;
 
 @property NSUInteger numberOfComments;
 @property NSUInteger numberOfLikes;
+
+- (void) extractDateInfo:(NSDictionary*)dateInfo;
 
 @end

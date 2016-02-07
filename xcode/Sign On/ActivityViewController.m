@@ -506,6 +506,8 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
             event.eventID = [eventDictionary objectForKey:@"id"];
             event.eventTitle = [eventDictionary objectForKey:@"title"];
             
+            [event extractDateInfo:[eventDictionary objectForKey:@"date"]];
+            
             event.numberOfComments = [[eventDictionary objectForKey:@"comment_count"] unsignedIntegerValue];
             
             event.eventDescription = [eventDictionary objectForKey:@"description"];
@@ -538,6 +540,7 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
             }
             event.attendees = attendees;
             [self.events addObject:event];
+            NSLog(@"Event timestamp: %@", event.timestamp);
         }
 //        self.eventCountLabel.text = [NSString stringWithFormat:@"%lu", [self.events count]];
 //        [self.eventsTableView reloadData];
