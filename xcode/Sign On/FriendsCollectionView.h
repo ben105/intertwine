@@ -33,7 +33,7 @@ typedef enum {
 
 @property (nonatomic, weak) id<FriendsCollectionViewDelegate> delegate;
 
-- (instancetype) initWithFrame:(CGRect)frame andBubbleWidth:(CGFloat)bubbleWidth;
+- (instancetype) initWithFrame:(CGRect)frame;
 
 - (NSArray*)friends;
 

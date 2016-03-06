@@ -7,10 +7,31 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6342B8CB1C6836EA00A49D3E /* CommentsSlide.png in Resources */ = {isa = PBXBuildFile; fileRef = 6342B8C71C6836EA00A49D3E /* CommentsSlide.png */; };
+		6342B8CE1C6836EA00A49D3E /* SlideUp@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 6342B8CA1C6836EA00A49D3E /* SlideUp@2x.png */; };
+		6342B8D11C68474100A49D3E /* Date@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 6342B8CF1C68474100A49D3E /* Date@2x.png */; };
+		6342B8D21C68474100A49D3E /* Location@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 6342B8D01C68474100A49D3E /* Location@2x.png */; };
+		6342B8D51C6968B700A49D3E /* SlideDownDark@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 6342B8D31C6968B700A49D3E /* SlideDownDark@2x.png */; };
+		6342B8D61C6968B700A49D3E /* SlideDownLight@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 6342B8D41C6968B700A49D3E /* SlideDownLight@2x.png */; };
+		634C2F721C82148E0041F29D /* PagingScrollView.m in Sources */ = {isa = PBXBuildFile; fileRef = 634C2F6D1C82148E0041F29D /* PagingScrollView.m */; };
+		634C2F731C82148E0041F29D /* HeaderPagingScrollView.m in Sources */ = {isa = PBXBuildFile; fileRef = 634C2F6F1C82148E0041F29D /* HeaderPagingScrollView.m */; };
+		634C2F741C82148E0041F29D /* HeaderPagingView.m in Sources */ = {isa = PBXBuildFile; fileRef = 634C2F711C82148E0041F29D /* HeaderPagingView.m */; };
+		63893FAF1C83513600EC66C3 /* LikeRed@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 63893FAE1C83513500EC66C3 /* LikeRed@2x.png */; };
+		63893FB11C83514500EC66C3 /* PlusRed@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 63893FB01C83514500EC66C3 /* PlusRed@2x.png */; };
+		63893FB31C83514A00EC66C3 /* BottomGradient@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 63893FB21C83514A00EC66C3 /* BottomGradient@2x.png */; };
+		63893FB61C8356EC00EC66C3 /* NSDate+Display.m in Sources */ = {isa = PBXBuildFile; fileRef = 63893FB51C8356EC00EC66C3 /* NSDate+Display.m */; };
 		63C69A541C362B01005A654C /* FriendsCollectionView.m in Sources */ = {isa = PBXBuildFile; fileRef = 63C69A4D1C362B01005A654C /* FriendsCollectionView.m */; };
 		63C69A551C362B01005A654C /* BlueFriendsCollectionView.m in Sources */ = {isa = PBXBuildFile; fileRef = 63C69A4F1C362B01005A654C /* BlueFriendsCollectionView.m */; };
 		63C69A561C362B01005A654C /* EventViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 63C69A511C362B01005A654C /* EventViewController.m */; };
 		63C69A571C362B01005A654C /* EventTitleView.m in Sources */ = {isa = PBXBuildFile; fileRef = 63C69A531C362B01005A654C /* EventTitleView.m */; };
+		63E400B11C7152C4007F0E56 /* SlideLeft@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 63E400B01C7152C4007F0E56 /* SlideLeft@2x.png */; };
+		63E400C11C716746007F0E56 /* SlideToChooseTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 63E400B61C716746007F0E56 /* SlideToChooseTableViewCell.m */; };
+		63E400C21C716746007F0E56 /* SemesterPage.m in Sources */ = {isa = PBXBuildFile; fileRef = 63E400B81C716746007F0E56 /* SemesterPage.m */; };
+		63E400C31C716746007F0E56 /* SemesterView.m in Sources */ = {isa = PBXBuildFile; fileRef = 63E400BA1C716746007F0E56 /* SemesterView.m */; };
+		63E400C41C716746007F0E56 /* DayPickerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 63E400BC1C716746007F0E56 /* DayPickerViewController.m */; };
+		63E400C51C716746007F0E56 /* IntertwineCalendarDayCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 63E400BE1C716746007F0E56 /* IntertwineCalendarDayCell.m */; };
+		63E400C61C716746007F0E56 /* NSDate+DaysOfYear.m in Sources */ = {isa = PBXBuildFile; fileRef = 63E400C01C716746007F0E56 /* NSDate+DaysOfYear.m */; };
+		63E400C91C72A08B007F0E56 /* EventFooterBar.m in Sources */ = {isa = PBXBuildFile; fileRef = 63E400C81C72A08B007F0E56 /* EventFooterBar.m */; };
 		B503CC641A2A2B35008F7B82 /* WebViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = B503CC631A2A2B35008F7B82 /* WebViewController.m */; };
 		B50903211B973E4B00D82FFC /* ActivityTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = B509031F1B973BFE00D82FFC /* ActivityTableViewCell.m */; };
 		B509BBC81A7DA642002ACE39 /* PendingRequestTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = B509BBC71A7DA642002ACE39 /* PendingRequestTableViewCell.m */; };
@@ -106,6 +127,23 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		6342B8C71C6836EA00A49D3E /* CommentsSlide.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = CommentsSlide.png; sourceTree = "<group>"; };
+		6342B8CA1C6836EA00A49D3E /* SlideUp@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "SlideUp@2x.png"; sourceTree = "<group>"; };
+		6342B8CF1C68474100A49D3E /* Date@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Date@2x.png"; sourceTree = "<group>"; };
+		6342B8D01C68474100A49D3E /* Location@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Location@2x.png"; sourceTree = "<group>"; };
+		6342B8D31C6968B700A49D3E /* SlideDownDark@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "SlideDownDark@2x.png"; sourceTree = "<group>"; };
+		6342B8D41C6968B700A49D3E /* SlideDownLight@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "SlideDownLight@2x.png"; sourceTree = "<group>"; };
+		634C2F6C1C82148E0041F29D /* PagingScrollView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PagingScrollView.h; sourceTree = "<group>"; };
+		634C2F6D1C82148E0041F29D /* PagingScrollView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PagingScrollView.m; sourceTree = "<group>"; };
+		634C2F6E1C82148E0041F29D /* HeaderPagingScrollView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HeaderPagingScrollView.h; sourceTree = "<group>"; };
+		634C2F6F1C82148E0041F29D /* HeaderPagingScrollView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HeaderPagingScrollView.m; sourceTree = "<group>"; };
+		634C2F701C82148E0041F29D /* HeaderPagingView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HeaderPagingView.h; sourceTree = "<group>"; };
+		634C2F711C82148E0041F29D /* HeaderPagingView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HeaderPagingView.m; sourceTree = "<group>"; };
+		63893FAE1C83513500EC66C3 /* LikeRed@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "LikeRed@2x.png"; sourceTree = "<group>"; };
+		63893FB01C83514500EC66C3 /* PlusRed@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "PlusRed@2x.png"; sourceTree = "<group>"; };
+		63893FB21C83514A00EC66C3 /* BottomGradient@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "BottomGradient@2x.png"; sourceTree = "<group>"; };
+		63893FB41C8356EC00EC66C3 /* NSDate+Display.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSDate+Display.h"; sourceTree = "<group>"; };
+		63893FB51C8356EC00EC66C3 /* NSDate+Display.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSDate+Display.m"; sourceTree = "<group>"; };
 		63C69A4C1C362B01005A654C /* FriendsCollectionView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FriendsCollectionView.h; sourceTree = "<group>"; };
 		63C69A4D1C362B01005A654C /* FriendsCollectionView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FriendsCollectionView.m; sourceTree = "<group>"; };
 		63C69A4E1C362B01005A654C /* BlueFriendsCollectionView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BlueFriendsCollectionView.h; sourceTree = "<group>"; };
@@ -114,6 +152,21 @@
 		63C69A511C362B01005A654C /* EventViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EventViewController.m; sourceTree = "<group>"; };
 		63C69A521C362B01005A654C /* EventTitleView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EventTitleView.h; sourceTree = "<group>"; };
 		63C69A531C362B01005A654C /* EventTitleView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EventTitleView.m; sourceTree = "<group>"; };
+		63E400B01C7152C4007F0E56 /* SlideLeft@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "SlideLeft@2x.png"; sourceTree = "<group>"; };
+		63E400B51C716746007F0E56 /* SlideToChooseTableViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SlideToChooseTableViewCell.h; sourceTree = "<group>"; };
+		63E400B61C716746007F0E56 /* SlideToChooseTableViewCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SlideToChooseTableViewCell.m; sourceTree = "<group>"; };
+		63E400B71C716746007F0E56 /* SemesterPage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SemesterPage.h; sourceTree = "<group>"; };
+		63E400B81C716746007F0E56 /* SemesterPage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SemesterPage.m; sourceTree = "<group>"; };
+		63E400B91C716746007F0E56 /* SemesterView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SemesterView.h; sourceTree = "<group>"; };
+		63E400BA1C716746007F0E56 /* SemesterView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SemesterView.m; sourceTree = "<group>"; };
+		63E400BB1C716746007F0E56 /* DayPickerViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DayPickerViewController.h; sourceTree = "<group>"; };
+		63E400BC1C716746007F0E56 /* DayPickerViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DayPickerViewController.m; sourceTree = "<group>"; };
+		63E400BD1C716746007F0E56 /* IntertwineCalendarDayCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IntertwineCalendarDayCell.h; sourceTree = "<group>"; };
+		63E400BE1C716746007F0E56 /* IntertwineCalendarDayCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IntertwineCalendarDayCell.m; sourceTree = "<group>"; };
+		63E400BF1C716746007F0E56 /* NSDate+DaysOfYear.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSDate+DaysOfYear.h"; sourceTree = "<group>"; };
+		63E400C01C716746007F0E56 /* NSDate+DaysOfYear.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSDate+DaysOfYear.m"; sourceTree = "<group>"; };
+		63E400C71C72A08B007F0E56 /* EventFooterBar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EventFooterBar.h; sourceTree = "<group>"; };
+		63E400C81C72A08B007F0E56 /* EventFooterBar.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EventFooterBar.m; sourceTree = "<group>"; };
 		B503CC621A2A2B35008F7B82 /* WebViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebViewController.h; sourceTree = "<group>"; };
 		B503CC631A2A2B35008F7B82 /* WebViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = WebViewController.m; sourceTree = "<group>"; };
 		B509031E1B973BFE00D82FFC /* ActivityTableViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ActivityTableViewCell.h; sourceTree = "<group>"; };
@@ -265,6 +318,40 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		634C2F621C8212C00041F29D /* Paging */ = {
+			isa = PBXGroup;
+			children = (
+				634C2F6C1C82148E0041F29D /* PagingScrollView.h */,
+				634C2F6D1C82148E0041F29D /* PagingScrollView.m */,
+				634C2F6E1C82148E0041F29D /* HeaderPagingScrollView.h */,
+				634C2F6F1C82148E0041F29D /* HeaderPagingScrollView.m */,
+				634C2F701C82148E0041F29D /* HeaderPagingView.h */,
+				634C2F711C82148E0041F29D /* HeaderPagingView.m */,
+			);
+			name = Paging;
+			sourceTree = "<group>";
+		};
+		63E400B41C716731007F0E56 /* Date */ = {
+			isa = PBXGroup;
+			children = (
+				63E400B51C716746007F0E56 /* SlideToChooseTableViewCell.h */,
+				63E400B61C716746007F0E56 /* SlideToChooseTableViewCell.m */,
+				63E400B71C716746007F0E56 /* SemesterPage.h */,
+				63E400B81C716746007F0E56 /* SemesterPage.m */,
+				63E400B91C716746007F0E56 /* SemesterView.h */,
+				63E400BA1C716746007F0E56 /* SemesterView.m */,
+				63E400BB1C716746007F0E56 /* DayPickerViewController.h */,
+				63E400BC1C716746007F0E56 /* DayPickerViewController.m */,
+				63E400BD1C716746007F0E56 /* IntertwineCalendarDayCell.h */,
+				63E400BE1C716746007F0E56 /* IntertwineCalendarDayCell.m */,
+				63E400BF1C716746007F0E56 /* NSDate+DaysOfYear.h */,
+				63E400C01C716746007F0E56 /* NSDate+DaysOfYear.m */,
+				63893FB41C8356EC00EC66C3 /* NSDate+Display.h */,
+				63893FB51C8356EC00EC66C3 /* NSDate+Display.m */,
+			);
+			name = Date;
+			sourceTree = "<group>";
+		};
 		B509BBC51A7DA61A002ACE39 /* Tableview Cells */ = {
 			isa = PBXGroup;
 			children = (
@@ -284,9 +371,11 @@
 				B5EC650A1A6B88B0003F45F2 /* IntertwineManager.m */,
 				B58FD1331BAC5E9500C470CC /* IntertwineManager+ProfileImage.h */,
 				B58FD1341BAC5E9500C470CC /* IntertwineManager+ProfileImage.m */,
+				63E400B41C716731007F0E56 /* Date */,
 				B59F2C9D1BD82841000265BA /* Notifications */,
 				B5B004581B59887700A6CBB4 /* Navigation */,
 				B54D53F61B12BD770013504A /* Multiple Banners */,
+				634C2F621C8212C00041F29D /* Paging */,
 				B56E43491AD4B93200D3B442 /* Activity */,
 				B56C48BE1BC1B3EF006B2867 /* Commenting */,
 				B556F5B21AA55FC4000C796C /* To Split Up */,
@@ -330,6 +419,8 @@
 				B5B004651B59958F00A6CBB4 /* Images */,
 				B5F6DFA21B269A9D008FB471 /* Logging In */,
 				B5E34CFC1B9426FB00FB6348 /* gear.png */,
+				63893FB01C83514500EC66C3 /* PlusRed@2x.png */,
+				63893FB21C83514A00EC66C3 /* BottomGradient@2x.png */,
 				B572DDB91BD8C4C900AC4481 /* notifications_icon.png */,
 				B572DDB11BD89DB700AC4481 /* search_icon.png */,
 				B5BECC051BD33BEE00581C29 /* editPencil.png */,
@@ -434,6 +525,8 @@
 		B56E43491AD4B93200D3B442 /* Activity */ = {
 			isa = PBXGroup;
 			children = (
+				63E400C71C72A08B007F0E56 /* EventFooterBar.h */,
+				63E400C81C72A08B007F0E56 /* EventFooterBar.m */,
 				B572DDB31BD89E2100AC4481 /* EventObject.h */,
 				B572DDB41BD89E2100AC4481 /* EventObject.m */,
 				B561CB111BDE6CB600573C21 /* ActivityDetailView.h */,
@@ -473,6 +566,7 @@
 				B572DDBB1BD8C4D700AC4481 /* CommentIcon.png */,
 				B572DDBC1BD8C4D700AC4481 /* CompletedIcon.png */,
 				B572DDBD1BD8C4D700AC4481 /* LikeIcon.png */,
+				63893FAE1C83513500EC66C3 /* LikeRed@2x.png */,
 			);
 			name = ActivityCell;
 			sourceTree = "<group>";
@@ -510,6 +604,13 @@
 				B5E34CFA1B94205A00FB6348 /* BackgroundImage.png */,
 				B5B0046D1B59964100A6CBB4 /* background@2x.png */,
 				B56C48BC1BC0B317006B2867 /* CompleteIcon.png */,
+				6342B8C71C6836EA00A49D3E /* CommentsSlide.png */,
+				6342B8CF1C68474100A49D3E /* Date@2x.png */,
+				6342B8D01C68474100A49D3E /* Location@2x.png */,
+				63E400B01C7152C4007F0E56 /* SlideLeft@2x.png */,
+				6342B8CA1C6836EA00A49D3E /* SlideUp@2x.png */,
+				6342B8D31C6968B700A49D3E /* SlideDownDark@2x.png */,
+				6342B8D41C6968B700A49D3E /* SlideDownLight@2x.png */,
 				B5B004661B59959400A6CBB4 /* Navigation */,
 			);
 			name = Images;
@@ -645,17 +746,25 @@
 				B56793371AC3088000558E2D /* elipses.png in Resources */,
 				B572DDC01BD8C4D700AC4481 /* LikeIcon.png in Resources */,
 				B5B0046C1B59960C00A6CBB4 /* home_icon.png in Resources */,
+				6342B8D21C68474100A49D3E /* Location@2x.png in Resources */,
 				B5BECC061BD33BEE00581C29 /* editPencil.png in Resources */,
 				B572DDB21BD89DB700AC4481 /* search_icon.png in Resources */,
+				6342B8CB1C6836EA00A49D3E /* CommentsSlide.png in Resources */,
+				63893FB11C83514500EC66C3 /* PlusRed@2x.png in Resources */,
+				63893FB31C83514A00EC66C3 /* BottomGradient@2x.png in Resources */,
 				B54D53FD1B13153A0013504A /* Categories.png in Resources */,
 				B5F6DFA11B269A99008FB471 /* atsign.png in Resources */,
 				B572DDC41BD8C97400AC4481 /* friends.png in Resources */,
+				6342B8D11C68474100A49D3E /* Date@2x.png in Resources */,
 				B5F6DF9F1B269A8F008FB471 /* facebookbutton.png in Resources */,
 				B572DDBF1BD8C4D700AC4481 /* CompletedIcon.png in Resources */,
 				B56793321AC3075800558E2D /* create_event_bottom.png in Resources */,
+				63E400B11C7152C4007F0E56 /* SlideLeft@2x.png in Resources */,
 				B531B01F1A27A3F20034CF3C /* Main.storyboard in Resources */,
 				B5F6DFA41B28DB4F008FB471 /* Add.png in Resources */,
 				B572DDBA1BD8C4C900AC4481 /* notifications_icon.png in Resources */,
+				6342B8D51C6968B700A49D3E /* SlideDownDark@2x.png in Resources */,
+				6342B8CE1C6836EA00A49D3E /* SlideUp@2x.png in Resources */,
 				B5C55ACF1BC49340008CB334 /* Submarine.aiff in Resources */,
 				B556F5BD1AA6B2D2000C796C /* settings_icon.png in Resources */,
 				B5333E631A2984620083E1CB /* facebook-login.png in Resources */,
@@ -669,6 +778,8 @@
 				B572DDBE1BD8C4D700AC4481 /* CommentIcon.png in Resources */,
 				B56793361AC3088000558E2D /* checkmark.png in Resources */,
 				B531B0211A27A3F20034CF3C /* Images.xcassets in Resources */,
+				63893FAF1C83513600EC66C3 /* LikeRed@2x.png in Resources */,
+				6342B8D61C6968B700A49D3E /* SlideDownLight@2x.png in Resources */,
 				B56E43461AD42B9700D3B442 /* TempBackground.png in Resources */,
 				B5B0046B1B59960C00A6CBB4 /* gear_icon.png in Resources */,
 				B5E34CFD1B9426FB00FB6348 /* gear.png in Resources */,
@@ -693,6 +804,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				B5EC650E1A6B88D6003F45F2 /* IntertwineManager+Friends.m in Sources */,
+				634C2F741C82148E0041F29D /* HeaderPagingView.m in Sources */,
+				63E400C91C72A08B007F0E56 /* EventFooterBar.m in Sources */,
+				63E400C11C716746007F0E56 /* SlideToChooseTableViewCell.m in Sources */,
 				B5B004631B598F8C00A6CBB4 /* FriendsTableViewController.m in Sources */,
 				B54D53F21B12BD690013504A /* ITDynamicBannerViewController.m in Sources */,
 				B56E434C1AD4B96700D3B442 /* ActivityViewController.m in Sources */,
@@ -703,22 +817,30 @@
 				63C69A571C362B01005A654C /* EventTitleView.m in Sources */,
 				B59F2CA31BD8290B000265BA /* IntertwineNotification.m in Sources */,
 				B5C8F35D1AD9F93E0040E1C8 /* CommentViewController.m in Sources */,
+				63E400C31C716746007F0E56 /* SemesterView.m in Sources */,
 				B54D53F31B12BD690013504A /* ITMultipleBannersViewController.m in Sources */,
 				63C69A541C362B01005A654C /* FriendsCollectionView.m in Sources */,
 				63C69A561C362B01005A654C /* EventViewController.m in Sources */,
 				63C69A551C362B01005A654C /* BlueFriendsCollectionView.m in Sources */,
+				63893FB61C8356EC00EC66C3 /* NSDate+Display.m in Sources */,
 				B531B01C1A27A3F20034CF3C /* ViewController.m in Sources */,
 				B509BBC81A7DA642002ACE39 /* PendingRequestTableViewCell.m in Sources */,
 				B54D53F11B12BD690013504A /* ITBannerTableView.m in Sources */,
 				B59F2CA01BD828CA000265BA /* NotificationMenuViewController.m in Sources */,
 				B5B004641B598F8C00A6CBB4 /* FriendsTableViewCell.m in Sources */,
 				B5E420021A8427600054F5CF /* SendRequestTableViewCell.m in Sources */,
+				63E400C21C716746007F0E56 /* SemesterPage.m in Sources */,
 				B503CC641A2A2B35008F7B82 /* WebViewController.m in Sources */,
 				B50903211B973E4B00D82FFC /* ActivityTableViewCell.m in Sources */,
 				B59F2CA61BD82F1F000265BA /* NotificationTableViewCell.m in Sources */,
+				63E400C51C716746007F0E56 /* IntertwineCalendarDayCell.m in Sources */,
 				B5C55AD41BC592D6008CB334 /* ActivityAlertView.m in Sources */,
+				634C2F731C82148E0041F29D /* HeaderPagingScrollView.m in Sources */,
+				63E400C41C716746007F0E56 /* DayPickerViewController.m in Sources */,
+				634C2F721C82148E0041F29D /* PagingScrollView.m in Sources */,
 				B58FD12F1BAAA40500C470CC /* CommentTableViewCell.m in Sources */,
 				B58DA7A11AC0A983000B814E /* Friend.m in Sources */,
+				63E400C61C716746007F0E56 /* NSDate+DaysOfYear.m in Sources */,
 				B5BCC3F91BB26E06007FB816 /* ButtonBarView.m in Sources */,
 				B54D53F01B12BD690013504A /* ITDynamicBannerView.m in Sources */,
 				B561CB131BDE6CB600573C21 /* ActivityDetailView.m in Sources */,
@@ -864,7 +986,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_IDENTITY = "iPhone Distribution";
+				CODE_SIGN_IDENTITY = "iPhone Distribution: Ben Rooke (5W2KTDXFV2)";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -877,7 +999,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = Intertwine;
-				PROVISIONING_PROFILE = "16a16dcb-57d2-4172-9261-0eabd865657f";
+				PROVISIONING_PROFILE = "";
 			};
 			name = Debug;
 		};
@@ -885,8 +1007,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_IDENTITY = "iPhone Distribution";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "iPhone Distribution: Ben Rooke (5W2KTDXFV2)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Ben Rooke (5W2KTDXFV2)";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/Sign",
@@ -898,7 +1020,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = Intertwine;
-				PROVISIONING_PROFILE = "16a16dcb-57d2-4172-9261-0eabd865657f";
+				PROVISIONING_PROFILE = "";
 			};
 			name = Release;
 		};

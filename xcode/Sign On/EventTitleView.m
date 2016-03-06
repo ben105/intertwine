@@ -11,14 +11,20 @@
 
 const CGFloat TitleViewLabelInset = 10.0;
 
+const CGFloat EventTitleViewAlpha = 0.33;
+const CGFloat EventTitleViewAlphaEditMode = 0.16;
+const CGFloat EventTitleViewBackgroundColor = 193.0/255.0;
+
 
 @implementation EventTitleView
 
 - (instancetype) initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
-        CGFloat color = 193.0/255.0;
-        self.backgroundColor = [UIColor colorWithRed:color green:color blue:color alpha:0.33];
+        self.backgroundColor = [UIColor colorWithRed:EventTitleViewBackgroundColor
+                                               green:EventTitleViewBackgroundColor
+                                                blue:EventTitleViewBackgroundColor
+                                               alpha:EventTitleViewAlpha];
         self.layer.borderColor = [[UIColor whiteColor] CGColor];
         self.layer.borderWidth = 1.0;
         self.layer.cornerRadius = 5.0;
@@ -27,6 +33,24 @@ const CGFloat TitleViewLabelInset = 10.0;
         [self addSubview:self.titleTextField];
     }
     return self;
+}
+
+#pragma mark - Editing
+
+- (void)hideBorder:(BOOL)hide {
+    if (hide) {
+        self.layer.borderWidth = 0;
+        self.backgroundColor = [UIColor colorWithRed:EventTitleViewBackgroundColor
+                                               green:EventTitleViewBackgroundColor
+                                                blue:EventTitleViewBackgroundColor
+                                               alpha:EventTitleViewAlphaEditMode];
+    } else {
+        self.layer.borderWidth = 1.0;
+        self.backgroundColor = [UIColor colorWithRed:EventTitleViewBackgroundColor
+                                               green:EventTitleViewBackgroundColor
+                                                blue:EventTitleViewBackgroundColor
+                                               alpha:EventTitleViewAlpha];
+    }
 }
 
 #pragma mark - Text Field Delegate
@@ -85,6 +109,8 @@ const CGFloat TitleViewLabelInset = 10.0;
         _titleTextField.returnKeyType = UIReturnKeyNext;
         _titleTextField.textColor = [UIColor whiteColor];
         _titleTextField.font = [UIFont fontWithName:@"HelveticaNeue" size:32];
+        _titleTextField.adjustsFontSizeToFitWidth = YES;
+        _titleTextField.minimumFontSize = 12.0;
     }
     return _titleTextField;
 }

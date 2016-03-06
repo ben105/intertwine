@@ -18,4 +18,7 @@
 @property (nonatomic, strong) UILabel *placeholderLabel;
 @property (nonatomic, strong) UITextField *titleTextField;
 @property (nonatomic, weak) id<EventTitleViewDelegate> delegate;
+
+/* For when we are or are not in edit mode. */
+- (void)hideBorder:(BOOL)hide;
 @end

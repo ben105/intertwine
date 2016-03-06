@@ -11,8 +11,8 @@
 
 @interface IntertwineManager (Activity)
 
++ (void) getUpcomingActivitiesWithResponse:(void (^)(id json, NSError *error, NSURLResponse *response))responseBlock;
 + (void) getActivityFeedWithResponse:(void (^)(id json, NSError *error, NSURLResponse *response))responseBlock;
-
 + (void) getNotificationsWithResponse:(void (^)(id json, NSError *error, NSURLResponse *response))responseBlock;
 
 @end

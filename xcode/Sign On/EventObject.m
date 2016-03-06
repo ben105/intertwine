@@ -8,23 +8,44 @@
 
 #import "EventObject.h"
 
-@interface EventObject ()
-@property (nonatomic, copy) NSString *startDate;
-@property (nonatomic, copy) NSString *startTime;
-@end
-
+#define ONE_DAY (60*60*24)
+#define TWO_DAYS (ONE_DAY * 2)
+#define ONE_WEEK (ONE_DAY * 7)
 
 const NSString *kStartDateEventKey = @"start_date";
 const NSString *kStartTimeEventKey = @"start_time";
 const NSString *kSemesterIdEventKey = @"semester_id";
 const NSString *kAllDayEventKey = @"all_day";
 
-char semesterNames[3][10] = {"Morning", "Afternoon", "Evening"};
+char semesterNames[4][10] = {"morning", "afternoon", "evening"};
 NSString* semesterNameForIndex(unsigned char index) {
     return [NSString stringWithCString:semesterNames[index] encoding:NSUTF8StringEncoding];
 }
 
+
+@interface EventObject ()
+- (NSDate*)_getUnpreciseToday;
+@end
+
+
 @implementation EventObject
+
+-(instancetype)init {
+    self = [super init];
+    if (self) {
+        /* There are some date objects we need to set to nil. */
+        self.startDate = nil;
+        self.startTime = nil;
+        self.isAllDay = NO;
+        self.semester = nil;
+    }
+    return self;
+}
+
+- (void)setSemesterID:(NSUInteger)semesterID {
+    _semesterID = semesterID;
+    _semester = semesterNameForIndex(semesterID);
+}
 
 -(NSDate*)timestamp {
     if (!self.startDate) {
@@ -32,10 +53,12 @@ NSString* semesterNameForIndex(unsigned char index) {
     }
     NSString *dateString = self.startDate;
     NSDateFormatter *format = [[NSDateFormatter alloc] init];
-    [format setDateFormat:@"yyyy'-'MM'-'dd"];
+    [format setDateFormat:@"yyyy'-'MM'-'dd HH':'mm':'ss"];
+    [format setTimeZone:[NSTimeZone systemTimeZone]];
     if (self.startTime && self.startDate) {
         dateString = [NSString stringWithFormat:@"%@ %@", self.startDate, self.startTime];
-        [format setDateFormat:@"yyyy'-'MM'-'dd HH':'mm':'ss"];
+    } else {
+        dateString = [NSString stringWithFormat:@"%@ 00:00:00", self.startDate];
     }
     _timestamp = [format dateFromString:dateString];
     return _timestamp;
@@ -53,33 +76,100 @@ NSString* semesterNameForIndex(unsigned char index) {
     // We don't assign the start date right away to the self instance because we might have an
     // ill formed dateInfo object.
     NSString *startDate = [dateInfo objectForKey:kStartDateEventKey];
-    if (!startDate) {
+    if ((NSNull*)startDate == [NSNull null] || !startDate) {
         /* There's nothing to do here, because 
          * we need at least a start date. */
         return;
     }
+    self.startDate = startDate;
+    
     id allDayObject = [dateInfo objectForKey:kAllDayEventKey];
     if ((NSNull*)allDayObject != [NSNull null]) {
         BOOL isAllDay = [(NSNumber*)allDayObject boolValue];
-        /* We can end here, because we know it's all day. */
         self.isAllDay = isAllDay;
-        self.startDate = startDate;
-        return;
+        if (isAllDay) {
+            /* We can end here, because we know it's all day. */
+            return;
+        }
     }
     id semesterObject = [dateInfo objectForKey:kSemesterIdEventKey];
     if ((NSNull*)semesterObject != [NSNull null]) {
         NSUInteger semesterID = [(NSNumber*)semesterObject unsignedIntegerValue];
+        self.semesterID = semesterID;
         /* If we have a semester ID > 0 then we can stop here and assign
          * the date and semester ID. */
-        self.semester = semesterNameForIndex(semesterID - 1);   // Subtract 1 because of 0 indexing.
-        self.startDate = startDate;
+        self.semester = semesterNameForIndex(semesterID);
         return;
     }
     NSString *startTime = [dateInfo objectForKey:kStartTimeEventKey];
-    if (startTime) {
+    if ((NSNull*)startTime != [NSNull null]) {
+        NSRange range = [startTime rangeOfString:@"+"];
+        if (range.location != NSNotFound) {
+            startTime = [startTime substringToIndex:range.location];
+        }
         self.startTime = startTime;
-        self.startDate = startDate;
     }
 }
+
+#pragma mark - Convenience Methods for Ordering Events by Date
+
+- (NSDate*)_getUnpreciseToday {
+    NSDate *now = [NSDate date];
+    NSDateComponents *components = [[NSCalendar currentCalendar] components:NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay
+                                                                  fromDate:now];
+    return [[NSCalendar currentCalendar] dateFromComponents:components];
+}
+
+- (BOOL) hasDate {
+    return self.startDate != nil;
+}
+
+- (BOOL) isInPast {
+    NSComparisonResult result = [self.timestamp compare:[self _getUnpreciseToday]];
+    return result == NSOrderedAscending;
+}
+
+- (BOOL) isToday {
+    if ([self isInPast]) {
+        return NO;
+    }
+    NSDate *tomorrow = [NSDate dateWithTimeInterval:ONE_DAY sinceDate:[self _getUnpreciseToday]];
+    NSComparisonResult result = [self.timestamp compare:tomorrow];
+    return result == NSOrderedAscending;
+}
+
+- (BOOL) isTomorrow {
+    if ([self isInPast]) {
+        return NO;
+    }
+    NSDate *twoDays = [NSDate dateWithTimeInterval:TWO_DAYS sinceDate:[self _getUnpreciseToday]];
+    NSComparisonResult result = [self.timestamp compare:twoDays];
+    return ![self isToday] && (result == NSOrderedAscending);
+}
+
+- (BOOL) isThisWeek {
+    if ([self isInPast]) {
+        return NO;
+    }
+    NSDate *thisWeek = [NSDate dateWithTimeInterval:ONE_WEEK sinceDate:[self _getUnpreciseToday]];
+    NSComparisonResult result = [self.timestamp compare:thisWeek];
+    return result == NSOrderedAscending;
+}
+
+- (BOOL) isThisMonth {
+    if (self.timestamp == nil) {
+        return NO;
+    }
+    if ([self isInPast]) {
+        return NO;
+    }
+    NSDate *today = [self _getUnpreciseToday];
+    NSDateComponents *todaysComponents = [[NSCalendar currentCalendar] components:NSCalendarUnitMonth | NSCalendarUnitYear
+                                                                         fromDate:today];
+    NSDateComponents *eventDateComponents = [[NSCalendar currentCalendar] components:NSCalendarUnitMonth | NSCalendarUnitYear
+                                                                            fromDate:self.timestamp];
+    return (todaysComponents.year == eventDateComponents.year) && (todaysComponents.month == eventDateComponents.month);
+}
+
 
 @end

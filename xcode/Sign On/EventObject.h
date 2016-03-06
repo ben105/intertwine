@@ -19,7 +19,10 @@
 @property (nonatomic, strong) NSArray *attendees;
 
 /* For dates. */
+@property (nonatomic, copy) NSString *startDate;
+@property (nonatomic, copy) NSString *startTime;
 @property (nonatomic, copy) NSString *semester;
+@property (nonatomic) NSUInteger semesterID;
 @property (nonatomic) BOOL isAllDay;
 @property (nonatomic, strong) NSDate *timestamp;
 
@@ -30,5 +33,11 @@
 @property NSUInteger numberOfLikes;
 
 - (void) extractDateInfo:(NSDictionary*)dateInfo;
+
+- (BOOL) hasDate;
+- (BOOL) isToday;
+- (BOOL) isTomorrow;
+- (BOOL) isThisWeek;
+- (BOOL) isThisMonth;
 
 @end

@@ -17,14 +17,20 @@
 
 - (void)setProfileID:(NSString*)profileID {
     _profileID = profileID;
-    UIImage *profileImage = [IntertwineManager profileImage:profileID];
-    if (profileImage == nil) {
-        NSString *userImageURL = [NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large", profileID];
-        NSData *data = [NSData dataWithContentsOfURL:[NSURL URLWithString:userImageURL]];
-        [IntertwineManager cachedImage:data forProfileID:profileID];
-        profileImage = [UIImage imageWithData:data];
-    }
-    self.imageView.image = profileImage;
+    dispatch_queue_t queue = dispatch_get_global_queue( DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+    dispatch_async(queue, ^{
+        UIImage *profileImage = [IntertwineManager profileImage:profileID];
+        if (profileImage == nil) {
+            NSString *userImageURL = [NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large", profileID];
+            NSData *data = [NSData dataWithContentsOfURL:[NSURL URLWithString:userImageURL]];
+            [IntertwineManager cachedImage:data forProfileID:profileID];
+            profileImage = [UIImage imageWithData:data];
+        }
+        /* Update the UI on the main thread. */
+        dispatch_async(dispatch_get_main_queue(), ^(void){
+            self.imageView.image = profileImage;
+        });
+    });
 }
 
 - (id) initWithFrame:(CGRect)frame {
@@ -34,6 +40,9 @@
         self.layer.borderColor = [[UIColor whiteColor] CGColor];
         self.layer.cornerRadius = CGRectGetWidth(frame) / 2.0;
         self.layer.borderWidth = 1.0;
+        self.layer.shadowColor = [[UIColor blackColor] CGColor];
+        self.layer.shadowOpacity = 1.0;
+        self.layer.shadowOffset = CGSizeMake(0, 6);
         [self addSubview:self.imageView];
     }
     return self;

@@ -30,7 +30,7 @@ const CGFloat maxLabelHeight = 100.0;
 @synthesize messageLabel = _messageLabel;
 
 - (instancetype) initWithFrame:(CGRect)frame andMessage:(NSString*)message profileID:(NSString*)profileID notifInfo:(NSDictionary*)notifInfo {
-    self = [super initWithFrame:frame];
+    self = [self initWithFrame:frame];
     if (self) {
         self.message = message;
         self.profilePicture.profileID = profileID;

@@ -16,22 +16,19 @@
 
 const NSString *kCommentCollectionIdentifier = @"commentvc_attendee";
 
+const CGFloat CommentBoxHeight = 50.0;
 
-
+#define COMMENTS_TABLE_VIEW_Y (CGRectGetMaxY(self.commentCountLabel.frame) + 10)
 
 @interface CommentObject : NSObject
-
 @property (nonatomic, copy) NSString *comment;
 @property (nonatomic, strong) UILabel *textLabel;
 @property (nonatomic, strong) NSNumber *eventID;
 @property (nonatomic, strong) Friend *commentator;
-
 -(id)initWithUser:(Friend*)user comment:(NSString*)comment;
-
 @end
 
 @implementation CommentObject
-
 -(id)initWithUser:(Friend*)user comment:(NSString*)comment {
     self = [super init];
     if (self) {
@@ -42,24 +39,13 @@ const NSString *kCommentCollectionIdentifier = @"commentvc_attendee";
     }
     return self;
 }
-
 @end
-
-
-
-
-
-
-
-
-
-
 
 
 @interface CommentViewController ()
 
-@property (nonatomic, strong) UIControl *backgroundExit;
-@property (nonatomic, strong) UIControl *dismissControlView;
+//@property (nonatomic, strong) UIControl *backgroundExit;
+//@property (nonatomic, strong) UIControl *dismissControlView;
 
 @property (nonatomic, strong) UIView *splashScreen;
 @property (nonatomic, strong) UITableView *commentsTableView;
@@ -89,9 +75,8 @@ const NSString *kCommentCollectionIdentifier = @"commentvc_attendee";
     // Do any additional setup after loading the view.
     self.comments = [[NSMutableArray alloc] init];
 
-    [self.view addSubview:self.backgroundExit];
-    [self.view addSubview:self.splashScreen];
-    [self.view addSubview:self.commentBottomBox];
+//    [self.view addSubview:self.backgroundExit];
+    
     
     [self _registerForKeyboardNotifications];
 }
@@ -107,7 +92,9 @@ const NSString *kCommentCollectionIdentifier = @"commentvc_attendee";
 - (void) viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
 
-    self.titleLabel.text = self.event.eventTitle;
+//    self.titleLabel.text = self.event.eventTitle;
+    [self.view addSubview:self.splashScreen];
+    [self.view addSubview:self.commentBottomBox];
     
     [self _setCommentCountLabel];
     [self _loadComments];
@@ -127,6 +114,10 @@ const NSString *kCommentCollectionIdentifier = @"commentvc_attendee";
     if (!success)
         return;
     
+    if ([self.commentTextField.text length] == 0) {
+        return;
+    }
+    
     // Add this comment to the table view manually.
     Friend *me = [[Friend alloc] init];
     me.accountID = [IntertwineManager getAccountID];
@@ -143,7 +134,7 @@ const NSString *kCommentCollectionIdentifier = @"commentvc_attendee";
     NSUInteger index = [self.comments count] - 1;
     [self.commentsTableView insertRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:index inSection:0]] withRowAnimation:UITableViewRowAnimationBottom];
     
-    [IntertwineManager addComment:self.commentTextField.text forEvent:self.titleLabel.text eventNumber:self.event.eventID withResponse:nil];
+    [IntertwineManager addComment:self.commentTextField.text forEvent:self.event.eventTitle eventNumber:self.event.eventID withResponse:nil];
     [self performSelector:@selector(_loadComments) withObject:nil afterDelay:1.0];
     self.commentTextField.text = @"";
     self.event.numberOfComments += 1;
@@ -152,9 +143,9 @@ const NSString *kCommentCollectionIdentifier = @"commentvc_attendee";
 
 - (BOOL)_checkCommentLimit {
     NSUInteger length = [self.commentTextField.text length];
-    if (length > 200) {
+    if (length > 400) {
         UIAlertView *alert = [[UIAlertView alloc] initWithTitle:nil
-                                                        message:[NSString stringWithFormat:@"Comment is too large. (%lu/200) characters.",(unsigned long)length]
+                                                        message:[NSString stringWithFormat:@"Comment is too large. (%lu/400) characters.",(unsigned long)length]
                                                        delegate:nil
                                               cancelButtonTitle:@"Okay"
                                               otherButtonTitles:nil];
@@ -226,33 +217,54 @@ const NSString *kCommentCollectionIdentifier = @"commentvc_attendee";
 
 - (void)_keyboardWasShown:(NSNotification*)aNotification
 {
+    /* Let the delegate know that we are trying to post a comment. */
+    if ([self.delegate respondsToSelector:@selector(didEnterCommentMode)]) {
+        [self.delegate didEnterCommentMode];
+    }
+    
     NSDictionary* info = [aNotification userInfo];
 
-    CGSize kbSize = [[info objectForKey:UIKeyboardFrameEndUserInfoKey] CGRectValue].size;
+    CGRect kbRect = [[info objectForKey:UIKeyboardFrameEndUserInfoKey] CGRectValue];
+    CGSize kbSize = kbRect.size;
     
     NSNumber *animationDurationNumber = [info objectForKey:UIKeyboardAnimationDurationUserInfoKey];
     double animationDuration = [animationDurationNumber doubleValue];
     
     [UIView animateWithDuration:animationDuration animations:^{
-        CGFloat width = CGRectGetWidth(self.view.frame);
-        CGFloat height = CGRectGetHeight(self.view.frame);
-        self.view.frame = CGRectMake(0, 0 - kbSize.height, width, height);
+        /* Adjust the comment table view frame */
+        CGRect frame = self.commentsTableView.frame;
+        frame.size.height = CGRectGetHeight(self.view.frame) - CGRectGetHeight(self.commentBottomBox.frame) - kbSize.height - COMMENTS_TABLE_VIEW_Y;
+        self.commentsTableView.frame = frame;
+        /* Now we can adjust the comment box frame. */
+        frame = self.commentBottomBox.frame;
+        frame.origin.y = CGRectGetHeight(self.view.frame) - kbSize.height - CGRectGetHeight(frame);
+        self.commentBottomBox.frame = frame;
     } completion:^(BOOL finished) {
-        [self.view addSubview:self.dismissControlView];
+//        [self.view addSubview:self.dismissControlView];
     }];
 }
 
 // Called when the UIKeyboardWillHideNotification is sent
 - (void)_keyboardWillBeHidden:(NSNotification*)aNotification
 {
-    [self.dismissControlView removeFromSuperview];
+    /* Let the delegate know that we are leaving comment mode. */
+    if ([self.delegate respondsToSelector:@selector(didExitCommentMode)]) {
+        [self.delegate didExitCommentMode];
+    }
+    
+//    [self.dismissControlView removeFromSuperview];
     NSNumber *animationDurationNumber = [[aNotification userInfo] objectForKey:UIKeyboardAnimationDurationUserInfoKey];
     double animationDuration = [animationDurationNumber doubleValue];
     
     [UIView animateWithDuration:animationDuration animations:^{
-        CGFloat width = CGRectGetWidth(self.view.frame);
-        CGFloat height = CGRectGetHeight(self.view.frame);
-        self.view.frame = CGRectMake(0, 0, width, height);
+        /* Adjust the comment table view frame */
+        CGRect frame = self.commentsTableView.frame;
+        frame.size.height = CGRectGetHeight(self.view.frame) - CGRectGetHeight(self.commentBottomBox.frame) - COMMENTS_TABLE_VIEW_Y;
+        self.commentsTableView.frame = frame;
+        /* Now we can adjust the comment box frame. */
+        frame = self.commentBottomBox.frame;
+        frame.origin.y = CGRectGetHeight(self.view.frame) - CGRectGetHeight(frame);
+        self.commentBottomBox.frame = frame;
     }];
 }
 
@@ -345,42 +357,41 @@ const NSString *kCommentCollectionIdentifier = @"commentvc_attendee";
 
 #pragma mark - Lazy Loading
 
-- (UIControl*)dismissControlView {
-    if (!_dismissControlView) {
-        CGFloat textFieldHeight = CGRectGetHeight(self.commentTextField.frame);
-        CGFloat controlHeight = CGRectGetHeight([[UIScreen mainScreen] bounds]) - textFieldHeight;
-        CGFloat controlWidth = CGRectGetWidth([[UIScreen mainScreen] bounds]);
-        _dismissControlView = [[UIControl alloc] initWithFrame:CGRectMake(0, 0, controlWidth, controlHeight)];
-        [_dismissControlView addTarget:self.commentTextField action:@selector(resignFirstResponder) forControlEvents:UIControlEventTouchUpInside];
-    }
-    return _dismissControlView;
-}
+//- (UIControl*)dismissControlView {
+//    if (!_dismissControlView) {
+//        CGFloat textFieldHeight = CGRectGetHeight(self.commentTextField.frame);
+//        CGFloat controlHeight = CGRectGetHeight([[UIScreen mainScreen] bounds]) - textFieldHeight;
+//        CGFloat controlWidth = CGRectGetWidth([[UIScreen mainScreen] bounds]);
+//        _dismissControlView = [[UIControl alloc] initWithFrame:CGRectMake(0, 0, controlWidth, controlHeight)];
+//        [_dismissControlView addTarget:self.commentTextField action:@selector(resignFirstResponder) forControlEvents:UIControlEventTouchUpInside];
+//    }
+//    return _dismissControlView;
+//}
 
-- (UIControl*)backgroundExit {
-    if (!_backgroundExit) {
-        _backgroundExit = [[UIControl alloc] initWithFrame:self.view.frame];
-        CGRect frame = _backgroundExit.frame;
-        frame.origin.x = 0;
-        frame.origin.y = 0;
-        _backgroundExit.frame = frame;
-        _backgroundExit.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:.55];
-        [_backgroundExit addTarget:self action:@selector(_dismiss) forControlEvents:UIControlEventTouchUpInside];
-    }
-    return _backgroundExit;
-}
+//- (UIControl*)backgroundExit {
+//    if (!_backgroundExit) {
+//        _backgroundExit = [[UIControl alloc] initWithFrame:self.view.frame];
+//        CGRect frame = _backgroundExit.frame;
+//        frame.origin.x = 0;
+//        frame.origin.y = 0;
+//        _backgroundExit.frame = frame;
+//        _backgroundExit.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:.55];
+//        [_backgroundExit addTarget:self action:@selector(_dismiss) forControlEvents:UIControlEventTouchUpInside];
+//    }
+//    return _backgroundExit;
+//}
 
 - (UIView*)splashScreen {
     if (!_splashScreen) {
-        CGRect screenBounds = [[UIScreen mainScreen] bounds];
-        CGFloat splashWidth = CGRectGetWidth(screenBounds) - 20;
-        CGFloat splashHeight = CGRectGetHeight(screenBounds) * 3.0/4.0;
+        CGFloat splashWidth = CGRectGetWidth(self.view.frame);
+        CGFloat splashHeight = CGRectGetHeight(self.view.frame) - CommentBoxHeight;
         _splashScreen = [[UIView alloc] initWithFrame:CGRectMake(0, 0, splashWidth, splashHeight)];
-        CGPoint center = CGPointMake(CGRectGetMidX(screenBounds), CGRectGetMidY(screenBounds));
-        _splashScreen.center = center;
-        _splashScreen.backgroundColor = [UIColor colorWithRed:236.0/255.0 green:244.0/255.0 blue:247.0/255.0 alpha:.9];
-        _splashScreen.layer.cornerRadius = 5.0;
-        _splashScreen.layer.borderWidth = 2.0;
-        _splashScreen.layer.borderColor = [[UIColor blackColor] CGColor];
+//        CGPoint center = CGPointMake(CGRectGetWidth(self.view.frame)/2.0, CGRectGetHeight(self.view.frame)/2.0);
+//        _splashScreen.center = center;
+        _splashScreen.backgroundColor = [UIColor colorWithRed:227.0/255.0 green:227.0/255.0 blue:227.0/255.0 alpha:.87];
+//        _splashScreen.layer.cornerRadius = 5.0;
+//        _splashScreen.layer.borderWidth = 2.0;
+//        _splashScreen.layer.borderColor = [[UIColor blackColor] CGColor];
         [_splashScreen addSubview:self.titleLabel];
         [_splashScreen addSubview:self.commentCountLabel];
         [_splashScreen addSubview:self.commentsTableView];
@@ -390,19 +401,20 @@ const NSString *kCommentCollectionIdentifier = @"commentvc_attendee";
 
 - (UITableView*)commentsTableView {
     if (!_commentsTableView) {
-        _commentsTableView = [[UITableView alloc] initWithFrame:CGRectMake(0, CGRectGetMaxY(self.commentCountLabel.frame) + 10, CGRectGetWidth(self.splashScreen.frame), CGRectGetHeight(self.splashScreen.frame) - CGRectGetMaxY(self.commentCountLabel.frame) - 10)];
+        _commentsTableView = [[UITableView alloc] initWithFrame:CGRectMake(0, COMMENTS_TABLE_VIEW_Y, CGRectGetWidth(self.splashScreen.frame), CGRectGetHeight(self.splashScreen.frame) - CGRectGetMaxY(self.commentCountLabel.frame) - 10)];
         _commentsTableView.separatorStyle = UITableViewCellSeparatorStyleNone;
         _commentsTableView.backgroundColor = [UIColor clearColor];
         _commentsTableView.delegate = self;
         _commentsTableView.dataSource = self;
         _commentsTableView.allowsSelection = NO;
+        _commentsTableView.keyboardDismissMode = UIScrollViewKeyboardDismissModeInteractive;
     }
     return _commentsTableView;
 }
 
 - (UILabel*)commentCountLabel {
     if (!_commentCountLabel) {
-        _commentCountLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, CGRectGetMaxY(self.titleLabel.frame), CGRectGetWidth(self.splashScreen.frame), 12)];
+        _commentCountLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 18.0, CGRectGetWidth(self.splashScreen.frame), 12)];
         _commentCountLabel.font = [UIFont fontWithName:@"HelveticaNeue-Light" size:14];
         _commentCountLabel.textAlignment = NSTextAlignmentCenter;
         _commentCountLabel.backgroundColor = [UIColor clearColor];
@@ -411,16 +423,16 @@ const NSString *kCommentCollectionIdentifier = @"commentvc_attendee";
     return _commentCountLabel;
 }
 
-- (UILabel*)titleLabel {
-    if (!_titleLabel) {
-        _titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 10, CGRectGetWidth(self.splashScreen.frame), 40)];
-        _titleLabel.font = [UIFont fontWithName:@"HelveticaNeue" size:22];
-        _titleLabel.textAlignment = NSTextAlignmentCenter;
-        _titleLabel.backgroundColor = [UIColor clearColor];
-        _titleLabel.textColor = [UIColor colorWithRed:8.0/255.0 green:41.0/255.0 blue:64.0/255.0 alpha:1];
-    }
-    return _titleLabel;
-}
+//- (UILabel*)titleLabel {
+//    if (!_titleLabel) {
+//        _titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 10, CGRectGetWidth(self.splashScreen.frame), 40)];
+//        _titleLabel.font = [UIFont fontWithName:@"HelveticaNeue" size:22];
+//        _titleLabel.textAlignment = NSTextAlignmentCenter;
+//        _titleLabel.backgroundColor = [UIColor clearColor];
+//        _titleLabel.textColor = [UIColor colorWithRed:8.0/255.0 green:41.0/255.0 blue:64.0/255.0 alpha:1];
+//    }
+//    return _titleLabel;
+//}
 
 - (UITextField*)commentTextField {
     if (!_commentTextField) {
@@ -436,8 +448,7 @@ const NSString *kCommentCollectionIdentifier = @"commentvc_attendee";
 
 - (UIView*)commentBottomBox {
     if (!_commentBottomBox) {
-        CGRect screenBounds = [[UIScreen mainScreen] bounds];
-        _commentBottomBox = [[UIView alloc] initWithFrame:CGRectMake(0, CGRectGetHeight(screenBounds) - 50, CGRectGetWidth(screenBounds), 50)];
+        _commentBottomBox = [[UIView alloc] initWithFrame:CGRectMake(0, CGRectGetHeight(self.view.frame) - CommentBoxHeight, CGRectGetWidth(self.view.frame), CommentBoxHeight)];
         _commentBottomBox.backgroundColor = [UIColor colorWithRed:236.0/255.0 green:244.0/255.0 blue:247.0/255.0 alpha:.9];
         [_commentBottomBox addSubview:self.postButton];
         [_commentBottomBox addSubview:self.commentTextField];

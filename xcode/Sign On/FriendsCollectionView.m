@@ -66,12 +66,11 @@ const CGFloat collectionCellLineSpacing = 20.0;
 
 #pragma mark - Initialization
 
-- (instancetype) initWithFrame:(CGRect)frame andBubbleWidth:(CGFloat)bubbleWidth {
+- (instancetype) initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
         self.backgroundColor = [UIColor clearColor];
         
-        _bubbleWidth = bubbleWidth;
         _friendsDataSource = [NSMutableArray new];
         
         [self addSubview:self.collectionView];

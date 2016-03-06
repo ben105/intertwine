@@ -32,6 +32,8 @@
 @property (nonatomic, strong) UILabel *titleLabel;
 - (void)setTitle:(NSString*)title;
 
+@property (nonatomic, strong) UILabel *dateLabel;
+
 @property (nonatomic, strong) NSArray *attendees;
 
 - (id) initWithReuseIdentifier:(NSString*)reuseIdentifier;
@@ -39,7 +41,7 @@
 @property (nonatomic, strong) EventObject *event;
 
 - (void) resize;
-+ (CGFloat) cellHeightForString:(NSString*)title andAttendeeCount:(NSUInteger)count;
++ (CGFloat) cellHeightForEvent:(EventObject*)event andAttendeeCount:(NSUInteger)count;
 
 - (void)completed:(BOOL)isComplete;
 

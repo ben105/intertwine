@@ -11,15 +11,25 @@
 #import "CommentViewController.h"
 #import "NotificationBanner.h"
 #import "NotificationMenuViewController.h"
+#import "EventViewController.h"
+#import "HeaderPagingScrollView.h"
 
 @class FriendsViewController;
 
-@interface ActivityViewController : UIViewController <NotificationMenuDelegate, NotificationBannerDelegate, CommentViewDelegate, ActivityCellDelegate, UITableViewDataSource, UITableViewDelegate>
+@interface ActivityViewController : UIViewController <HeaderPagingScrollViewDataSource, EventViewControllerDelegate, NotificationMenuDelegate, NotificationBannerDelegate, CommentViewDelegate, ActivityCellDelegate, UITableViewDataSource, UITableViewDelegate>
 
-@property (nonatomic, strong) UITableView *activityTableView;
-@property (nonatomic, strong) NSMutableArray *events;
+@property (nonnull, nonatomic, strong) UITableView *activityTableView;
+@property (nonnull, nonatomic, strong) UITableView *upcomingTableView;
 
-@property (nonatomic, strong) FriendsViewController *friendsVC;
+@property (nullable, nonatomic, strong) NSMutableArray *events;
+@property (nullable, nonatomic, strong) NSMutableArray *todaysEvents;
+@property (nullable, nonatomic, strong) NSMutableArray *tomorrowsEvents;
+@property (nullable, nonatomic, strong) NSMutableArray *thisWeeksEvents;
+@property (nullable, nonatomic, strong) NSMutableArray *thisMonthsEvents;
+@property (nullable, nonatomic, strong) NSMutableArray *upcomingEvents;
+
+
+@property (nullable, nonatomic, strong) FriendsViewController *friendsVC;
 
 - (void) presentRemoteNotification:(NSDictionary * _Nonnull)userInfo inForeground:(BOOL)inForeground;
 

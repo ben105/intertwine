@@ -8,6 +8,7 @@
 
 #import "IntertwineManager+Events.h"
 #import "Friend.h"
+#import "EventObject.h"
 
 const NSString *eventsEndpoint = @"/api/v1/events";
 const NSString *eventEditEndpoint = @"/api/v1/edit_event";
@@ -15,10 +16,24 @@ const NSString *commentsEndpoint = @"/api/v1/comment";
 const NSString *eventCompleteEndpoint = @"/api/v1/event_complete";
 
 
-@implementation EventDate
-@end
-
 @implementation IntertwineManager (Events)
+
++ (NSMutableDictionary*)dateInfoForEvent:(EventObject*)event {
+    NSString *timezone = [[NSTimeZone systemTimeZone] name];
+    NSMutableDictionary *dateInfo = [NSMutableDictionary new];
+    [dateInfo setObject:timezone forKey:@"timezone"];
+    if (event.startDate) {
+        [dateInfo setObject:event.startDate forKey:@"start_date"];
+    }
+    if (event.startTime) {
+        [dateInfo setObject:event.startTime forKey:@"start_time"];
+    }
+    if (event.semester) {
+        [dateInfo setObject:[NSNumber numberWithUnsignedInteger:event.semesterID] forKey:@"semester_id"];
+    }
+    [dateInfo setObject:[NSNumber numberWithBool:event.isAllDay] forKey:@"all_day"];
+    return dateInfo;
+}
 
 #pragma mark - Comment Create/Read
 
@@ -60,7 +75,7 @@ const NSString *eventCompleteEndpoint = @"/api/v1/event_complete";
 
 # pragma mark - Event CRUD
 
-+ (void) createEvent:(NSString*)title withFriends:(NSArray *)friends withEventDate:(EventDate*)eventDate withResponse:(void (^)(id, NSError *, NSURLResponse *))responseBlock {
++ (void) createEvent:(EventObject*)event withFriends:(NSArray*)friends withResponse:(void (^)(id json, NSError *error, NSURLResponse *response))responseBlock {
     /*
      * Turn the 'friends' array into a JSON list of
      * dictionaries.
@@ -76,25 +91,9 @@ const NSString *eventCompleteEndpoint = @"/api/v1/event_complete";
      * Parent Dictionary to wrap it all.
      */
     NSMutableDictionary *body = [[NSMutableDictionary alloc] init];
-    NSMutableDictionary *date = nil;
-    
-    NSString *timezone = [[NSTimeZone systemTimeZone] name];
-    
-    if (eventDate) {
-        date = [NSMutableDictionary new];
-        [date setObject:timezone forKey:@"timezone"];
-        if (eventDate.date) {
-            [date setObject:eventDate.date forKey:@"date"];
-        }
-        if (eventDate.time) {
-            [date setObject:eventDate.time forKey:@"time"];
-        }
-        if (eventDate.semester) {
-            [date setObject:[NSNumber numberWithInt:eventDate.semester] forKey:@"semester"];
-        }
-    }
-    [body setObject:date forKey:@"date"];
-    [body setObject:title forKey:@"title"];
+    NSMutableDictionary *dateInfo = [IntertwineManager dateInfoForEvent:event];
+    [body setObject:dateInfo forKey:@"date"];
+    [body setObject:event.eventTitle forKey:@"title"];
     [body setObject:jsonFriends forKey:@"friends"];
     
     NSData *data = [IntertwineManager loadJSON:body];
@@ -112,9 +111,6 @@ const NSString *eventCompleteEndpoint = @"/api/v1/event_complete";
     [IntertwineManager sendRequest:request response:responseBlock];
 }
 
-+ (void) createEvent:(NSString*)title withFriends:(NSArray*)friends withResponse:(void (^)(id json, NSError *error, NSURLResponse *response))responseBlock {
-    [IntertwineManager createEvent:title withFriends:friends withEventDate:nil withResponse:responseBlock];
-}
 
 + (void) deleteEvent:(NSNumber*)eventID withResponse:(void (^)(id json, NSError *error, NSURLResponse *response))responseBlock {
     /*
@@ -148,7 +144,7 @@ const NSString *eventCompleteEndpoint = @"/api/v1/event_complete";
 }
 
 
-+ (void) editEvent:(NSNumber*)eventID withTitle:(NSString*)title newTitle:(NSString*)newTitle invited:(NSArray*)invited uninvited:(NSArray*)uninvited withResponse:(void (^)(id json, NSError *error, NSURLResponse *response))responseBlock {
++ (void) editEvent:(EventObject*)event withTitle:(NSString*)title newTitle:(NSString*)newTitle invited:(NSArray*)invited uninvited:(NSArray*)uninvited withResponse:(void (^)(id json, NSError *error, NSURLResponse *response))responseBlock {
     /*
      * We need a dictionary that contains at LEAST the event ID, but optionally also
      * the following items:
@@ -158,11 +154,13 @@ const NSString *eventCompleteEndpoint = @"/api/v1/event_complete";
      * - uninvited
      * - location
      */
-    unsigned long int event_id = [eventID unsignedIntegerValue];
+    unsigned long int event_id = [event.eventID unsignedIntegerValue];
     NSString *eventIDString = [NSString stringWithFormat:@"%lu", event_id];
     NSMutableDictionary *body = [[NSMutableDictionary alloc] init];
+    NSMutableDictionary *dateInfo = [IntertwineManager dateInfoForEvent:event];
     [body setObject:eventIDString forKey:@"event_id"];
     [body setObject:title forKey:@"title"];
+    [body setObject:dateInfo forKey:@"date"];
     if (newTitle) {
         [body setObject:newTitle forKey:@"new_title"];
     }

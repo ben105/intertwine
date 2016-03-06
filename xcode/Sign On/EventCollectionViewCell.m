@@ -13,7 +13,9 @@
 
 
 const CGFloat labelHeight = 12.0;
-const CGFloat extraSpace = 15.0;
+const CGFloat extraSpace = 10.0;
+
+const CGFloat numberOfBubblesPerRow = 4.0;
 
 @interface EventCollectionViewCell()
 + (CGFloat) _bubbleWidth;
@@ -28,7 +30,7 @@ const CGFloat extraSpace = 15.0;
     CGFloat interitemSpacing = 15.0;
     /* If we want 4 bubbles across the screen, that means there will be 5 spaces.
      * Think about it... */
-    return (screenWidth - (interitemSpacing * 5.0)) / 4.0;
+    return (screenWidth - (interitemSpacing * (numberOfBubblesPerRow+1))) / numberOfBubblesPerRow;
 }
 
 + (CGFloat) cellWidth {
@@ -37,7 +39,7 @@ const CGFloat extraSpace = 15.0;
 }
 
 + (CGFloat) cellHeight {
-    return [EventCollectionViewCell _bubbleWidth] + labelHeight;
+    return [EventCollectionViewCell _bubbleWidth] + 2 + labelHeight;
 }
 
 - (id) initWithFrame:(CGRect)frame {
@@ -45,7 +47,7 @@ const CGFloat extraSpace = 15.0;
     if (self) {
         CGFloat bubbleWidth = [EventCollectionViewCell _bubbleWidth];
         CGRect profileFrame = CGRectMake(extraSpace, 0, bubbleWidth, bubbleWidth);
-        CGRect labelFrame = CGRectMake(extraSpace, bubbleWidth, bubbleWidth, labelHeight);
+        CGRect labelFrame = CGRectMake(extraSpace, bubbleWidth + 2, bubbleWidth, labelHeight);
         
         self.profilePicture = [[FriendProfileView alloc] initWithFrame:profileFrame];
 //        self.profilePicture.layer.borderColor = [[UIColor blackColor] CGColor];
@@ -54,7 +56,7 @@ const CGFloat extraSpace = 15.0;
         
         self.nameLabel = [[UILabel alloc] initWithFrame:labelFrame];
         self.nameLabel.backgroundColor = [UIColor clearColor];
-        self.nameLabel.textColor = [UIColor blackColor];
+        self.nameLabel.textColor = [UIColor whiteColor];
         self.nameLabel.textAlignment = NSTextAlignmentCenter;
         self.nameLabel.font = [UIFont systemFontOfSize:11];
         

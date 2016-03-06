@@ -18,7 +18,7 @@
 #import "ActivityAlertView.h"
 #import "NotificationMenuViewController.h"
 #import "IntertwineNotification.h"
-#import "EventViewController.h"
+#import "NSDate+Display.h"
 
 #import "IntertwineManager+Activity.h"
 #import "IntertwineManager+Friends.h"
@@ -27,16 +27,23 @@
 #import <AudioToolbox/AudioToolbox.h>
 
 #define BACKGROUND_COLOR [UIColor colorWithRed:21.0/255.0 green:52.0/255.0 blue:88.0/255.0 alpha:1]
+#define ACTIVITY_VIEW_HEADER_COLOR [UIColor colorWithRed:0 green:0 blue:0 alpha:0.19]
+#define HEADER_COLOR_NON_TRANSPARENT [UIColor colorWithRed:14.0/255.0 green:39.0/255.0 blue:64.0/255.0 alpha:1]
+const char titles[2][12] = { "Upcoming", "Activity" };
 
-
-const CGFloat headerHeight = 58.0;
+const CGFloat ActivityViewSectionHeaderHeight = 50.0;
+const CGFloat headerHeight = 80.0;
 const CGFloat footerHeight = 50.0;
-const CGFloat y_toolBarItems = 23.0;
-#define y_footer CGRectGetHeight([[UIScreen mainScreen] bounds]) - footerHeight
+const CGFloat y_toolBarItems = headerHeight / 2.0;
+#define y_footer CGRectGetHeight(self.view.frame) - footerHeight
 
 const CGFloat slideSideBarsAnimationSpeed = 0.3;
 
 @interface ActivityViewController ()
+
+/* To switch between the two table views, we should put a background scroll
+ * view on the view. */
+@property (nonatomic, strong) HeaderPagingScrollView *backgroundScrollView;
 
 @property (nonatomic) SystemSoundID notificationSound;
 - (void)_loadNotificationsMenu;
@@ -49,7 +56,7 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
 @property (nonatomic, strong) EventViewController *createActivityVC;
 @property (nonatomic, strong) UIImageView *backgroundImage;
 @property (nonatomic, strong) UIView *header;
-@property (nonatomic, strong) UIView *footer;
+@property (nonatomic, strong) UIImageView *footer;
 @property (nonatomic, strong) UILabel *titleLabel;
 @property (nonatomic, strong) UIButton *gearButton;
 
@@ -64,6 +71,17 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
 @property (nonatomic, strong) UIButton *newActivityButton;
 - (void) _newActivity;
 - (void) _loadActivities;
+- (void) _removeUpcomingActivities;
+- (void) _sortUpcomingActivitiesIntoSections;
+- (void) _updateAvailableSections;
+- (void) _loadUpcomingActivities;
+
+/* Sorting method. */
+- (void) _sortArrayByDate:(NSMutableArray*)unsortedArray;
+
+/* Once receiving JSON from the server, translate it into a mutable dictionary. */
+- (NSMutableArray*) _extractEventsFromJSON:(id)json;
+
 - (void)_markActivityComplete:(EventObject*)event forCell:(ActivityTableViewCell*)cell;
 - (void)_presentEventViewController;
 
@@ -74,16 +92,26 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
 
 - (void) _load;
 
-- (UITableViewCell*)_tableView:(UITableView*)tableView cellForRowAtIndexPath:(NSIndexPath*)indexPath;
-- (UITableViewCell*)_tableView:(UITableView*)tableView completedCellForRowAtIndexPath:(NSIndexPath*)indexPath;
+/* Private methods for how we handle the table view data sources. */
+- (NSInteger)_activityTableViewNumberOfRowsInSection:(NSInteger)section;
+- (UITableViewCell*)_activityTableViewNormalCellForRowAtIndexPath:(NSIndexPath*)indexPath;
+- (UITableViewCell*)_activityTableViewCompletedCellForRowAtIndexPath:(NSIndexPath*)indexPath;
+- (UITableViewCell*)_activityTableViewCellForRowAtIndexPath:(NSIndexPath*)indexPath;
+- (UITableViewCell*)_upcomingTableViewCellForRowAtIndexPath:(NSIndexPath*)indexPath;
+
+/* Because we have different arrays for each type of upcoming event,
+ * we need a way to keep track of the section count, and which section
+ * has data from which event. */
+@property (nonatomic, strong) NSArray *sections;
+@property (nonatomic, strong) NSMutableArray *availableSections;
+@property (nonatomic, strong) NSArray *sectionNames;
 
 @end
 
+
 @implementation ActivityViewController
 
-
-
-#pragma mark - View Stuff
+#pragma mark - View Management
 
 - (void) _clearSubViewControllers {
     [UIView animateWithDuration:slideSideBarsAnimationSpeed animations:^{
@@ -94,12 +122,34 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
         self.friendsVC.view.frame = friendsSideFrame;
     } completion:^(BOOL finished) {
         [self.friendsVC.view removeFromSuperview];
-        self.friendsVC = nil;
+        _friendsVC = nil;
         [self _load];
     }];
 }
 
+- (void) _showViews {
+    self.activityTableView.alpha = 1;
+    self.upcomingTableView.alpha = 1;
+    self.gearButton.alpha = 1;
+    self.notificationsButton.alpha = 1;
+    self.friendsButton.alpha = 1;
+    self.header.alpha = 1;
+    self.titleLabel.alpha = 1;
+    self.footer.alpha = 1;
+    self.newActivityButton.alpha = 1;
+}
 
+- (void) _hideViews {
+    self.activityTableView.alpha = 0;
+    self.upcomingTableView.alpha = 0;
+    self.gearButton.alpha = 0;
+    self.notificationsButton.alpha = 0;
+    self.friendsButton.alpha = 0;
+    self.header.alpha = 0;
+    self.titleLabel.alpha = 0;
+    self.footer.alpha = 0;
+    self.newActivityButton.alpha = 0;
+}
 
 - (void)viewDidLoad {
     [super viewDidLoad];
@@ -119,27 +169,39 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
     [IntertwineManager updateDeviceToken:[IntertwineManager getDeviceToken]];
     
     // Do any additional setup after loading the view.
-    self.events = [[NSMutableArray alloc] init];
+    self.events = [NSMutableArray new];
+    self.upcomingEvents = [NSMutableArray new];
+    self.todaysEvents = [NSMutableArray new];
+    self.tomorrowsEvents = [NSMutableArray new];
+    self.thisWeeksEvents = [NSMutableArray new];
+    self.thisMonthsEvents = [NSMutableArray new];
+    
+    self.availableSections = [NSMutableArray new];
+    self.sections = @[self.todaysEvents, self.tomorrowsEvents, self.thisWeeksEvents, self.thisMonthsEvents, self.upcomingEvents];
+    self.sectionNames = @[@"Today", @"Tomorrow", @"This Week", @"This Month", @"Upcoming"];
     
     self.view.backgroundColor = BACKGROUND_COLOR;
     [self.view addSubview:self.backgroundImage];
+    
+    [self.view addSubview:self.backgroundScrollView];
+    [self.backgroundScrollView addSubview:self.activityTableView];
+    [self.backgroundScrollView addSubview:self.upcomingTableView];
+    
     [self.view addSubview:self.header];
     [self.view addSubview:self.footer];
 
-    CGRect frame = self.footer.frame;
-    frame.origin.x = 0;
-    frame.origin.y = 0;
-    self.newActivityButton.frame = frame;
-    [self.footer addSubview:self.newActivityButton];
-
-    [self.view addSubview:self.activityTableView];
+//    CGRect frame = self.footer.frame;
+//    frame.origin.x = 0;
+//    frame.origin.y = 0;
+//    self.newActivityButton.frame = frame;
+    [self.view addSubview:self.newActivityButton];
     
-    [self.view addSubview:self.titleLabel];
-    self.titleLabel.text = @"Intertwine";
+//    [self.view addSubview:self.titleLabel];
+//    self.titleLabel.text = @"Intertwine";
     
-    [self.view addSubview:self.gearButton];
+//    [self.view addSubview:self.gearButton];
     [self.view addSubview:self.notificationsButton];
-    [self.view addSubview:self.friendsButton];
+//    [self.view addSubview:self.friendsButton];
     [self.view addSubview:self.blackSheet];
 }
 
@@ -150,6 +212,7 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
 
 - (void) _load {
     [self _loadActivities];
+    [self _loadUpcomingActivities];
     [self _loadFriends];
     [self _loadNotificationsMenu];
 }
@@ -289,7 +352,7 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
                                                                  notifInfo:userInfo];
     banner.delegate = self;
     
-    [self.view addSubview:banner];
+    [self.view insertSubview:banner atIndex:500];
     
     [UIView animateWithDuration:1.0 animations:^{
         CGRect frame = banner.frame;
@@ -320,7 +383,7 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
 #pragma mark - Notification Menu Delegate
 
 - (void)shouldDismissNotificationMenu {
-    [self _loadActivities];
+    [self _load];
     [UIView animateWithDuration:0.5
                      animations:^{
                          CGRect frame = self.notificationMenuViewController.view.frame;
@@ -340,7 +403,7 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
 #pragma mark - Comment View Delegate
 
 - (void)shouldDismissCommentView {
-    [self _loadActivities];
+    [self _load];
     [UIView animateWithDuration:0.5
                      animations:^{
                          self.commentView.view.alpha = 0;
@@ -351,12 +414,16 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
 }
 
 - (void) _presentCommentViewForEvent:(EventObject*)event {
-    self.commentView.event = event;
-    self.commentView.view.alpha = 0;
-    [self.view addSubview:self.commentView.view];
-    [UIView animateWithDuration:0.5 animations:^{
-        self.commentView.view.alpha = 1;
-    }];
+    self.createActivityVC.viewMode = ActivityViewCommentMode;
+    self.createActivityVC.event = event;
+    [self _presentEventViewController];
+    
+//    self.commentView.event = event;
+//    self.commentView.view.alpha = 0;
+//    [self.view addSubview:self.commentView.view];
+//    [UIView animateWithDuration:0.5 animations:^{
+//        self.commentView.view.alpha = 1;
+//    }];
 }
 
 #pragma mark - Completion of Activity
@@ -383,18 +450,37 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
 
 #pragma mark - Event View Controller Delegate
 
+- (void) _didEditOrCreateEventInUpcoming:(EventObject*)event {
+    if ([self.upcomingEvents indexOfObject:event] == NSNotFound) {
+        [self.upcomingEvents addObject:event];
+    }
+    [self _reloadUpcomingActivitiesTable];
+}
+
+- (void) _didEditOrCreateEventInActivity:(EventObject*)event {
+    if ([self.events indexOfObject:event] == NSNotFound) {
+        [self.events addObject:event];
+    }
+    [self _reloadActivitesTables];
+}
+
+- (void) didEditOrCreateEvent:(EventObject*)event {
+    [self _didEditOrCreateEventInActivity:event];
+    if (event.startDate) {
+        [self _didEditOrCreateEventInUpcoming:event];
+    }
+}
+
 - (void) eventViewControllerWillDismiss {
-    [self.createActivityVC.view removeFromSuperview];
-    self.createActivityVC = nil;
-    
+    [self _load];
+    [self performSelector:@selector(_load) withObject:nil afterDelay:2];
     [UIView animateWithDuration:0.2
                      animations:^{
-                         self.activityTableView.alpha = 1;
-                         self.gearButton.alpha = 1;
-                         self.notificationsButton.alpha = 1;
-                         self.friendsButton.alpha = 1;
-                         self.header.alpha = 1;
-                         self.titleLabel.alpha = 1;
+                         self.createActivityVC.view.alpha = 0;
+                         [self _showViews];
+                     } completion:^(BOOL finished) {
+                         [self.createActivityVC.view removeFromSuperview];
+                         _createActivityVC = nil;
                      }];
 }
 
@@ -426,17 +512,13 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
 #pragma mark - New Activity
 
 - (void) _presentEventViewController {
+    [self.view addSubview:self.createActivityVC.view];
     [UIView animateWithDuration:0.3
                      animations:^{
-                         self.activityTableView.alpha = 0;
-                         self.gearButton.alpha = 0;
-                         self.notificationsButton.alpha = 0;
-                         self.friendsButton.alpha = 0;
-                         self.header.alpha = 0;
-                         self.titleLabel.alpha = 0;
+                         [self _hideViews];
                      }
                      completion:^(BOOL finished) {
-                         [self.view addSubview:self.createActivityVC.view];
+//                         [self.view addSubview:self.createActivityVC.view];
                      }];
 }
 
@@ -457,7 +539,7 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
             NSLog(@"No JSON returned back from request.");
             return;
         }
-        NSMutableArray *newFriendsArray = [[NSMutableArray alloc] init];
+        NSMutableArray *newFriendsArray = [NSMutableArray new];
         for (NSDictionary *friendDictionary in json) {
             Friend *friend = [[Friend alloc] init];
             friend.first = [friendDictionary objectForKey:@"first"];
@@ -489,6 +571,144 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
 
 #pragma mark - Activities
 
+- (void) _sortArrayByDate:(NSMutableArray*)unsortedArray {
+    NSSortDescriptor *sortByDate = [NSSortDescriptor sortDescriptorWithKey:@"timestamp" ascending:YES];
+    [unsortedArray sortUsingDescriptors:@[sortByDate]];
+}
+
+- (NSMutableArray*) _extractEventsFromJSON:(id)json {
+    
+    // Date formatter used in loop.
+    NSDateFormatter *format = [[NSDateFormatter alloc] init];
+    [format setDateFormat:@"yyyy'-'MM'-'dd HH':'mm':'ss"];
+    
+    NSMutableArray *events = [[NSMutableArray alloc] initWithCapacity:[(NSArray*)json count]];
+    for (NSDictionary *eventDictionary in json) {
+        EventObject *event = [[EventObject alloc] init];
+        event.eventID = [eventDictionary objectForKey:@"id"];
+        event.eventTitle = [eventDictionary objectForKey:@"title"];
+        
+        [event extractDateInfo:[eventDictionary objectForKey:@"date"]];
+        
+        event.numberOfComments = [[eventDictionary objectForKey:@"comment_count"] unsignedIntegerValue];
+        
+        event.eventDescription = [eventDictionary objectForKey:@"description"];
+        event.isComplete = [[eventDictionary objectForKey:@"completed"] boolValue];
+        
+        // Get the updated time (for sorting later)
+        NSString *timeString = [eventDictionary objectForKey:@"updated_time"];
+        event.updatedTime = [format dateFromString:timeString];
+        
+        // Inititate the creator from the creator dictionary
+        NSDictionary *creatorDictionary = [eventDictionary objectForKey:@"creator"];
+        event.creator = [[Friend alloc] init];
+        event.creator.first = [creatorDictionary objectForKey:@"first"];
+        event.creator.last = [creatorDictionary objectForKey:@"last"];
+        event.creator.accountID = [[creatorDictionary objectForKey:@"id"] stringValue];
+        event.creator.facebookID = [creatorDictionary objectForKey:@"facebook_id"];
+        event.creator.emailAddress = [creatorDictionary objectForKey:@"email"];
+        
+        // Assign the attendees
+        NSArray *attendeeList = [eventDictionary objectForKey:@"attendees"];
+        NSMutableArray *attendees = [NSMutableArray new];
+        for ( NSDictionary *attendeesDictionary in attendeeList) {
+            Friend *attendee = [[Friend alloc] init];
+            attendee.first = [attendeesDictionary objectForKey:@"first"];
+            attendee.last = [attendeesDictionary objectForKey:@"last"];
+            attendee.emailAddress = [attendeesDictionary objectForKey:@"email"];
+            attendee.facebookID = [attendeesDictionary objectForKey:@"facebook_id"];
+            attendee.accountID = [[attendeesDictionary objectForKey:@"id"] stringValue];
+            [attendees addObject:attendee];
+        }
+        event.attendees = attendees;
+        [events addObject:event];
+    }
+    return events;
+}
+
+- (void) _removeUpcomingActivities {
+    [self.upcomingEvents removeAllObjects];
+    [self.todaysEvents removeAllObjects];
+    [self.tomorrowsEvents removeAllObjects];
+    [self.thisWeeksEvents removeAllObjects];
+    [self.thisMonthsEvents removeAllObjects];
+}
+
+- (void) _sortUpcomingActivitiesIntoSections {
+    NSMutableArray *objectsToRemove = [NSMutableArray new];
+    for (EventObject *event in self.upcomingEvents) {
+        if ([event isToday]) {
+            if ([self.todaysEvents indexOfObject:event] == NSNotFound) {
+                [self.todaysEvents addObject:event];
+            }
+        } else if ([event isTomorrow]) {
+            if ([self.tomorrowsEvents indexOfObject:event] == NSNotFound) {
+                [self.tomorrowsEvents addObject:event];
+            }
+        } else if ([event isThisWeek]) {
+            if ([self.thisWeeksEvents indexOfObject:event] == NSNotFound) {
+                [self.thisWeeksEvents addObject:event];
+            }
+        } else if ([event isThisMonth]) {
+            if ([self.thisMonthsEvents indexOfObject:event] == NSNotFound) {
+                [self.thisMonthsEvents addObject:event];
+            }
+        } else {
+            continue;
+        }
+        [objectsToRemove addObject:event];
+    }
+    [self.upcomingEvents removeObjectsInArray:objectsToRemove];
+    [self _sortArrayByDate:self.upcomingEvents];
+    [self _sortArrayByDate:self.todaysEvents];
+    [self _sortArrayByDate:self.tomorrowsEvents];
+    [self _sortArrayByDate:self.thisWeeksEvents];
+    [self _sortArrayByDate:self.thisMonthsEvents];
+}
+
+- (void) _updateAvailableSections {
+    [self.availableSections removeAllObjects];
+    if ([self.todaysEvents count]) {
+        [self.availableSections addObject:@0];
+    }
+    if ([self.tomorrowsEvents count]) {
+        [self.availableSections addObject:@1];
+    }
+    if ([self.thisWeeksEvents count]) {
+        [self.availableSections addObject:@2];
+    }
+    if ([self.thisMonthsEvents count]) {
+        [self.availableSections addObject:@3];
+    }
+    if ([self.upcomingEvents count]) {
+        [self.availableSections addObject:@4];
+    }
+}
+
+- (void) _reloadUpcomingActivitiesTable {
+    [self _sortUpcomingActivitiesIntoSections];
+    [self _updateAvailableSections];
+    [self.upcomingTableView reloadData];
+}
+
+- (void) _loadUpcomingActivities {
+    [IntertwineManager getUpcomingActivitiesWithResponse:^(id json, NSError *error, NSURLResponse *response) {
+        if (error) {
+            NSLog(@"Error occured!!\n%@", error);
+            return;
+        }
+        [self _removeUpcomingActivities];
+        self.upcomingEvents = [self _extractEventsFromJSON:json];
+        [self _reloadUpcomingActivitiesTable];
+    }];
+}
+
+- (void) _reloadActivitesTables {
+    NSSortDescriptor *sortByDate = [NSSortDescriptor sortDescriptorWithKey:@"updatedTime" ascending:NO];
+    [self.events sortUsingDescriptors:@[sortByDate]];
+    [self.activityTableView reloadData];
+}
+
 - (void) _loadActivities {
     [IntertwineManager getActivityFeedWithResponse:^(id json, NSError *error, NSURLResponse *response) {
         if(error) {
@@ -496,58 +716,9 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
             return;
         }
         
-        // Date formatter used in loop.
-        NSDateFormatter *format = [[NSDateFormatter alloc] init];
-        [format setDateFormat:@"yyyy'-'MM'-'dd HH':'mm':'ss"];
-        
         [self.events removeAllObjects];
-        for ( NSDictionary *eventDictionary in json ) {
-            EventObject *event = [[EventObject alloc] init];
-            event.eventID = [eventDictionary objectForKey:@"id"];
-            event.eventTitle = [eventDictionary objectForKey:@"title"];
-            
-            [event extractDateInfo:[eventDictionary objectForKey:@"date"]];
-            
-            event.numberOfComments = [[eventDictionary objectForKey:@"comment_count"] unsignedIntegerValue];
-            
-            event.eventDescription = [eventDictionary objectForKey:@"description"];
-            event.isComplete = [[eventDictionary objectForKey:@"completed"] boolValue];
-            
-            // Get the updated time (for sorting later)
-            NSString *timeString = [eventDictionary objectForKey:@"updated_time"];
-            event.updatedTime = [format dateFromString:timeString];
-            
-            // Inititate the creator from the creator dictionary
-            NSDictionary *creatorDictionary = [eventDictionary objectForKey:@"creator"];
-            event.creator = [[Friend alloc] init];
-            event.creator.first = [creatorDictionary objectForKey:@"first"];
-            event.creator.last = [creatorDictionary objectForKey:@"last"];
-            event.creator.accountID = [[creatorDictionary objectForKey:@"id"] stringValue];
-            event.creator.facebookID = [creatorDictionary objectForKey:@"facebook_id"];
-            event.creator.emailAddress = [creatorDictionary objectForKey:@"email"];
-            
-            // Assign the attendees
-            NSArray *attendeeList = [eventDictionary objectForKey:@"attendees"];
-            NSMutableArray *attendees = [[NSMutableArray alloc] init];
-            for ( NSDictionary *attendeesDictionary in attendeeList) {
-                Friend *attendee = [[Friend alloc] init];
-                attendee.first = [attendeesDictionary objectForKey:@"first"];
-                attendee.last = [attendeesDictionary objectForKey:@"last"];
-                attendee.emailAddress = [attendeesDictionary objectForKey:@"email"];
-                attendee.facebookID = [attendeesDictionary objectForKey:@"facebook_id"];
-                attendee.accountID = [[attendeesDictionary objectForKey:@"id"] stringValue];
-                [attendees addObject:attendee];
-            }
-            event.attendees = attendees;
-            [self.events addObject:event];
-            NSLog(@"Event timestamp: %@", event.timestamp);
-        }
-//        self.eventCountLabel.text = [NSString stringWithFormat:@"%lu", [self.events count]];
-//        [self.eventsTableView reloadData];
-        
-        NSSortDescriptor *sortByDate = [NSSortDescriptor sortDescriptorWithKey:@"updatedTime" ascending:NO];
-        [self.events sortUsingDescriptors:@[sortByDate]];
-        [self.activityTableView reloadData];
+        self.events = [self _extractEventsFromJSON:json];
+        [self _reloadActivitesTables];
     }];
 }
 
@@ -573,65 +744,129 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
-    [tableView deselectRowAtIndexPath:indexPath animated:YES];
-    
-    EventObject *event = [self.events objectAtIndex:indexPath.row];
-    
-    // TODO: See if there's a way to just assign the event, and not the individual attributes.
-    [self.createActivityVC setEventTitle:event.eventTitle];
-    self.createActivityVC.viewMode = ActivityViewEditMode;
-//    self.createActivityVC.editEventIsCompleted = event.isComplete;
-    self.createActivityVC.event = event;
-    
-//    NSMutableArray *uninvitedFriends = [self.friends mutableCopy];
-//    NSMutableArray *invitedFriends = [NSMutableArray new];
-    
-    for (Friend *attendee in event.attendees) {
-        if ([attendee.accountID isEqualToString:[IntertwineManager getAccountID]]) {
-            continue;
-        }
-        for (Friend *friend in self.friends) {
-            if ([friend.accountID isEqualToString:attendee.accountID]) {
-                [self.createActivityVC.invitedView addFriend:attendee];
-                [self.createActivityVC.uninvitedView setStatus:kInvited forFriend:attendee];
-                break;
-            }
-        }
+    [tableView deselectRowAtIndexPath:indexPath animated:NO];
+    EventObject *event = nil;
+    if (tableView == self.activityTableView) {
+        event = [self.events objectAtIndex:indexPath.row];
+    } else {
+        NSInteger sectionIndex = [[self.availableSections objectAtIndex:indexPath.section] integerValue];
+        NSMutableArray *sectionArray = [self.sections objectAtIndex:sectionIndex];
+        event = [sectionArray objectAtIndex:indexPath.row];
     }
-    
-//    self.createActivityVC.uninvitedFriends = uninvitedFriends;
-//    self.createActivityVC.invitedFriends = invitedFriends;
+    self.createActivityVC.viewMode = ActivityViewEditMode;
+    self.createActivityVC.event = event;
     [self _presentEventViewController];
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-    EventObject *event = [self.events objectAtIndex:indexPath.row];
+    EventObject *event = nil;
+    if (tableView == self.activityTableView) {
+        event = [self.events objectAtIndex:indexPath.row];
+    } else {
+        NSInteger sectionIndex = [[self.availableSections objectAtIndex:indexPath.section] integerValue];
+        NSMutableArray *sectionArray = [self.sections objectAtIndex:sectionIndex];
+        event = [sectionArray objectAtIndex:indexPath.row];
+    }
     CGFloat height = 0;
     if (event.isComplete) {
         height = activityCompleteCellHeight;
     } else {
-        height = [ActivityTableViewCell cellHeightForString:event.eventTitle andAttendeeCount:[[event attendees] count]];
+        height = [ActivityTableViewCell cellHeightForEvent:event andAttendeeCount:[[event attendees] count]];
     }
     return height;
 }
 
 
-#pragma mark - Table View Data Source
+#pragma mark - Table View Number of Sections
 
-- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    return [self.events count];
+- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
+    CGFloat height = 0;
+    if (tableView == self.upcomingTableView) {
+        height = ActivityViewSectionHeaderHeight;
+    }
+    return height;
+}
+
+- (nullable UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
+    UILabel *view = nil;
+    if (tableView == self.upcomingTableView) {
+        view = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, CGRectGetWidth(self.upcomingTableView.frame), ActivityViewSectionHeaderHeight)];
+        view.backgroundColor = HEADER_COLOR_NON_TRANSPARENT;
+        view.textAlignment = NSTextAlignmentCenter;
+        view.textColor = [UIColor whiteColor];
+        view.font = [UIFont fontWithName:@"HelveticaNeue-Light" size:18];
+        
+        NSInteger sectionIndex = [[self.availableSections objectAtIndex:section] integerValue];
+        view.text = [self.sectionNames objectAtIndex:sectionIndex];
+    }
+    return view;
+}
+
+- (nullable NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
+    NSString *sectionTitle = nil;
+    if (tableView == self.upcomingTableView) {
+        NSInteger sectionIndex = [[self.availableSections objectAtIndex:section] integerValue];
+        sectionTitle = [self.sectionNames objectAtIndex:sectionIndex];
+    }
+    return sectionTitle;
+}
+
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
+    NSInteger numberOfSections = 1;
+    if (tableView == self.upcomingTableView) {
+        /* We need to count the number of arrays that were filled during
+         * the data load.
+         * There should be an array for each section:
+            - Today
+            - Tomorrow
+            - This week
+            - This month
+            - The rest of time!
+         */
+        return [self.availableSections count];
+    }
+    return numberOfSections;
 }
 
 
-- (UITableViewCell*)_tableView:(UITableView*)tableView cellForRowAtIndexPath:(NSIndexPath*)indexPath {
+#pragma mark - Table View Number of Rows in Section
+
+- (NSInteger)_activityTableViewNumberOfRowsInSection:(NSInteger)section {
+    return [self.events count];
+}
+
+- (NSInteger)_upcomingTableViewNumberOfRowsInSection:(NSInteger)section {
+//    return [self.upcomingEvents count];
+    /* We should have an array for each section. 
+     * The sum game is, just that. Sum up the arrays. */
+    NSInteger sectionIndex = [[self.availableSections objectAtIndex:section] integerValue];
+    NSMutableArray *sectionArray = [self.sections objectAtIndex:sectionIndex];
+    return [sectionArray count];
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
+    NSInteger numberOfRows = 0;
+    if (tableView == self.activityTableView) {
+        numberOfRows = [self _activityTableViewNumberOfRowsInSection:section];
+    } else if (tableView == self.upcomingTableView) {
+        numberOfRows = [self _upcomingTableViewNumberOfRowsInSection:section];
+    }
+    return numberOfRows;
+}
+
+
+#pragma mark - Table View Cell for Row at Index Path
+
+- (UITableViewCell*)_activityTableViewNormalCellForRowAtIndexPath:(NSIndexPath*)indexPath {
     static NSString *reuseIdentifier = @"activityCell";
-    ActivityTableViewCell *cell = (ActivityTableViewCell*)[tableView dequeueReusableCellWithIdentifier:reuseIdentifier];
+    ActivityTableViewCell *cell = (ActivityTableViewCell*)[self.activityTableView dequeueReusableCellWithIdentifier:reuseIdentifier];
     if (!cell) {
         cell = [[ActivityTableViewCell alloc] initWithReuseIdentifier:reuseIdentifier];
     }
     
     EventObject *event = [self.events objectAtIndex:indexPath.row];
     cell.event = event;
+    cell.dateLabel.text = [NSDate intertwineDateStringForEvent:event];
     
     cell.commentButton.detailLabel.text = [NSString stringWithFormat:@"%lu", (unsigned long)event.numberOfComments];
     cell.delegate = self;
@@ -643,16 +878,16 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
     return cell;
 }
 
-- (UITableViewCell*)_tableView:(UITableView*)tableView completedCellForRowAtIndexPath:(NSIndexPath*)indexPath {
+- (UITableViewCell*)_activityTableViewCompletedCellForRowAtIndexPath:(NSIndexPath*)indexPath {
     static NSString *reuseIdentifier = @"completedActivityCell";
-    ActivityCompleteTableViewCell *cell = (ActivityCompleteTableViewCell*)[tableView dequeueReusableCellWithIdentifier:reuseIdentifier];
+    ActivityCompleteTableViewCell *cell = (ActivityCompleteTableViewCell*)[self.activityTableView dequeueReusableCellWithIdentifier:reuseIdentifier];
     if (!cell) {
         cell = [[ActivityCompleteTableViewCell alloc] initWithReuseIdentifier:reuseIdentifier];
     }
     EventObject *event = [self.events objectAtIndex:indexPath.row];
     cell.titleLabel.text = event.eventTitle;
 
-    NSMutableArray *firstNames = [[NSMutableArray alloc] init];
+    NSMutableArray *firstNames = [NSMutableArray new];
     for (Friend *attendee in event.attendees) {
         [firstNames addObject:attendee.first];
     }
@@ -661,37 +896,92 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
 }
 
 
-- (UITableViewCell*)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
+- (UITableViewCell*)_activityTableViewCellForRowAtIndexPath:(NSIndexPath*)indexPath {
     EventObject *event = [self.events objectAtIndex:indexPath.row];
     UITableViewCell *cell = nil;
     if (event.isComplete) {
-        cell = [self _tableView:tableView completedCellForRowAtIndexPath:indexPath];
+        cell = [self _activityTableViewCompletedCellForRowAtIndexPath:indexPath];
     } else {
-        cell = [self _tableView:tableView cellForRowAtIndexPath:indexPath];
+        cell = [self _activityTableViewNormalCellForRowAtIndexPath:indexPath];
+    }
+    return cell;
+}
+
+- (UITableViewCell*)_upcomingTableViewCellForRowAtIndexPath:(NSIndexPath*)indexPath {
+    static NSString *reuseIdentifier = @"upcomingCell";
+    
+    NSInteger sectionIndex = [[self.availableSections objectAtIndex:indexPath.section] integerValue];
+    NSMutableArray *section = [self.sections objectAtIndex:sectionIndex];
+    EventObject *event = [section objectAtIndex:indexPath.row];
+    ActivityTableViewCell *cell = (ActivityTableViewCell*)[self.upcomingTableView dequeueReusableCellWithIdentifier:reuseIdentifier];
+    if (!cell) {
+        cell = [[ActivityTableViewCell alloc] initWithReuseIdentifier:reuseIdentifier];
+    }
+    cell.event = event;
+    
+    cell.commentButton.detailLabel.text = [NSString stringWithFormat:@"%lu", (unsigned long)event.numberOfComments];
+    cell.delegate = self;
+    cell.dateLabel.text = [NSDate intertwineDateStringForEvent:event];
+    
+    [cell setAttendees:[event attendees]];
+    [cell setTitle:event.eventTitle];
+    [cell completed:event.isComplete];
+    
+    return cell;
+}
+
+- (UITableViewCell*)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
+    UITableViewCell *cell = nil;
+    if (tableView == self.activityTableView) {
+        cell = [self _activityTableViewCellForRowAtIndexPath:indexPath];
+    } else if (tableView == self.upcomingTableView) {
+        cell = [self _upcomingTableViewCellForRowAtIndexPath:indexPath];
     }
     return cell;
 }
 
 
+#pragma mark - Header View Data Source
 
-
-- (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath {
-    
-    if (editingStyle == UITableViewCellEditingStyleDelete) {
-        // Delete the row from the data source
-        NSLog(@"Deleting");
-    }
+- (NSString*)titleForSegment:(NSUInteger)segmentIndex {
+    NSString *title = [NSString stringWithCString:titles[segmentIndex] encoding:NSUTF8StringEncoding];
+    return title;
 }
 
+#pragma mark - Table View Commit Editing Style
+
+//- (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath {
+//    
+//    if (editingStyle == UITableViewCellEditingStyleDelete) {
+//        // Delete the row from the data source
+//        NSLog(@"Deleting");
+//    }
+//}
+
 #pragma mark - Lazy Loading
+
+- (HeaderPagingScrollView*)backgroundScrollView {
+    if (!_backgroundScrollView) {
+        CGRect frame = self.view.frame;
+        frame.origin.x = 0;
+        frame.origin.y = 0;
+        _backgroundScrollView = [[HeaderPagingScrollView alloc] initWithFrame:frame numberOfPages:2];
+        _backgroundScrollView.delegate = self;
+        CGFloat yCenter = CGRectGetHeight(self.header.frame)/2. ;
+        _backgroundScrollView.headerView.center = CGPointMake(CGRectGetWidth(self.header.frame)/2.0, yCenter);
+        [self.header addSubview:_backgroundScrollView.headerView];
+    }
+    return _backgroundScrollView;
+}
 
 - (UITableView*)activityTableView {
     if (!_activityTableView) {
         /* Readjust the height of the table view by the height of the header. */
         CGRect frame = self.view.frame;
         frame.size.height -= headerHeight;
-        frame.size.height -= footerHeight;
+//        frame.size.height -= footerHeight;
         frame.origin.y += headerHeight;
+        frame.origin.x += CGRectGetWidth(self.view.frame);
         
         _activityTableView = [[UITableView alloc] initWithFrame:frame style:UITableViewStylePlain];
         _activityTableView.backgroundColor = [UIColor clearColor];
@@ -701,6 +991,25 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
 //        _activityTableView.allowsSelection = NO;
     }
     return _activityTableView;
+}
+
+- (UITableView*)upcomingTableView {
+    if (!_upcomingTableView) {
+        /* Readjust the height of the table view by the height of the header. */
+        CGRect frame = self.view.frame;
+        frame.size.height -= headerHeight;
+//        frame.size.height -= footerHeight;
+        frame.origin.y += headerHeight;
+        frame.origin.x = 0;
+//        frame.origin.x += CGRectGetWidth(self.view.frame);
+        
+        _upcomingTableView = [[UITableView alloc] initWithFrame:frame style:UITableViewStylePlain];
+        _upcomingTableView.backgroundColor = [UIColor clearColor];
+        _upcomingTableView.delegate = self;
+        _upcomingTableView.dataSource = self;
+        _upcomingTableView.separatorStyle = UITableViewCellSeparatorStyleNone;
+    }
+    return _upcomingTableView;
 }
 
 - (UIImageView*)backgroundImage {
@@ -716,19 +1025,21 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
     if (!_header) {
         _header = [[UIView alloc] initWithFrame:CGRectMake(0, 0, CGRectGetWidth(self.view.frame), headerHeight)];
 //        _header.backgroundColor = [UIColor colorWithRed:20.0/255.0 green:81.0/255.0 blue:121.0/255.0 alpha:1.0];
-        _header.backgroundColor = [UIColor colorWithRed:20.0/255.0 green:81.0/255.0 blue:121.0/255.0 alpha:1.0];
+        _header.backgroundColor = ACTIVITY_VIEW_HEADER_COLOR;
 //        _header.layer.borderWidth = 1.0;
 //        _header.layer.borderColor = [[UIColor colorWithRed:151.0/255.0 green:151.0/255.0 blue:151.0/255.0 alpha:1] CGColor];
     }
     return _header;
 }
 
-- (UIView*)footer {
+- (UIImageView*)footer {
     if (!_footer) {
-        _footer = [[UIView alloc] initWithFrame:CGRectMake(-5, y_footer, CGRectGetWidth(self.view.frame) + 10, footerHeight + 2)];
-        _footer.backgroundColor = [UIColor colorWithRed:20.0/255.0 green:81.0/255.0 blue:121.0/255.0 alpha:1.0];
-        _footer.layer.borderColor = [[UIColor whiteColor] CGColor];
-        _footer.layer.borderWidth = 1.0;
+        CGFloat screenHeight = CGRectGetHeight(self.view.frame);
+        CGFloat screenWidth = CGRectGetWidth(self.view.frame);
+        UIImage *gradientBottom = [UIImage imageNamed:@"BottomGradient.png"];
+        _footer = [[UIImageView alloc] initWithImage:gradientBottom];
+        _footer.frame = CGRectMake(0, screenHeight-gradientBottom.size.height, screenWidth, gradientBottom.size.height);
+        _footer.userInteractionEnabled = NO;
     }
     return _footer;
 }
@@ -758,7 +1069,10 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
     if (!_notificationsButton) {
         _notificationsButton = [UIButton buttonWithType:UIButtonTypeCustom];
         [_notificationsButton setImage:[UIImage imageNamed:@"notifications_icon.png"] forState:UIControlStateNormal];
-        _notificationsButton.frame = CGRectMake(CGRectGetMaxX(self.gearButton.frame) + 20, y_toolBarItems, 26.0, 26.0);
+        _notificationsButton.frame = CGRectMake(28, 0, 26.0, 26.0);
+        CGPoint center = _notificationsButton.center;
+        center.y = y_toolBarItems;
+        _notificationsButton.center = center;
         [_notificationsButton addTarget:self action:@selector(_presentNotificationsViewController) forControlEvents:UIControlEventTouchUpInside];
     }
     return _notificationsButton;
@@ -770,7 +1084,7 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
         [_friendsButton setImage:[UIImage imageNamed:@"friends.png"] forState:UIControlStateNormal];
         [_friendsButton addTarget:self action:@selector(_presentFriendsViewController) forControlEvents:UIControlEventTouchUpInside];
         
-        CGFloat screenWidth = CGRectGetWidth([[UIScreen mainScreen] bounds]);
+        CGFloat screenWidth = CGRectGetWidth(self.view.frame);
         _friendsButton.frame = CGRectMake(screenWidth - 56.0, y_toolBarItems, 46.0, 26.0);
     }
     return _friendsButton;
@@ -779,8 +1093,14 @@ const CGFloat slideSideBarsAnimationSpeed = 0.3;
 - (UIView*)newActivityButton {
     if (!_newActivityButton) {
         _newActivityButton = [UIButton buttonWithType:UIButtonTypeCustom];
-        [_newActivityButton setTitle:@"+" forState:UIControlStateNormal];
+//        [_newActivityButton setTitle:@"+" forState:UIControlStateNormal];
+        UIImage *plusButton = [UIImage imageNamed:@"PlusRed.png"];
+        [_newActivityButton setImage:plusButton forState:UIControlStateNormal];
         [_newActivityButton addTarget:self action:@selector(_newActivity) forControlEvents:UIControlEventTouchUpInside];
+        CGFloat screenWidth = CGRectGetWidth(self.view.frame);
+        CGFloat screenHeight = CGRectGetHeight(self.view.frame);
+        CGFloat inset = 20.0;
+        _newActivityButton.frame = CGRectMake(screenWidth - plusButton.size.width - inset, screenHeight - plusButton.size.height - inset, plusButton.size.width, plusButton.size.height);
     }
     return _newActivityButton;
 }
