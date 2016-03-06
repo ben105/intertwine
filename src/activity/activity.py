@@ -23,13 +23,13 @@ def get_upcoming(ctx):
 		event_dates.semesters_id,
 		event_dates.all_day
 	FROM
-		event_dates, events
-	INNER JOIN 	event_attendees
-	ON 		event_attendees.events_id = events.id
+		event_dates, events_view
+	INNER JOIN 	event_attendees_view
+	ON 		event_attendees_view.events_id = events.id
 	WHERE
-		event_attendees.attendee_accounts_id = %s and 
+		event_attendees_view.attendee_accounts_id = %s and 
 		completed=false and
-		events.id = event_dates.events_id and
+		events_view.id = event_dates.events_id and
 		event_dates.start_date >= Date(now())
 	ORDER BY
 		updated_time DESC;
@@ -94,12 +94,12 @@ def get_activity(ctx):
 		event_dates.semesters_id,
 		event_dates.all_day
 	FROM
-		events
+		events_view as events
 	LEFT OUTER JOIN event_dates
 	ON 		events.id = event_dates.events_id
-	INNER JOIN 	event_attendees
+	INNER JOIN 	event_attendees_view as event_attendees
 	ON 		event_attendees.events_id = events.id
-	INNER JOIN 	friends
+	INNER JOIN 	friends_view as friends
 	ON 		friends.friend_accounts_id = event_attendees.attendee_accounts_id
 	WHERE
 		friends.accounts_id = %s and completed=false

@@ -22,7 +22,7 @@ def comment_count(ctx, event_id):
 	if not event_id:
 		logging.error('invalid event ID when user %d tried retrieving comment count')
 		return 0
-	query = 'SELECT count(*) FROM comments WHERE events_id=%s;'
+	query = 'SELECT count(*) FROM comments_view WHERE events_id=%s;'
 	try:
 		ctx.cur.execute(query, (event_id,))
 	except Exception as exc:
@@ -58,7 +58,7 @@ def get_comments(ctx, event_id):
 		a.facebook_id,
 		comment
 	FROM
-		comments as c,
+		comments_view as c,
 		accounts as a
 	WHERE
 		a.id = c.accounts_id and
@@ -105,7 +105,7 @@ def notify_attendees(ctx, event_id, title, comment):
 	SELECT
 		attendee_accounts_id
 	FROM
-		event_attendees
+		event_attendees_view
 	WHERE
 		events_id = %s and 
 		attendee_accounts_id <> %s;
@@ -121,7 +121,7 @@ def notify_attendees(ctx, event_id, title, comment):
 	SELECT
 		comments.accounts_id
 	FROM
-		events, comments
+		events, comments_view as comments
 	WHERE
 		events.id = %s and (events.id = comments.events_id);
 	"""

@@ -129,7 +129,7 @@ def get_attendees(ctx, event_id):
 		accounts.facebook_id, 
 		accounts.id 
 	FROM 
-		event_attendees, 
+		event_attendees_view as event_attendees, 
 		accounts 
 	WHERE 
 		event_attendees.attendee_accounts_id=accounts.id and 
@@ -189,9 +189,9 @@ def get_events_with_user(ctx, user_id):
 		event_dates.semesters_id,
 		event_dates.all_day
 	FROM 
-		accounts, 
-		event_attendees,
-		events
+		accounts_view as accounts, 
+		event_attendees_view as event_attendees,
+		events_view as events
 	LEFT OUTER JOIN event_dates
 	ON events.id = event_dates.events_id
 	WHERE 
@@ -247,9 +247,9 @@ def get_events_for_user(ctx, user_id):
 		event_dates.semesters_id,
 		event_dates.all_day
 	FROM 
-		accounts, 
-		event_attendees,
-		events
+		accounts_view as accounts, 
+		event_attendees_view as event_attendees,
+		events_view as events
 	LEFT OUTER JOIN event_dates
 	ON events.id = event_dates.events_id
 	WHERE 
@@ -322,7 +322,7 @@ def complete(ctx, event_id, title):
 	SELECT
 		attendee_accounts_id
 	FROM
-		event_attendees
+		event_attendees_view
 	WHERE
 		events_id = %s and attendee_accounts_id <> %s;
 	"""
@@ -438,7 +438,7 @@ def edit(ctx, event_id, title, new_title, date, invited, uninvited):
 		except Exception as exc:
 			logging.error(exc)
 			return response.block(error=strings.SERVER_ERROR, code=500)
-		query = 'SELECT attendee_accounts_id FROM events, event_attendees WHERE events.id=%s and event_attendees.events_id = events.id;'
+		query = 'SELECT attendee_accounts_id FROM events_view as events, event_attendees_view as event_attendees WHERE events.id=%s and event_attendees.events_id = events.id;'
 		ctx.cur.execute(query, (event_id,))
 		rows = ctx.cur.fetchall()
 		ids = [row[0] for row in rows]
