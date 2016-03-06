@@ -296,6 +296,7 @@ class TestAccounts(unittest.TestCase):
 
 		self.ctx.user_id = user_id
 	
+		import pdb; pdb.set_trace()
 		resp = search.find(self.ctx, 'Alex')
 		self.assertTrue(resp['success'])
 		results = resp['payload']

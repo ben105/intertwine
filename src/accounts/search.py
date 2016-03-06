@@ -1,4 +1,5 @@
 from intertwine import response
+from intertwine import strings
 import logging
 
 def find(ctx, name):
@@ -25,7 +26,7 @@ def find(ctx, name):
 		accounts.id,
 		(SELECT count(*) FROM friend_requests WHERE requester_accounts_id = %(user_id)s and requestee_accounts_id = accounts.id) AS requestee
 	FROM
-		accounts_view
+		accounts_view as accounts
 	WHERE
 		(first ilike %(like1)s or
 		last ilike %(like2)s) and accounts.id <> %(user_id2)s and accounts.id not in 

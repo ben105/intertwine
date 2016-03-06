@@ -13,7 +13,8 @@ def get_modules(cur):
 	# First let's look at all files in the directory.
 	tests = os.listdir(test_dir)
 	tests.remove(__file__)
-	unittest_modules = map(lambda x: x.rstrip('.py'), tests)
+	moduleNames = map(lambda x: x.rstrip('.py'), tests)
+	unittest_modules = map(__import__, moduleNames)
 	for module in unittest_modules:
 		if getattr(module, 'cur', None) is not None:
 			module.cur = cur
