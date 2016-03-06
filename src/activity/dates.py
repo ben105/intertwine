@@ -7,7 +7,7 @@ class EventDate(object):
 	def __init__(self, json_body):
 		self.time = None	# Because there might not be a specific time set.
 		self.semester = None
-		self.semester_id = None
+		self.semester_id = None 
 		self.all_day = False
 		try:
 			self.extract_date(json_body)
@@ -35,6 +35,12 @@ class EventDate(object):
 		# timestamp = timestamp.replace(tzinfo=pytz.timezone(timezone))
 		return tz_timestamp.astimezone(pytz.timezone('UTC'))
 
+	def string(self):
+		s = self.date
+		if self.time:
+			s = s + ' ' + self.time
+		return s
+
 	def extract_date(self, json_body):
 		"""
 		Raises:
@@ -43,33 +49,31 @@ class EventDate(object):
 		  ValueError:
 		"""
 		body = json.loads(json_body)
-		date = body['date']
-		time = body.get('time')
+		date = body['start_date']
+		time = body.get('start_time')
 		tz = body['timezone']
+
+		if not date:
+			return
 
 		# Combine the date and time, if there exists a time.
 		if not time:
 			# Check for semester. And all day boolean.
-			self.semester = body.get('semester')
+			self.semester = body.get('semester_id')
 			# Semester trumps all day.
 			if self.semester:
 				self.all_day = False
 			else:
 				self.all_day = body['all_day']
-			# Use this time value so the following function will work.
-			time = '00:00:00'
-		timestamp = '{0} {1}'.format(date, time)
-		timestamp = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S')
+			self.date = date
 
-		# Use the timezone coming in as an indicator of how to
-		# convert to UTC. I will be using UTC dates in my database.
-		utctime = self.convert_to_utc(timestamp, tz)
-
-		# Convert the timestamp back into a str.
-		utc_str = utctime.strftime('%Y-%m-%d %H:%M:%S')
-		date_tuple = utc_str.split(' ')
-
-		# We only want to set the time if there 
-		if not self.semester and not self.all_day:
+		else:
+			timestamp = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S')
+			# Use the timezone coming in as an indicator of how to
+			# convert to UTC. I will be using UTC dates in my database.
+			utctime = self.convert_to_utc(timestamp, tz)
+			# Convert the timestamp back into a str.
+			utc_str = utctime.strftime('%Y-%m-%d %H:%M:%S')
+			date_tuple = utc_str.split(' ')
 			self.time = date_tuple[1]
-		self.date = date_tuple[0]
+			self.date = date_tuple[0]

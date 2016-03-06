@@ -26,7 +26,7 @@ def insert_event_date(ctx, event_id, date):
 	try:
 		ctx.cur.execute(query, (ctx.user_id, event_id, date.semester_id, date.date, date.time, date.all_day))
 	except Exception as exc:
-		logging.error('exception raise while trying to insert date for event id %s by user %s', event_id, user_id)
+		logging.error('exception raise while trying to insert date for event id %s by user %s', event_id, ctx.user_id)
 		raise
 
 
@@ -80,7 +80,7 @@ def create(ctx, title, description, attendees, date=None):
 			return response.block(error=strings.SERVER_ERROR, code=500)
 		except Exception as exc:
 			logging.error(exc)
-			return response.block(error=stings.SERVER_ERROR, code=500)
+			return response.block(error=strings.SERVER_ERROR, code=500)
 
 	for user in attendees:
 		try:
@@ -88,7 +88,7 @@ def create(ctx, title, description, attendees, date=None):
 			if date:
 				# Because a date exists, we will need to update the push notification to
 				# display the time in the message.
-				push.push_notification(ctx, user, "{} {} created a new event: {} at {}".format(first, last, title), notifInfo, date)
+				push.push_notification(ctx, user, "{} {} created a new event: {} at {}".format(first, last, title, date.string()), notifInfo)
 			else:	
 				push.push_notification(ctx, user, "{} {} created a new event: {}".format(first, last, title), notifInfo)
 		except Exception as exc:
@@ -159,7 +159,7 @@ def response_for_events(ctx, rows):
 		event["creator"] = creator
 		event["updated_time"] = str(row[4]).split('.')[0]
 		event["date"] = {
-			"start_date": row[6],
+			"start_date": str(row[6]),
 			"start_time": row[7],
 			"semester_id": row[8],
 			"all_day": row[9]
@@ -371,7 +371,26 @@ def remove_attendees(ctx, event_id, attendees):
 		return response.block(error=strings.SERVER_ERROR, code=500)
 
 def edit_date(ctx, event_id, date):
-	pass
+	if not date or not event_id:
+		err_msg = 'failed trying to update event date'
+		logging.error(err_msg)
+		raise ValueError(err_msg)
+	query = """
+	UPDATE 
+		event_dates
+	SET
+		semesters_id = %s,
+		start_date = %s,
+		start_time = %s,
+		all_day = %s
+	WHERE
+		events_id = %s; 
+	"""
+	try:
+		ctx.cur.execute(query, (date.semester_id, date.date, date.time, date.all_day, event_id))
+	except Exception as exc:
+		logging.error('exception raise while trying to insert date for event id %s by user %s:\n%s', event_id, ctx.user_id, exc)
+		raise
 
 def edit_title(ctx, event_id, title):
 	if not event_id or not title:
@@ -411,9 +430,24 @@ def edit(ctx, event_id, title, new_title, date, invited, uninvited):
 		if err:
 			return err
 	if date is not None:
-		err = edit_date(ctx, event_id, date)
-		if err:
-			return err
+		try:
+			edit_date(ctx, event_id, date)
+		except ValueError as ve:
+			logging.error('bad information passed to edit_date: %s', ve)
+			return response.block(error=strings.SERVER_ERROR, code=500)
+		except Exception as exc:
+			logging.error(exc)
+			return response.block(error=strings.SERVER_ERROR, code=500)
+		query = 'SELECT attendee_accounts_id FROM events, event_attendees WHERE events.id=%s and event_attendees.events_id = events.id;'
+		ctx.cur.execute(query, (event_id,))
+		rows = ctx.cur.fetchall()
+		ids = [row[0] for row in rows]
+		for user in ids:
+			try:
+        			notifInfo = {'event_id':event_id, 'action':push.JUMP_TO}
+        			push.push_notification(ctx, user, "{} {} update the date for the event {}. New date is {}".format(ctx.first, ctx.last, title, date.string()), notifInfo)
+			except Exception as exc:
+				logging.error('exception raised trying to send push notification while adding attendee %d to activity %s\n%s', user, title, str(exc))	
 	if new_title is not None:
 		err = edit_title(ctx, event_id, new_title)
 		if err:

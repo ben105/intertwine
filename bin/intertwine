@@ -1,6 +1,7 @@
 #!/usr/bin/env python2.7
 
 from flask import Flask, request
+import logging
 import json
 import re
 import sys
@@ -67,6 +68,12 @@ def comment_handler():
 
 ####### Activities ########
 
+@app.route('/api/v1/upcoming', methods=['GET'])
+def upcoming():
+	ctx = create_context(request)
+	resp = activity.get_upcoming(ctx)
+	return json.dumps(resp)
+
 @app.route('/api/v1/activity', methods=['GET'])
 def activities():
 	ctx = create_context(request)
@@ -76,7 +83,6 @@ def activities():
 @app.route('/api/v1/events', methods=['GET', 'POST', 'DELETE'])
 def event_api():
 	ctx = create_context(request)
-
 	# If user is asking for their activities.
 	if request.method == "GET":
 		resp = events.get_events(ctx)
@@ -86,7 +92,7 @@ def event_api():
 		body = json.loads(request.data)
 		event_date = None
 		date = body.get('date')
-		if date:
+		if date and date.get('start_date'):
 			try:
 				event_date = dates.EventDate(json.dumps(date))
 			except RuntimeError as err:
@@ -112,9 +118,15 @@ def edit_event():
 	title = body.get('title')
 	new_title = body.get('new_title')
 	date = body.get('date')
+	event_date = None
+	if date and date.get('start_date'):
+		try:
+			event_date = dates.EventDate(json.dumps(date))
+		except RuntimeError as err:
+			logging.error('runtime error encounted posting event date, %s', err)
 	invited = body.get('invited')
 	uninvited = body.get('uninvited')
-	resp = events.edit(ctx, event_id, title, new_title, date, invited, uninvited)
+	resp = events.edit(ctx, event_id, title, new_title, event_date, invited, uninvited)
 	return json.dumps(resp)
 
 @app.route('/api/v1/event_complete', methods=['POST'])
