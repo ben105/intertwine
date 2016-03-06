@@ -116,7 +116,7 @@ def push_notification(ctx, user_id, msg, notifInfo=None):
 	deviceTokens = devices.get_token(ctx.cur, user_id)
 	if not deviceTokens:
 		logging.error(
-			'error getting device token for user %d\n \
+			'error getting device token for user %s\n \
 			Push notification won\'t be sent.', user_id)
 		return
 
@@ -141,13 +141,13 @@ def push_notification(ctx, user_id, msg, notifInfo=None):
 	data = json.dumps( thePayLoad )
 	# Format the data
 	theFormat = '!BH32sH%ds' % len(data)
-	# Create the SSL socket
-	ssl_sock = ssl.wrap_socket( socket.socket( socket.AF_INET, socket.SOCK_STREAM ), certfile = theCertfile )
-	ssl_sock.connect( theHost )
 
 	save_notification(ctx, user_id, msg, thePayLoad)
 	
 	for deviceToken in deviceTokens:
+		# Create the SSL socket
+		ssl_sock = ssl.wrap_socket( socket.socket( socket.AF_INET, socket.SOCK_STREAM ), certfile = theCertfile )
+		ssl_sock.connect( theHost )
 		# Put everything together
 		theNotification = struct.pack( theFormat, 0, 32, str(deviceToken), len(data), data )
 		ssl_sock.write( theNotification )
@@ -161,6 +161,4 @@ def push_notification(ctx, user_id, msg, notifInfo=None):
 		# that we successfully wrote to the server.
 		# However, that might not be the case. But either way, we can still
 		# present it as a historical notification whether it was sent or not.
-
-
-	ssl_sock.close()
+		ssl_sock.close()
