@@ -46,7 +46,7 @@ def get_comments(ctx, event_id):
 		logging.error('invalid user ID when trying to retrieve comments')
 		return response.block(error=strings.VALUE_ERROR, code=500)
 	if not event_id:
-		logging.error('invalid event ID when user %d tried retrieving comments')
+		logging.error('invalid event ID when user %d tried retrieving comments', ctx.user_id)
 		return response.block(error=strings.VALUE_ERROR, code=500)
 	query = """
 	SELECT
