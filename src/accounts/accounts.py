@@ -116,10 +116,10 @@ def sign_in_facebook(ctx, facebook_id, first, last):
 
 	# Bail early if there already exists a facebook account
 	# with this Facebook ID.
-	rows = ctx.cur.fetchall()
-	if len(rows):
+	row = ctx.cur.fetchone()
+	if row:
 		return response.block(payload={
-			'user_id':rows[0][0]
+			'user_id':row[0]
 		})
 	
 	# The user's account does not exist for this Facebook ID,
