@@ -25,14 +25,14 @@ def find(ctx, name):
 		accounts.id,
 		(SELECT count(*) FROM friend_requests WHERE requester_accounts_id = %(user_id)s and requestee_accounts_id = accounts.id) AS requestee
 	FROM
-		accounts
+		accounts_view
 	WHERE
 		(first ilike %(like1)s or
 		last ilike %(like2)s) and accounts.id <> %(user_id2)s and accounts.id not in 
 		(SELECT
 			friend_accounts_id
 		FROM
-			friends
+			friends_view
 		WHERE
 			accounts_id = %(user_id3)s);
 	"""

@@ -46,7 +46,7 @@ def get_pending_requests(ctx):
 		accounts.email,
 		accounts.id
 	FROM 
-		accounts, friend_requests
+		accounts_view as accounts, friend_requests
 	WHERE
 		friend_requests.denied = false and
 		friend_requests.requester_accounts_id = accounts.id and
@@ -102,7 +102,7 @@ def fb_friends(ctx, friends_list):
 		accounts.facebook_id,
 		accounts.email
 	FROM 
-		accounts
+		accounts_view as accounts
 	WHERE 
 		accounts.id not in (
 			SELECT blocked_accounts_id FROM blocked_accounts WHERE accounts_id=%s
@@ -146,7 +146,7 @@ def get_friends(ctx):
 		accounts.email,
 		accounts.id
 	FROM
-		accounts, friends
+		accounts_view as accounts, friends_view as friends
 	WHERE
 		accounts.id = friends.friend_accounts_id and
 		friends.accounts_id = %s;
@@ -175,7 +175,7 @@ def get_blocked(ctx):
 		accounts.facebook_id,
 		accounts.email
 	FROM
-		accounts, blocked_accounts
+		accounts_view as accounts, blocked_accounts
 	WHERE
 		accounts.id = blocked_accounts.blocked_accounts_id and
 		blocked_accounts.accounts_id = %s
@@ -218,7 +218,7 @@ def get_denied(ctx):
 		accounts.facebook_id,
 		accounts.email
 	FROM
-		accounts, friend_requests
+		accounts_view as accounts, friend_requests
 	WHERE
 		accounts.id = friend_requests.requester_accounts_id and
 		friend_requests.denied = true and
