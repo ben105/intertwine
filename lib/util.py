@@ -1,6 +1,7 @@
 import json
 import logging
 from functools import wraps
+import psycopg2
 
 from intertwine import context
 
@@ -39,9 +40,17 @@ def single_transaction(func):
 
                 commit_value = ctx.cur.connection.autocommit
                 # Set it to false.
-                ctx.cur.connection.autocommit = False
+		try:
+                	ctx.cur.connection.autocommit = False
+		except psycopg2.ProgrammingError as perr:
+			# I think the idea here is that we are already in a transaction.
+			pass
 
-                resp = func(*argv, **kwargs)
+		try:
+                	resp = func(*argv, **kwargs)
+		except Exception as exc:
+			logging.error('function crashed in a single transaction due to exception, %s', exc)
+			resp = False
                 success = False
                 if isinstance(resp, bool):
                         success = resp
