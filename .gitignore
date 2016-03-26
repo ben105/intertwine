@@ -1,3 +1,5 @@
 DerivedData
 *.pyc
 .DS_Store
+*.pem
+*.p12
